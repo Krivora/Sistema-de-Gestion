@@ -105,7 +105,7 @@ export async function update(id, {
     `UPDATE branch_products
      SET price=$1, cost=$2, min_stock=$3, reorder_point=$4,currency=$5,
          is_active=$6, updated_at=NOW()
-     WHERE id=$8
+     WHERE id=$7
      RETURNING *`,
     [price, cost, min_stock, reorder_point, currency, is_active, id]
   );

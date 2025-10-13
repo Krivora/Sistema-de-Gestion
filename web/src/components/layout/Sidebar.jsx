@@ -3,57 +3,105 @@ import { useState, useEffect } from "react";
 import {
   Dashboard as DashboardIcon,
   Store as StoreIcon,
+  ShoppingCart as ShoppingCartIcon,
+  ReceiptLong as ReceiptIcon,
   Inventory2 as InventoryIcon,
   Category as CategoryIcon,
+  Layers as LayersIcon,
+  Assessment as ReportIcon,
+  AccountTree as BranchIcon,
   Group as UsersIcon,
+  Warehouse as WarehouseIcon,
   Menu as MenuIcon,
 } from "@mui/icons-material";
 import { useTheme } from "../../providers/ThemeProvider";
 
 /* -----------------------------
-   🔗 Enlaces agrupados por sección
+   🔗 Enlaces agrupados por sección con iconografía mejorada
 ------------------------------ */
 const menuSections = [
   {
     title: "Principal",
     items: [
-      { to: "/", label: "Dashboard", icon: <DashboardIcon fontSize="small" /> },
+      {
+        to: "/",
+        label: "Dashboard",
+        icon: <DashboardIcon fontSize="small" />,
+      },
     ],
   },
   {
     title: "Gestión",
     items: [
-      { to: "/purchases", label: "Compras", icon: <StoreIcon fontSize="small" /> },
-      { to: "/sales", label: "Ventas", icon: <StoreIcon fontSize="small" /> },
+      {
+        to: "/purchases",
+        label: "Compras",
+        icon: <ShoppingCartIcon fontSize="small" />, // 🛒 Compras
+      },
+      {
+        to: "/sales",
+        label: "Ventas",
+        icon: <ReceiptIcon fontSize="small" />, // 🧾 Ventas
+      },
     ],
   },
   {
     title: "Sucursales",
     items: [
-      { to: "/branches", label: "Sucursales", icon: <StoreIcon fontSize="small" /> },
-      { to: "/branches-products", label: "Productos Sucursal", icon: <StoreIcon fontSize="small" /> },
+      {
+        to: "/branches",
+        label: "Sucursales",
+        icon: <BranchIcon fontSize="small" />, // 🌿 Estructura de sucursales
+      },
+      {
+        to: "/branches-products",
+        label: "Productos Sucursal",
+        icon: <WarehouseIcon fontSize="small" />, // 🏢 Inventario en sucursal
+      },
     ],
   },
   {
     title: "Inventario",
     items: [
-      { to: "/inventory-transactions", label: "Movimientos", icon: <InventoryIcon fontSize="small" /> },
+      {
+        to: "/inventory-transactions",
+        label: "Movimientos",
+        icon: <InventoryIcon fontSize="small" />, // 📦 Movimientos de stock
+      },
     ],
   },
   {
     title: "Productos",
     items: [
-      { to: "/categories", label: "Categorías", icon: <CategoryIcon fontSize="small" /> },
-      { to: "/products", label: "Productos", icon: <InventoryIcon fontSize="small" /> },
+      {
+        to: "/categories",
+        label: "Categorías",
+        icon: <LayersIcon fontSize="small" />, // 🧩 Agrupaciones
+      },
+      {
+        to: "/products",
+        label: "Productos",
+        icon: <CategoryIcon fontSize="small" />, // 🏷️ Catálogo de productos
+      },
     ],
   },
   {
     title: "Usuarios",
     items: [
-      { to: "/users", label: "Usuarios", icon: <UsersIcon fontSize="small" /> },
+      {
+        to: "/users",
+        label: "Usuarios",
+        icon: <UsersIcon fontSize="small" />, // 👥 Gestión de usuarios
+      },
+      {
+        to: "/reports",
+        label: "Reportes",
+        icon: <ReportIcon fontSize="small" />, // 📊 Reportes / análisis
+      },
     ],
   },
 ];
+
 
 export default function Sidebar({ open, setOpen, onCollapseChange }) {
   const { pathname } = useLocation();

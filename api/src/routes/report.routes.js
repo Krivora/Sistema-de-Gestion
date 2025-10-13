@@ -1,11 +1,23 @@
+// src/api/reports.routes.js
 import { Router } from "express";
-import * as ReportController from "../controllers/report.controller.js";
+import { ReportsController } from "../controllers/report.controller.js";
+import { authRequired } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.get("/stock", ReportController.getStockByBranch);
-router.get("/sales-period", ReportController.getSalesByPeriod);
-router.get("/purchases-suppliers", ReportController.getPurchasesBySupplier);
-router.get("/top-products", ReportController.getTopSellingProducts);
+// 📦 Inventario
+router.get("/stock", authRequired, ReportsController.stock);
+
+// 💰 Ventas
+router.get("/sales", authRequired, ReportsController.sales);
+
+// 🧾 Compras
+router.get("/purchases", authRequired, ReportsController.purchases);
+
+// 🛍️ Top productos
+router.get("/top-products", authRequired, ReportsController.topProducts);
+
+// 📊 Dashboard general
+router.get("/dashboard", authRequired, ReportsController.dashboard);
 
 export default router;

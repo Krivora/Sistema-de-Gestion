@@ -1,17 +1,19 @@
-import * as ReportRepo from "../repositories/report.repository.js";
+import * as repo from "../repositories/report.repository.js";
 
-export async function stockByBranch(branchId) {
-  return await ReportRepo.getCurrentStockByBranch(branchId);
-}
-
-export async function salesByPeriod({ startDate, endDate }) {
-  return await ReportRepo.getSalesByPeriod({ startDate, endDate });
-}
-
-export async function purchasesBySupplier() {
-  return await ReportRepo.getPurchasesBySupplier();
-}
-
-export async function topSellingProducts(limit) {
-  return await ReportRepo.getTopSellingProducts(limit);
-}
+export const ReportsService = {
+  async stock(branchId) {
+    return await repo.getCurrentStockByBranch(branchId);
+  },
+  async sales({ startDate, endDate }) {
+    return await repo.getSalesByPeriod({ startDate, endDate });
+  },
+  async purchases({ startDate, endDate }) {
+    return await repo.getPurchasesByPeriod({ startDate, endDate });
+  },
+  async topProducts(limit) {
+    return await repo.getTopSellingProducts(limit);
+  },
+  async dashboard({ startDate, endDate }) {
+    return await repo.getDashboardSummary({ startDate, endDate });
+  },
+};

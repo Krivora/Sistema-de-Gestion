@@ -18,30 +18,71 @@ export async function getSale(id) {
 
 // 🔹 Crear venta (con movimientos y actualización de stock)
 export async function createSale(data) {
-  const { branch_id, doc_no, items } = data;
+  const {
+    branch_id,
+    doc_no,
+    customer_name,
+    customer_phone,
+    payment_method,
+    subtotal,
+    total,
+    items,
+  } = data;
 
-  const sale = await SalesRepo.createSale({ branch_id, doc_no });
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
 
-  for (const item of items) {
-    await SalesRepo.addItem(sale.id, item);
+    // ✅ Ahora pasamos todos los campos al repository
+    const sale = await SalesRepo.createSale(
+      {
+        branch_id,
+        doc_no,
+        customer_name,
+        customer_phone,
+        payment_method,
+        subtotal,
+        total,
+      },
+      client
+    );
 
-    // 🧾 Crear movimiento de salida
-    await TxRepo.create({
-      branch_id,
-      product_id: item.product_id,
-      type: "SALE",
-      qty: item.qty,
-      unit_cost: item.unit_price,
-      note: `Venta ${sale.doc_no}`,
-      ref_type: "sale",
-      ref_id: sale.id,
-    });
+    // 🔹 Insertar ítems y movimientos de inventario
+    for (const item of items) {
+      await SalesRepo.addItem(sale.id, item, client);
 
-    // 📉 Restar stock
-    await BranchProductsRepo.upsertStock(branch_id, item.product_id, -item.qty, item.unit_price);
+      // 🧾 Movimiento de salida
+      await TxRepo.create(
+        {
+          branch_id,
+          product_id: item.product_id,
+          type: "SALE",
+          qty: item.qty,
+          unit_cost: item.unit_price,
+          note: `Venta ${sale.doc_no}`,
+          ref_type: "sale",
+          ref_id: sale.id,
+        },
+        client
+      );
+
+      // 📉 Restar stock
+      await BranchProductsRepo.upsertStock(
+        branch_id,
+        item.product_id,
+        -item.qty,
+        item.unit_price
+      );
+    }
+
+    await client.query("COMMIT");
+    return await getSale(sale.id);
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
   }
-
-  return await getSale(sale.id);
 }
 
 // 🔹 Eliminar venta (y movimientos asociados)

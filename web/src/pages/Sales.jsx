@@ -6,6 +6,7 @@ import { SalesApi } from "../api";
 import SaleTable from "../components/sales/SaleTable";
 import SaleForm from "../components/sales/SaleForm";
 import SaleDetails from "../components/sales/SaleDetails";
+import useSalePrint from "../components/sales/SalePrint";
 import { useToast } from "../utils/toastUtils";
 import { useAlert } from "../utils/alertUtils";
 import { useNotify } from "../utils/notifyUtils";
@@ -15,6 +16,8 @@ export default function Sales() {
   const [open, setOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState(null);
+  const { handlePrint } = useSalePrint();
+
   const toast = useToast();
   const alert = useAlert();
   const notify = useNotify();
@@ -62,7 +65,7 @@ export default function Sales() {
         </Button>
       </div>
 
-      <SaleTable sales={sales} loading={loading} onDelete={handleDelete} onView={handleView} />
+      <SaleTable sales={sales} loading={loading} onDelete={handleDelete} onView={handleView}  onPrint={(s) => handlePrint(s.id)} />
 
       <SaleForm open={open} onClose={() => setOpen(false)} onSave={handleSave} />
 

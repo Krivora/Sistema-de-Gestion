@@ -10,6 +10,7 @@ import Products from "../pages/Products";
 import Purchases from "../pages/Purchases";
 import Sales from "../pages/Sales";
 import Users from "../pages/Users";
+import Reports from "../pages/Reports";
 import InventoryTransactions from "../pages/InventoryTransactions";
 const router = createBrowserRouter([
   {
@@ -31,6 +32,7 @@ const router = createBrowserRouter([
       { path: "products", element: <Products /> },
       { path: "purchases", element: <Purchases /> },
       { path: "sales", element: <Sales /> },
+      { path: "reports", element: <Reports /> },
       { path: "categories", element: <Categories /> },
       { path: "users", element: <Users /> },
     ],

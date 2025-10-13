@@ -4,15 +4,17 @@ import { BranchProductsApi } from "../api";
 export function useBranchProducts(defaultBranchId = "") {
   const [items, setItems] = useState([]);
   const [branchId, setBranchId] = useState(defaultBranchId);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // 🔹 Cargar productos por sucursal cuando cambia el branchId
   useEffect(() => {
-    setItems([]);
-    fetch();
+    fetchBranchProducts(branchId);
   }, [branchId]);
 
-  const fetch = async (bId = branchId) => {
+
+  // ✅ Función interna con nombre único (no colisiona con window.fetch)
+  const fetchBranchProducts = async (bId = branchId) => {
     try {
       setLoading(true);
       const data = bId
@@ -20,15 +22,16 @@ export function useBranchProducts(defaultBranchId = "") {
         : await BranchProductsApi.listAll();
       setItems(data);
     } catch (err) {
+      console.error("Error cargando productos de sucursal:", err);
       setError(err);
     } finally {
       setLoading(false);
     }
   };
 
+  // 🧾 CRUD helpers
   const createItem = async (payload) => {
     const created = await BranchProductsApi.create(payload);
-    // Si estás filtrando por sucursal, refresca o inserta si coincide
     if (!branchId || Number(branchId) === Number(created.branch_id)) {
       setItems((prev) => [created, ...prev]);
     }
@@ -55,7 +58,7 @@ export function useBranchProducts(defaultBranchId = "") {
     error,
     branchId,
     setBranchId,
-    fetch,
+    fetchBranchProducts,
     createItem,
     updateItem,
     deleteItem,

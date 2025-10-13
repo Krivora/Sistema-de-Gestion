@@ -1,18 +1,13 @@
+// src/routes/purchase.routes.js
 import { Router } from "express";
 import * as PurchaseController from "../controllers/purchase.controller.js";
+import { authRequired } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// 🧾 Listar todas
-router.get("/", PurchaseController.getPurchases);
-
-// 📄 Obtener una
-router.get("/:id", PurchaseController.getPurchase);
-
-// ➕ Crear nueva compra (con ítems)
-router.post("/", PurchaseController.createPurchase);
-
-// 🗑️ Eliminar compra
-router.delete("/:id", PurchaseController.deletePurchase);
+router.get("/", authRequired, PurchaseController.getPurchases);
+router.get("/:id", authRequired, PurchaseController.getPurchase);
+router.post("/", authRequired, PurchaseController.createPurchase);
+router.delete("/:id", authRequired, PurchaseController.deletePurchase);
 
 export default router;

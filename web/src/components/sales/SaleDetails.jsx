@@ -39,6 +39,24 @@ export default function SaleDetails({ open, onClose, sale }) {
 
           <div>
             <Typography variant="subtitle2" color="text.secondary">
+              Cliente
+            </Typography>
+            <Typography variant="body1" fontWeight="500">
+              {sale.customer_name || "Público General"}
+            </Typography>
+          </div>
+
+          <div>
+            <Typography variant="subtitle2" color="text.secondary">
+              Método de Pago
+            </Typography>
+            <Typography variant="body1" fontWeight="500">
+              {sale.payment_method || "Efectivo"}
+            </Typography>
+          </div>
+
+          <div>
+            <Typography variant="subtitle2" color="text.secondary">
               Estado
             </Typography>
             <span
@@ -54,10 +72,12 @@ export default function SaleDetails({ open, onClose, sale }) {
 
           <div>
             <Typography variant="subtitle2" color="text.secondary">
-              Fecha de creación
+              Fecha
             </Typography>
             <Typography variant="body1" fontWeight="500">
-              {new Date(sale.created_at).toLocaleString()}
+              {new Date(
+                  new Date(sale.created_at).getTime() - 7 * 60 * 60 * 1000
+                ).toLocaleString("es-MX")}
             </Typography>
           </div>
         </div>

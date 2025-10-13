@@ -5,11 +5,12 @@ import {
   DialogActions,
   Button,
   TextField,
+  Autocomplete,
   MenuItem,
   IconButton,
   Tooltip,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Add, Delete } from "@mui/icons-material";
 import { useBranches } from "../../hooks/useBranches";
 import { useProducts } from "../../hooks/useProducts";
@@ -30,11 +31,26 @@ export default function PurchaseForm({ open, onClose, onSave }) {
     unit_cost: "",
   });
 
+  // 🔹 texto de búsqueda del Autocomplete
+  const [query, setQuery] = useState("");
+
+  // 🔹 Filtrar productos por nombre
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    if (!query) return products.slice(0, 10); // muestra los primeros 15 por defecto
+    return products
+      .filter((p) =>
+        p.name.toLowerCase().includes(query.toLowerCase())
+      )
+      .slice(0, 15); // máximo 15 resultados
+  }, [query, products]);
+
   // 🔹 Limpiar al cerrar modal
   useEffect(() => {
     if (!open) {
       setForm({ branch_id: "", doc_no: "", items: [] });
       setNewItem({ product_id: "", qty: "", unit_cost: "" });
+      setQuery("");
     }
   }, [open]);
 
@@ -51,6 +67,7 @@ export default function PurchaseForm({ open, onClose, onSave }) {
     };
     setForm((prev) => ({ ...prev, items: [...prev.items, item] }));
     setNewItem({ product_id: "", qty: "", unit_cost: "" });
+    setQuery(""); // limpia búsqueda
   };
 
   // ❌ Eliminar producto
@@ -67,7 +84,6 @@ export default function PurchaseForm({ open, onClose, onSave }) {
   // 💾 Guardar compra
   const handleSubmit = () => {
     if (!form.branch_id || form.items.length === 0) return;
-    // ⚠️ El doc_no se puede omitir, backend generará uno
     const payload = {
       ...form,
       doc_no: form.doc_no.trim() === "" ? undefined : form.doc_no,
@@ -79,9 +95,7 @@ export default function PurchaseForm({ open, onClose, onSave }) {
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Nueva Compra</DialogTitle>
 
-      <DialogContent
-        sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
-      >
+      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
         {/* 🔹 Datos principales */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <TextField
@@ -89,9 +103,7 @@ export default function PurchaseForm({ open, onClose, onSave }) {
             label="Sucursal"
             name="branch_id"
             value={form.branch_id}
-            onChange={(e) =>
-              setForm({ ...form, branch_id: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, branch_id: e.target.value })}
             fullWidth
             required
           >
@@ -102,15 +114,12 @@ export default function PurchaseForm({ open, onClose, onSave }) {
             ))}
           </TextField>
 
-          {/* ⚙️ El folio puede dejarse vacío */}
           <TextField
             label="Folio (opcional)"
             name="doc_no"
             placeholder="(Se generará automáticamente si se deja vacío)"
             value={form.doc_no}
-            onChange={(e) =>
-              setForm({ ...form, doc_no: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, doc_no: e.target.value })}
             fullWidth
           />
         </div>
@@ -120,31 +129,27 @@ export default function PurchaseForm({ open, onClose, onSave }) {
           <h4 className="font-medium mb-2">Agregar productos</h4>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-            <TextField
-              select
-              size="small"
-              label="Producto"
-              value={newItem.product_id}
-              onChange={(e) =>
-                setNewItem({ ...newItem, product_id: e.target.value })
+            <Autocomplete
+              options={filteredProducts}
+              getOptionLabel={(option) => option.name}
+              value={products.find((p) => p.id === newItem.product_id) || null}
+              onChange={(_, value) =>
+                setNewItem({ ...newItem, product_id: value ? value.id : "" })
               }
-              fullWidth
-            >
-              {products.map((p) => (
-                <MenuItem key={p.id} value={p.id}>
-                  {p.name}
-                </MenuItem>
-              ))}
-            </TextField>
+              onInputChange={(_, value) => setQuery(value)}
+              renderInput={(params) => (
+                <TextField {...params} label="Producto" size="small" fullWidth />
+              )}
+              noOptionsText={query ? "Sin resultados" : "Escribe para buscar..."}
+              sx={{ width: "100%" }}
+            />
 
             <TextField
               size="small"
               type="number"
               label="Cantidad"
               value={newItem.qty}
-              onChange={(e) =>
-                setNewItem({ ...newItem, qty: e.target.value })
-              }
+              onChange={(e) => setNewItem({ ...newItem, qty: e.target.value })}
               fullWidth
             />
 
@@ -153,17 +158,11 @@ export default function PurchaseForm({ open, onClose, onSave }) {
               type="number"
               label="Costo Unitario"
               value={newItem.unit_cost}
-              onChange={(e) =>
-                setNewItem({ ...newItem, unit_cost: e.target.value })
-              }
+              onChange={(e) => setNewItem({ ...newItem, unit_cost: e.target.value })}
               fullWidth
             />
 
-            <Button
-              variant="contained"
-              onClick={handleAddItem}
-              sx={{ minWidth: "fit-content" }}
-            >
+            <Button variant="contained" onClick={handleAddItem} sx={{ minWidth: "fit-content" }}>
               <Add fontSize="small" />
             </Button>
           </div>
@@ -190,10 +189,7 @@ export default function PurchaseForm({ open, onClose, onSave }) {
                       <td>${(i.qty * i.unit_cost).toFixed(2)}</td>
                       <td className="text-right">
                         <Tooltip title="Eliminar">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleRemoveItem(idx)}
-                          >
+                          <IconButton size="small" onClick={() => handleRemoveItem(idx)}>
                             <Delete fontSize="small" />
                           </IconButton>
                         </Tooltip>

@@ -148,7 +148,11 @@ export default function InventoryTransactionTable({ transactions = [], loading, 
 
             return (
               <tr key={t.id} className={`hover:${darkMode ? "bg-[#2a2a2a]" : "bg-gray-50"}`}>
-                <td className="px-6 py-4">{new Date(t.created_at).toLocaleString()}</td>
+                <td className="px-6 py-4">
+                  {new Date(
+                    new Date(t.created_at).getTime() - 7 * 60 * 60 * 1000
+                  ).toLocaleString("es-MX")}
+                </td>
                 <td className="px-6 py-4">{t.branch_name}</td>
                 <td className="px-6 py-4">{t.product_name}</td>
 

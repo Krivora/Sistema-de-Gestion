@@ -1,16 +1,15 @@
 import { useState, useMemo } from "react";
-import { Delete, Visibility } from "@mui/icons-material";
+import { Delete, Visibility, Print } from "@mui/icons-material";
 import { Skeleton, Tooltip, IconButton } from "@mui/material";
 import { useTheme } from "../../providers/ThemeProvider";
 import TableFilters from "../common/TableFilters";
 import Pagination from "../common/TablePagination";
 
-export default function SaleTable({ sales = [], loading, onDelete, onView }) {
+export default function SaleTable({ sales = [], loading, onDelete, onView, onPrint }) {
   const { darkMode } = useTheme();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
   const filtered = useMemo(() => {
     return sales.filter((s) => {
       const text = `${s.doc_no} ${s.branch_name ?? ""}`.toLowerCase();
@@ -124,19 +123,31 @@ export default function SaleTable({ sales = [], loading, onDelete, onView }) {
                   {s.status === "open" ? "Abierta" : "Cerrada"}
                 </span>
               </td>
-              <td className="px-6 py-4">{new Date(s.created_at).toLocaleString()}</td>
+              <td className="px-6 py-4">
+                {new Date(
+                  new Date(s.created_at).getTime() - 7 * 60 * 60 * 1000
+                ).toLocaleString("es-MX")}
+              </td>
               <td className="px-6 py-4 text-right">
                 <Tooltip title="Ver detalles">
                   <IconButton size="small" onClick={() => onView(s)}>
                     <Visibility fontSize="small" />
                   </IconButton>
                 </Tooltip>
+
+                <Tooltip title="Imprimir recibo">
+                  <IconButton size="small" onClick={() => onPrint(s)} className={actionBtn}>
+                    <Print fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+
                 <Tooltip title="Eliminar">
                   <IconButton size="small" onClick={() => onDelete(s.id)} className={actionBtn}>
                     <Delete fontSize="small" />
                   </IconButton>
                 </Tooltip>
               </td>
+
             </tr>
           ))}
         </tbody>
