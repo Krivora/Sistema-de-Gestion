@@ -210,7 +210,7 @@ export default function ProductsReport() {
                 <td className={tdStyle}>{p.sku}</td>
                 <td className={tdStyle}>{p.category_name ?? "—"}</td>
                 <td
-                  className={`${tdStyle} text-center font-medium ${
+                  className={`${tdStyle} text-start font-medium ${
                     p.is_active
                       ? darkMode
                         ? "text-green-400"

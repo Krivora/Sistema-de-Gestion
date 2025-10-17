@@ -5,7 +5,7 @@ export async function findAll() {
     SELECT p.*, c.name AS category_name
     FROM products p
     LEFT JOIN categories c ON c.id = p.category_id
-    ORDER BY p.id
+    ORDER BY LOWER(p.name) ASC
   `);
   return rows;
 }

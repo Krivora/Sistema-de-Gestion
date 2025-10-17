@@ -7,16 +7,23 @@ export default function TopProductsChart({ data = [] }) {
   const { darkMode } = useTheme();
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data}>
+      <BarChart data={data} layout="vertical" margin={{ left: 40 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#333" : "#e5e7eb"} />
-        <XAxis dataKey="product_name" stroke={darkMode ? "#aaa" : "#555"} fontSize={12} interval={0} angle={-20} textAnchor="end" />
-        <YAxis stroke={darkMode ? "#aaa" : "#555"} fontSize={12} tickFormatter={(v) => fmtMoney(v)} />
+        <XAxis type="number" stroke={darkMode ? "#aaa" : "#555"} fontSize={12} tickFormatter={fmtMoney} />
+        <YAxis type="category" dataKey="product_name" stroke={darkMode ? "#aaa" : "#555"} fontSize={12} width={100} />
         <Tooltip
           contentStyle={{ backgroundColor: darkMode ? "#1a1a1a" : "#fff", borderColor: darkMode ? "#333" : "#ddd" }}
           formatter={(v) => [fmtMoney(v), "Ventas"]}
           labelStyle={{ color: darkMode ? "#e5e7eb" : "#111827" }}
         />
-        <Bar dataKey="total_sales" fill="#10b981" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="total_sales" fill="url(#colorTop)" radius={[0, 6, 6, 0]} barSize={18}>
+          <defs>
+            <linearGradient id="colorTop" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
+              <stop offset="100%" stopColor="#34d399" stopOpacity={0.8} />
+            </linearGradient>
+          </defs>
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );

@@ -143,12 +143,11 @@ export default function BranchProductTable({
               <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-800"}`}>{r.branch_name ?? "—"}</td>
               <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-800"}`}>{money(r.cost, r.currency)}</td>
               <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-800"}`}>{money(r.price, r.currency)}</td>
-              <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-800"}`}>{r.min_stock ?? "—"}</td>
-              <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-800"}`}>{r.reorder_point ?? "—"}</td>
+              <td className={`px-12 py-4 ${darkMode ? "text-gray-300" : "text-gray-800"}`}>{Number(r.min_stock ?? "—").toFixed(0)}</td>
+              <td className={`px-12 py-4 ${darkMode ? "text-gray-300" : "text-gray-800"}`}>{Number(r.reorder_point ?? "—").toFixed(0)}</td>
               <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-800"}`}>{r.currency}</td>
-              <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-800"}`}>
-                {r.current_stock ?? 0}
-              </td>
+              <td className={`px-12 py-4 ${darkMode ? "text-gray-300" : "text-gray-800"}`}>{Number(r.current_stock || 0).toFixed(0)} </td>
+
 
 
               <td className="px-6 py-4">

@@ -18,7 +18,6 @@ export default function Products() {
   const toast = useToast();
   const alert = useAlert();
   const notify = useNotify();
-
   const handleSave = async (data) => {
     try {
       if (editing) {

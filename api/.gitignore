@@ -24,7 +24,10 @@ dist-ssr/
 # =========================
 # Environment variables
 # =========================
+# Variables de entorno (todas las carpetas)
 .env
+**/.env
+**/.env.*
 .env.local
 .env.development.local
 .env.production.local

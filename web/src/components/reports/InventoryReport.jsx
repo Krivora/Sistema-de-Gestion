@@ -208,14 +208,14 @@ export default function InventoryReport() {
                 <td className={`${tdStyle}`}>{r.product_name}</td>
                 <td className={`${tdStyle}`}>{r.category_name || "—"}</td>
                 <td
-                  className={`${tdStyle} text-right ${
+                  className={`${tdStyle} text-start ${
                     darkMode ? "text-gray-200" : "text-gray-800"
                   }`}
                 >
                   ${r.price ? parseFloat(r.price).toFixed(2) : "0.00"}
                 </td>
                 <td
-                  className={`${tdStyle} text-right font-medium ${
+                  className={`${tdStyle} text-start font-medium ${
                     r.stock <= 3
                       ? "text-red-500"
                       : darkMode

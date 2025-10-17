@@ -96,7 +96,6 @@ export default function SaleForm({ open, onClose, onSave }) {
     setQuery("");
   };
 
-  // ❌ Eliminar producto
   const handleRemoveItem = (index) => {
     setForm({ ...form, items: form.items.filter((_, i) => i !== index) });
   };

@@ -9,6 +9,7 @@ export function useProducts() {
     setLoading(true);
     const data = await ProductsApi.list();
     setProducts(data);
+    console.log(data);
     setLoading(false);
   }
 

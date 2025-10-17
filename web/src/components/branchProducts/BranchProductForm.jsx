@@ -1,6 +1,6 @@
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, TextField, MenuItem
+  Button, TextField, MenuItem, Autocomplete
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useBranches } from "../../hooks/useBranches";
@@ -14,12 +14,10 @@ export default function BranchProductForm({ open, onClose, onSave, row, defaultB
     cost: "",
     min_stock: "",
     reorder_point: "",
-    tax_rate: 16,
     currency: "MXN",
     is_active: true,
   });
 
-  // Cargar catálogo de sucursales y productos (solo activos)
   const { branches } = useBranches();
   const { products } = useProducts();
 
@@ -27,6 +25,7 @@ export default function BranchProductForm({ open, onClose, onSave, row, defaultB
     () => (branches || []).filter((b) => b.is_active),
     [branches]
   );
+
   const activeProducts = useMemo(
     () => (products || []).filter((p) => p.is_active),
     [products]
@@ -41,7 +40,6 @@ export default function BranchProductForm({ open, onClose, onSave, row, defaultB
         cost: row.cost ?? "",
         min_stock: row.min_stock ?? "",
         reorder_point: row.reorder_point ?? "",
-        tax_rate: row.tax_rate ?? 16,
         currency: row.currency ?? "MXN",
         is_active: row.is_active ?? true,
       });
@@ -53,7 +51,6 @@ export default function BranchProductForm({ open, onClose, onSave, row, defaultB
         cost: "",
         min_stock: "",
         reorder_point: "",
-        tax_rate: 16,
         currency: "MXN",
         is_active: true,
       });
@@ -69,7 +66,6 @@ export default function BranchProductForm({ open, onClose, onSave, row, defaultB
         cost: "",
         min_stock: "",
         reorder_point: "",
-        tax_rate: 16,
         currency: "MXN",
         is_active: true,
       });
@@ -78,7 +74,6 @@ export default function BranchProductForm({ open, onClose, onSave, row, defaultB
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // Convertir numéricos cuando aplique
     const numeric = ["price", "cost", "min_stock", "reorder_point", "tax_rate"];
     setForm((prev) => ({
       ...prev,
@@ -87,15 +82,31 @@ export default function BranchProductForm({ open, onClose, onSave, row, defaultB
   };
 
   const handleSubmit = () => {
-    if (!form.branch_id || !form.product_id) return; // validación básica
+    if (!form.branch_id || !form.product_id) return;
     onSave(form);
   };
+
+  // 👉 Estado para manejar el texto que escribe el usuario en el Autocomplete
+  const [inputValue, setInputValue] = useState("");
+
+  // 👉 Lógica: si no hay texto, muestra solo los primeros 10 productos
+  // pero si el usuario escribe, filtra entre todos los productos activos
+  const filteredProducts = useMemo(() => {
+    const normalizedText = inputValue.toLowerCase();
+    if (!normalizedText) return activeProducts.slice(0, 10);
+    return activeProducts.filter(
+      (p) =>
+        p.name.toLowerCase().includes(normalizedText) ||
+        (p.sku && p.sku.toLowerCase().includes(normalizedText))
+    );
+  }, [activeProducts, inputValue]);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth>
       <DialogTitle>{row ? "Editar asignación" : "Asignar producto a sucursal"}</DialogTitle>
       <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
 
+        {/* Selector de sucursal */}
         <TextField
           select
           name="branch_id"
@@ -112,21 +123,27 @@ export default function BranchProductForm({ open, onClose, onSave, row, defaultB
           ))}
         </TextField>
 
-        <TextField
-          select
-          name="product_id"
-          label="Producto"
-          value={form.product_id}
-          onChange={handleChange}
+        {/* Autocomplete de productos */}
+        <Autocomplete
+          options={filteredProducts}
+          getOptionLabel={(p) => `${p.name}${p.sku ? ` (${p.sku})` : ""}`}
+          value={activeProducts.find((p) => p.id === form.product_id) || null}
+          onChange={(_, newValue) => {
+            setForm((prev) => ({
+              ...prev,
+              product_id: newValue ? newValue.id : "",
+            }));
+          }}
+          inputValue={inputValue}
+          onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
+          renderInput={(params) => (
+            <TextField {...params} label="Producto" placeholder="Buscar producto..." fullWidth />
+          )}
           fullWidth
-        >
-          <MenuItem value="">— Seleccionar —</MenuItem>
-          {activeProducts.map((p) => (
-            <MenuItem key={p.id} value={p.id}>
-              {p.name} {p.sku ? `(${p.sku})` : ""}
-            </MenuItem>
-          ))}
-        </TextField>
+          filterSelectedOptions
+          clearOnEscape
+        />
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <TextField name="cost" label="Costo" type="number" value={form.cost} onChange={handleChange} fullWidth />
           <TextField name="price" label="Precio" type="number" value={form.price} onChange={handleChange} fullWidth />
