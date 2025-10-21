@@ -16,7 +16,7 @@ export default function Sales() {
   const [open, setOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState(null);
-  const { handlePrint } = useSalePrint();
+  const { handleDownloadPDF  } = useSalePrint();
 
   const toast = useToast();
   const alert = useAlert();
@@ -46,6 +46,7 @@ export default function Sales() {
     }
   };
 
+  
   const handleView = async (sale) => {
     try {
       const full = await SalesApi.get(sale.id);
@@ -65,7 +66,7 @@ export default function Sales() {
         </Button>
       </div>
 
-      <SaleTable sales={sales} loading={loading} onDelete={handleDelete} onView={handleView}  onPrint={(s) => handlePrint(s.id)} />
+      <SaleTable sales={sales} loading={loading} onDelete={handleDelete} onView={handleView}  onDownload={(s) => handleDownloadPDF(s.id)} />
 
       <SaleForm open={open} onClose={() => setOpen(false)} onSave={handleSave} />
 

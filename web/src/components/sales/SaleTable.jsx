@@ -1,16 +1,15 @@
 import { useState, useMemo } from "react";
-import { Delete, Visibility, Print } from "@mui/icons-material";
+import { Delete, Visibility,Download } from "@mui/icons-material";
 import { Skeleton, Tooltip, IconButton } from "@mui/material";
 import { useTheme } from "../../providers/ThemeProvider";
 import TableFilters from "../common/TableFilters";
 import Pagination from "../common/TablePagination";
 
-export default function SaleTable({ sales = [], loading, onDelete, onView, onPrint }) {
+export default function SaleTable({ sales = [], loading, onDelete, onView, onDownload }) {
   const { darkMode } = useTheme();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  console.log(sales);
   const filtered = useMemo(() => {
     return sales.filter((s) => {
       const text = `${s.doc_no} ${s.customer_name}${s.branch_name ?? ""}`.toLowerCase();
@@ -143,13 +142,11 @@ export default function SaleTable({ sales = [], loading, onDelete, onView, onPri
                       <Visibility fontSize="small" />
                     </IconButton>
                   </Tooltip>
-
-                  <Tooltip title="Imprimir recibo">
-                    <IconButton size="small" onClick={() => onPrint(s)} className={actionBtn}>
-                      <Print fontSize="small" />
+                  <Tooltip title="Descargar PDF">
+                    <IconButton size="small" onClick={() => onDownload(s)} className={actionBtn}>
+                      <Download fontSize="small" />
                     </IconButton>
                   </Tooltip>
-
                   <Tooltip title="Eliminar">
                     <IconButton size="small" onClick={() => onDelete(s.id)} className={actionBtn}>
                       <Delete fontSize="small" />
@@ -212,13 +209,11 @@ export default function SaleTable({ sales = [], loading, onDelete, onView, onPri
                   <Visibility fontSize="small" />
                 </IconButton>
               </Tooltip>
-
-              <Tooltip title="Imprimir recibo">
-                <IconButton size="small" onClick={() => onPrint(s)} className={actionBtn}>
-                  <Print fontSize="small" />
+              <Tooltip title="Descargar PDF">
+                <IconButton size="small" onClick={() => onDownload(s)} className={actionBtn}>
+                  <Download fontSize="small" />
                 </IconButton>
               </Tooltip>
-
               <Tooltip title="Eliminar">
                 <IconButton size="small" onClick={() => onDelete(s.id)} className={actionBtn}>
                   <Delete fontSize="small" />
