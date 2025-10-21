@@ -75,7 +75,7 @@ export default function BranchTable({ branches = [], loading, onEdit, onDelete, 
 
   return (
     <div
-      className={`overflow-x-auto rounded-xl border shadow-sm ${
+      className={`rounded-xl border shadow-sm transition-all ${
         darkMode ? "border-gray-700 bg-[#1a1a1a]" : "border-gray-200 bg-white"
       }`}
     >
@@ -94,74 +94,120 @@ export default function BranchTable({ branches = [], loading, onEdit, onDelete, 
         darkMode={darkMode}
         placeholder="Buscar sucursal..."
       />
-
-      <table className="w-full text-sm text-left border-collapse">
-        <thead
-          className={`text-xs font-semibold uppercase ${
-            darkMode ? "bg-[#2a2a2a] text-gray-300" : "bg-gray-50 text-gray-500"
-          }`}
-        >
-          <tr>
-            <th className="px-6 py-3">Código</th>
-            <th className="px-6 py-3">Nombre</th>
-            <th className="px-6 py-3">Dirección</th>
-            <th className="px-6 py-3">Teléfono</th>
-            <th className="px-6 py-3">Estado</th>
-            <th className="px-6 py-3 text-right">Acciones</th>
-          </tr>
-        </thead>
-
-        <tbody
-          className={`divide-y ${
-            darkMode ? "divide-gray-700 bg-[#1a1a1a]" : "divide-gray-200 bg-white"
-          }`}
-        >
-          {paginated.map((b) => (
-            <tr
-              key={b.id}
-              className={`transition hover:${darkMode ? "bg-[#2a2a2a]" : "bg-gray-50"}`}
-            >
-              <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-800"}`}>{b.code}</td>
-              <td className={`px-6 py-4 font-medium ${darkMode ? "text-gray-100" : "text-gray-900"}`}>
-                {b.name}
-              </td>
-              <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>{b.address}</td>
-              <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>{b.phone}</td>
-              <td className="px-6 py-4">
-                <Chip
-                  label={b.is_active ? "Activa" : "Inactiva"}
-                  size="small"
-                  sx={{
-                    fontWeight: 500,
-                    bgcolor: b.is_active ? "#22c55e33" : "#6b728033",
-                    color: b.is_active ? "#22c55e" : darkMode ? "#9ca3af" : "#4b5563",
-                  }}
-                />
-              </td>
-              <td className="px-6 py-4 text-right">
-                <div className="flex justify-end gap-2">
-                    <Tooltip title={b.is_active ? "Inhabilitar" : "Habilitar"}>
-                        <IconButton size="small" onClick={() => onToggleStatus(b)} className={actionBtn}>
-                        <PowerSettingsNew
-                            fontSize="small"
-                            color={b.is_active ? "error" : "success"}
-                        />
-                        </IconButton>
-                    </Tooltip>
-                  <button onClick={() => onEdit(b)} className={actionBtn}>
-                    <Edit fontSize="small" />
-                  </button>
-                 
-                  <button onClick={() => onDelete(b.id)} className={actionBtn}>
-                    <Delete fontSize="small" />
-                  </button>
-                </div>
-              </td>
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full text-sm text-left border-collapse">
+          <thead
+            className={`text-xs font-semibold uppercase ${
+              darkMode ? "bg-[#2a2a2a] text-gray-300" : "bg-gray-50 text-gray-500"
+            }`}
+          >
+            <tr>
+              <th className="px-6 py-3">Código</th>
+              <th className="px-6 py-3">Nombre</th>
+              <th className="px-6 py-3">Dirección</th>
+              <th className="px-6 py-3">Teléfono</th>
+              <th className="px-6 py-3">Estado</th>
+              <th className="px-6 py-3 text-right">Acciones</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
 
+          <tbody
+            className={`divide-y ${
+              darkMode ? "divide-gray-700 bg-[#1a1a1a]" : "divide-gray-200 bg-white"
+            }`}
+          >
+            {paginated.map((b) => (
+              <tr
+                key={b.id}
+                className={`transition hover:${darkMode ? "bg-[#2a2a2a]" : "bg-gray-50"}`}
+              >
+                <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-800"}`}>{b.code}</td>
+                <td className={`px-6 py-4 font-medium ${darkMode ? "text-gray-100" : "text-gray-900"}`}>
+                  {b.name}
+                </td>
+                <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>{b.address}</td>
+                <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>{b.phone}</td>
+                <td className="px-6 py-4">
+                  <Chip
+                    label={b.is_active ? "Activa" : "Inactiva"}
+                    size="small"
+                    sx={{
+                      fontWeight: 500,
+                      bgcolor: b.is_active ? "#22c55e33" : "#6b728033",
+                      color: b.is_active ? "#22c55e" : darkMode ? "#9ca3af" : "#4b5563",
+                    }}
+                  />
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <div className="flex justify-end gap-2">
+                      <Tooltip title={b.is_active ? "Inhabilitar" : "Habilitar"}>
+                          <IconButton size="small" onClick={() => onToggleStatus(b)} className={actionBtn}>
+                          <PowerSettingsNew
+                              fontSize="small"
+                              color={b.is_active ? "error" : "success"}
+                          />
+                          </IconButton>
+                      </Tooltip>
+                    <button onClick={() => onEdit(b)} className={actionBtn}>
+                      <Edit fontSize="small" />
+                    </button>
+                    
+                    <button onClick={() => onDelete(b.id)} className={actionBtn}>
+                      <Delete fontSize="small" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {/* 📱 Mobile card view */}
+      <div className="md:hidden p-2 space-y-3 overflow-hidden">
+        {paginated.map((b) => (
+          <div
+            key={b.id}
+            className={`rounded-lg p-3 shadow-sm border ${
+              darkMode ? "bg-[#1a1a1a] border-gray-700" : "bg-white border-gray-200"
+            }`}
+          >
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-semibold text-sm">{b.name}</h3>
+              <Chip
+                label={b.is_active ? "Activa" : "Inactiva"}
+                size="small"
+                sx={{
+                  fontWeight: 500,
+                  bgcolor: b.is_active ? "#22c55e33" : "#6b728033",
+                  color: b.is_active ? "#22c55e" : darkMode ? "#9ca3af" : "#4b5563",
+                }}
+              />
+            </div>
+
+            <p className="text-xs text-gray-400 mb-1">{b.code || "—"}</p>
+            <p className={`text-xs mb-0.5 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+              Dirección: {b.address || "—"}
+            </p>
+            <p className={`text-xs mb-1 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+              Teléfono: {b.phone || "—"}
+            </p>
+
+            <div className="flex justify-end gap-2 mt-2 flex-wrap">
+              <Tooltip title={b.is_active ? "Inhabilitar" : "Habilitar"}>
+                <IconButton size="small" onClick={() => onToggleStatus(b)} className={actionBtn}>
+                  <PowerSettingsNew fontSize="small" color={b.is_active ? "error" : "success"} />
+                </IconButton>
+              </Tooltip>
+              <IconButton size="small" onClick={() => onEdit(b)} className={actionBtn}>
+                <Edit fontSize="small" />
+              </IconButton>
+              <IconButton size="small" onClick={() => onDelete(b.id)} className={actionBtn}>
+                <Delete fontSize="small" />
+              </IconButton>
+            </div>
+          </div>
+        ))}
+      </div>
       <Pagination page={page} totalPages={totalPages} onChange={(newPage) => setPage(newPage)} />
     </div>
   );

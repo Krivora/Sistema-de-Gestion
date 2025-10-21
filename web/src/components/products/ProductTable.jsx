@@ -1,65 +1,58 @@
 import { useMemo, useState } from "react";
 import { Edit, Delete, PowerSettingsNew } from "@mui/icons-material";
-import { Chip, IconButton, Skeleton, Tooltip } from "@mui/material";
+import { IconButton, Skeleton, Tooltip } from "@mui/material";
 import { useTheme } from "../../providers/ThemeProvider";
 import TableFilters from "../common/TableFilters";
 import Pagination from "../common/TablePagination";
 
-function truncate(text = "", max = 80) {
-  return text.length > max ? text.slice(0, max) + "…" : text;
-}
-
-export default function ProductTable({
-  products = [],
-  loading,
-  onEdit,
-  onDelete,
-  onToggleStatus,
-}) {
+export default function ProductTable({products = [],loading,onEdit,onDelete,onToggleStatus,}) {
   const { darkMode } = useTheme();
   const [search, setSearch] = useState("");
-  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   // 🔎 Filtro
   const filtered = useMemo(() => {
     return products.filter((p) => {
-      const full = `${p.sku ?? ""} ${p.name ?? ""} ${p.category_name ?? ""} ${p.description ?? ""}`.toLowerCase();
-      return full.includes(search.toLowerCase());
+      const text = `${p.sku ?? ""} ${p.name ?? ""} ${p.category_name ?? ""} ${p.description ?? ""}`.toLowerCase();
+      return text.includes(search.toLowerCase());
     });
   }, [products, search]);
 
   // 📄 Paginación
   const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
   const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-  // 🎞️ Loading
+
+  const actionBtn = darkMode
+    ? "rounded-full p-1 text-gray-400 hover:bg-[#333333] hover:text-white"
+    : "rounded-full p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800";
+
+  // ⏳ Loading
   if (loading) {
     return (
       <div
-        className={`overflow-x-auto rounded-xl border shadow-sm ${
+        className={`rounded-xl border shadow-sm w-full ${
           darkMode ? "border-gray-700 bg-[#1a1a1a]" : "border-gray-200 bg-white"
         }`}
       >
-        <table className="w-full text-sm text-left border-collapse">
+        <table className="w-full text-sm text-left">
           <thead
             className={`text-xs font-semibold uppercase ${
               darkMode ? "bg-[#2a2a2a] text-gray-300" : "bg-gray-50 text-gray-500"
             }`}
           >
             <tr>
-              <th className="px-6 py-3">SKU</th>
-              <th className="px-6 py-3">Nombre</th>
-              <th className="px-6 py-3">Categoría</th>
-              <th className="px-6 py-3">Descripción</th>
-              <th className="px-6 py-3">Estado</th>
-              <th className="px-6 py-3 text-right">Acciones</th>
+              {["Nombre", "SKU", "Categoría", "Descripción", "Estado", "Acciones"].map((h) => (
+                <th key={h} className="px-6 py-3">{h}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {Array.from({ length: 5 }).map((_, i) => (
-              <tr key={i} className="border-t">
-                {[1, 2, 3, 4, 5, 6].map((j) => (
+              <tr key={i}>
+                {Array.from({ length: 6 }).map((__, j) => (
                   <td key={j} className="px-6 py-4">
-                    <Skeleton variant="text" width={120} animation="wave" />
+                    <Skeleton variant="text" width={100} />
                   </td>
                 ))}
               </tr>
@@ -70,22 +63,23 @@ export default function ProductTable({
     );
   }
 
-  // 🧍‍♂️ Sin datos
+  // 🧍 Sin datos
   if (!products || products.length === 0) {
     return (
-      <div className={`p-4 text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+      <div
+        className={`p-4 text-sm rounded-lg text-center ${
+          darkMode ? "text-gray-400 bg-[#1a1a1a]" : "text-gray-600 bg-gray-50"
+        }`}
+      >
         No hay productos registrados aún.
       </div>
     );
   }
 
-  const actionBtn = darkMode
-    ? "rounded-full p-1 text-gray-400 hover:bg-[#333333] hover:text-white"
-    : "rounded-full p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800";
-
+  // 🧩 Layout completo
   return (
     <div
-      className={`overflow-x-auto rounded-xl border shadow-sm ${
+      className={`rounded-xl border shadow-sm transition-all ${
         darkMode ? "border-gray-700 bg-[#1a1a1a]" : "border-gray-200 bg-white"
       }`}
     >
@@ -105,86 +99,148 @@ export default function ProductTable({
         placeholder="Buscar producto..."
       />
 
-      {/* 🧾 Tabla */}
-      <table className="w-full text-sm text-left border-collapse">
-        <thead
-          className={`text-xs font-semibold uppercase ${
-            darkMode ? "bg-[#2a2a2a] text-gray-300" : "bg-gray-50 text-gray-500"
-          }`}
-        >
-          <tr>
-            <th className="px-6 py-3">Nombre</th>
-            <th className="px-6 py-3">SKU</th>
-            <th className="px-6 py-3">Categoría</th>
-            <th className="px-6 py-3">Descripción</th>
-            <th className="px-6 py-3">Estado</th>
-            <th className="px-6 py-3 text-right">Acciones</th>
-          </tr>
-        </thead>
-
-        <tbody
-          className={`divide-y ${
-            darkMode ? "divide-gray-700 bg-[#1a1a1a]" : "divide-gray-200 bg-white"
-          }`}
-        >
-          {paginated.map((p) => (
-            <tr
-              key={p.id}
-              className={`transition hover:${darkMode ? "bg-[#2a2a2a]" : "bg-gray-50"}`}
-            >
-              <td className={`px-6 py-4 font-medium ${darkMode ? "text-gray-100" : "text-gray-900"}`}>
-                {p.name}
-              </td>
-
-              <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-800"}`}>
-                {p.sku || <span className="text-gray-400 italic">—</span>}
-              </td>
-
-              <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-800"}`}>
-                {p.category_name || <span className="text-gray-400 italic">Sin categoría</span>}
-              </td>
-
-              <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
-                {p.description ? truncate(p.description, 80) : (
-                  <span className="italic text-gray-400">Sin descripción</span>
-                )}
-              </td>
-
-              <td className="px-6 py-4">
-                <Chip
-                  label={p.is_active ? "Activo" : "Inactivo"}
-                  color={p.is_active ? "success" : "default"}
-                  size="small"
-                  sx={{
-                    fontWeight: 500,
-                    bgcolor: p.is_active ? "#22c55e33" : "#6b728033",
-                    color: p.is_active ? "#22c55e" : darkMode ? "#9ca3af" : "#4b5563",
-                  }}
-                />
-              </td>
-
-              <td className="px-6 py-4 text-right">
-                <div className="flex justify-end gap-2">
-                    <Tooltip title={p.is_active ? "Inhabilitar" : "Habilitar"}>
-                        <IconButton size="small" onClick={() => onToggleStatus(p)} className={actionBtn}>
-                            <PowerSettingsNew fontSize="small" color={p.is_active ? "error" : "success"} />
-                        </IconButton>
-                    </Tooltip>
-                  <button onClick={() => onEdit(p)} className={actionBtn}>
-                    <Edit fontSize="small" />
-                  </button>
-                  <button onClick={() => onDelete(p.id)} className={actionBtn}>
-                    <Delete fontSize="small" />
-                  </button>
-                </div>
-              </td>
+      {/* 🖥️ Desktop table */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full text-sm text-left">
+          <thead
+            className={`text-xs font-semibold uppercase ${
+              darkMode ? "bg-[#2a2a2a] text-gray-300" : "bg-gray-50 text-gray-500"
+            }`}
+          >
+            <tr>
+              <th className="px-6 py-3">Nombre</th>
+              <th className="px-6 py-3">SKU</th>
+              <th className="px-6 py-3">Categoría</th>
+              <th className="px-6 py-3">Descripción</th>
+              <th className="px-6 py-3">Estado</th>
+              <th className="px-6 py-3 text-right">Acciones</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody
+            className={`divide-y ${
+              darkMode ? "divide-gray-700 bg-[#1a1a1a]" : "divide-gray-200 bg-white"
+            }`}
+          >
+            {paginated.map((p) => (
+              <tr
+                key={p.id}
+                className={`transition-colors hover:${
+                  darkMode ? "bg-[#2a2a2a]" : "bg-gray-50"
+                }`}
+              >
+                <td className="px-6 py-4 font-medium">{p.name}</td>
+                <td className="px-6 py-4">{p.sku || "—"}</td>
+                <td className="px-6 py-4">{p.category_name || "Sin categoría"}</td>
+                <td className="px-6 py-4">
+                  {p.description ? p.description :
+                    <span className="italic text-gray-400">Sin descripción</span>
+                  }
+                </td>
+                <td className="px-6 py-4">
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                      p.is_active
+                        ? "bg-green-200 text-green-700"
+                        : "bg-red-200 text-red-700"
+                    }`}
+                  >
+                    {p.is_active ? "Activo" : "Inactivo"}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-right space-x-1">
+                  <Tooltip title={p.is_active ? "Inhabilitar" : "Habilitar"}>
+                    <IconButton size="small" onClick={() => onToggleStatus(p)} className={actionBtn}>
+                      <PowerSettingsNew fontSize="small" color={p.is_active ? "error" : "success"} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Editar">
+                    <IconButton size="small" onClick={() => onEdit(p)} className={actionBtn}>
+                      <Edit fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Eliminar">
+                    <IconButton size="small" onClick={() => onDelete(p.id)} className={actionBtn}>
+                      <Delete fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      {/* 📄 Paginación */}
-      <Pagination page={page} totalPages={totalPages} onChange={(newPage) => setPage(newPage)} />
+      {/* 📱 Mobile card view */}
+      <div className="md:hidden p-2 space-y-3 overflow-hidden">
+        {paginated.map((p) => (
+          <div
+            key={p.id}
+            className={`rounded-lg p-3 shadow-sm border break-words overflow-hidden ${
+              darkMode
+                ? "bg-[#1a1a1a] border-gray-700"
+                : "bg-white border-gray-200"
+            }`}
+          >
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-semibold text-sm break-words">{p.name}</h3>
+              <span
+                className={`text-xs px-2 py-1 rounded-full ${
+                  p.is_active
+                    ? "bg-green-200 text-green-700"
+                    : "bg-red-200 text-red-700"
+                }`}
+              >
+                {p.is_active ? "Activo" : "Inactivo"}
+              </span>
+            </div>
+
+            <p className="text-xs text-gray-400 break-all">
+              SKU: <span className="font-mono">{p.sku || "—"}</span>
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5 break-words">
+              {p.category_name || "Sin categoría"}
+            </p>
+
+            {p.description && (
+              <p
+                className={`text-xs mb-3 break-words ${
+                  darkMode ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                {p.description}
+              </p>
+            )}
+
+            <div className="flex justify-end gap-2 mt-2 flex-wrap">
+              <Tooltip title={p.is_active ? "Inhabilitar" : "Habilitar"}>
+                <IconButton
+                  size="small"
+                  onClick={() => onToggleStatus(p)}
+                  className={actionBtn}
+                >
+                  <PowerSettingsNew
+                    fontSize="small"
+                    color={p.is_active ? "error" : "success"}
+                  />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title="Editar">
+                <IconButton size="small" onClick={() => onEdit(p)} className={actionBtn}>
+                  <Edit fontSize="small" />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title="Eliminar">
+                <IconButton size="small" onClick={() => onDelete(p.id)} className={actionBtn}>
+                  <Delete fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
     </div>
   );
 }

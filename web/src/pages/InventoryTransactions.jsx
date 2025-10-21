@@ -48,10 +48,15 @@ export default function InventoryTransactions() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Movimientos de Inventario</h2>
-        <div className="flex gap-3">
+    <div className="p-4 sm:p-6 space-y-4 max-w-full overflow-x-hidden">
+      {/* 🧭 Header responsive */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+          Movimientos de Inventario
+        </h2>
+
+        {/* 🧩 Filtros y botón */}
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <TextField
             select
             size="small"
@@ -62,7 +67,9 @@ export default function InventoryTransactions() {
               setFilters(newFilters);
               fetchTransactions(newFilters);
             }}
-            sx={{ minWidth: 220 }}
+            sx={{
+              minWidth: { xs: "100%", sm: 180, md: 220 },
+            }}
           >
             <MenuItem value="">Todas</MenuItem>
             {branches.map((b) => (
@@ -82,7 +89,9 @@ export default function InventoryTransactions() {
               setFilters(newFilters);
               fetchTransactions(newFilters);
             }}
-            sx={{ minWidth: 220 }}
+            sx={{
+              minWidth: { xs: "100%", sm: 180, md: 220 },
+            }}
           >
             <MenuItem value="">Todos</MenuItem>
             {products.map((p) => (
@@ -96,18 +105,24 @@ export default function InventoryTransactions() {
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setOpen(true)}
+            sx={{
+              width: { xs: "100%", sm: "auto" },
+              whiteSpace: "nowrap",
+            }}
           >
             Nuevo Movimiento
           </Button>
         </div>
       </div>
 
+      {/* 📋 Tabla */}
       <InventoryTransactionTable
         transactions={transactions}
         loading={loading}
         onDelete={handleDelete}
       />
 
+      {/* 📦 Formulario */}
       <InventoryTransactionForm
         open={open}
         onClose={() => setOpen(false)}

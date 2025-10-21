@@ -73,7 +73,7 @@ export default function Products() {
 
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6 space-y-4 max-w-full overflow-x-hidden">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Productos</h2>
         <Button

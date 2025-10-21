@@ -57,7 +57,7 @@ export default function Sales() {
   };
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4 max-w-full overflow-x-hidden">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Ventas</h2>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpen(true)}>
