@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Button, MenuItem, TextField } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { useInventoryTransactions } from "../hooks/useInventoryTransactions";
-import { useBranches } from "../hooks/useBranches";
-import { useProducts } from "../hooks/useProducts";
-import InventoryTransactionTable from "../components/inventoryTransactions/InventoryTransactionTable";
-import InventoryTransactionForm from "../components/inventoryTransactions/InventoryTransactionForm";
-import { useToast } from "../utils/toastUtils";
-import { useAlert } from "../utils/alertUtils";
-import { useNotify } from "../utils/notifyUtils";
+import { useInventoryTransactions } from "@/hooks/useInventoryTransactions";
+import { useBranches } from "@/hooks/useBranches";
+import { useProducts } from "@/hooks/useProducts";
+import InventoryTransactionTable from "@/components/client/inventoryTransactions/InventoryTransactionTable";
+import InventoryTransactionForm from "@/components/client/inventoryTransactions/InventoryTransactionForm";
+import { useToast } from "@/utils/toastUtils";
+import { useAlert } from "@/utils/alertUtils";
+import { useNotify } from "@/utils/notifyUtils";
 
 export default function InventoryTransactions() {
   const { transactions, loading, createTransaction, deleteTransaction, fetchTransactions } =

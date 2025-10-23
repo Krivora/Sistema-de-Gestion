@@ -1,6 +1,6 @@
 import toast from "react-hot-toast";
 import { CheckCircle, Error, Info, Warning } from "@mui/icons-material";
-import { useTheme } from "../providers/ThemeProvider";
+import { useTheme } from "../context/ThemeProvider";
 import { motion } from "framer-motion";
 
 /**

@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { ThemeProvider, useTheme } from "./providers/ThemeProvider";
+import { ThemeProvider, useTheme } from "./context/ThemeProvider";
 import { AuthProvider } from "./context/AuthProvider"; // 👈 importamos nuestro AuthProvider
 import Routes from "./routes";
 import { Toaster } from "react-hot-toast";

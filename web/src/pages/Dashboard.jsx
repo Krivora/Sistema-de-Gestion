@@ -5,20 +5,20 @@ import {
   Store,
   WarningAmber,
 } from "@mui/icons-material";
-import { useTheme } from "../providers/ThemeProvider";
-import { useReports } from "../hooks/useReports";
-import { useProducts } from "../hooks/useProducts";
-import { useBranches } from "../hooks/useBranches";
-import { useBranchProducts } from "../hooks/useBranchProducts";
+import { useTheme } from "@/context/ThemeProvider";
+import { useReports } from "@/hooks/useReports";
+import { useProducts } from "@/hooks/useProducts";
+import { useBranches } from "@/hooks/useBranches";
+import { useBranchProducts } from "@/hooks/useBranchProducts";
 
-import DashboardLayout from "../components/dashboard/DashboardLayout";
-import DateRangeControls from "../components/dashboard/DateRangeControls";
-import KpiCard from "../components/dashboard/KpiCard";
-import ChartCard from "../components/dashboard/ChartCard";
-import SalesChart from "../components/dashboard/SalesChart";
-import TopProductsChart from "../components/dashboard/TopProductsChart";
-import LowStockList from "../components/dashboard/LowStockList";
-import { fmtMoney } from "../utils/formatters";
+import DashboardLayout from "@/components/client/dashboard/DashboardLayout";
+import DateRangeControls from "@/components/client/dashboard/DateRangeControls";
+import KpiCard from "@/components/client/dashboard/KpiCard";
+import ChartCard from "@/components/client/dashboard/ChartCard";
+import SalesChart from "@/components/client/dashboard/SalesChart";
+import TopProductsChart from "@/components/client/dashboard/TopProductsChart";
+import LowStockList from "@/components/client/dashboard/LowStockList";
+import { fmtMoney } from "@/utils/formatters";
 
 export default function Dashboard() {
   const { darkMode } = useTheme();

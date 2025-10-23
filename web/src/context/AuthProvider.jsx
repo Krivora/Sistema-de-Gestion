@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { AuthApi } from "../api";
+import { AuthApi } from "@/api";
 
 // 1️⃣ Creamos el contexto global
 const AuthContext = createContext();

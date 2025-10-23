@@ -1,5 +1,5 @@
 import Swal from "sweetalert2";
-import { useTheme } from "../providers/ThemeProvider";
+import { useTheme } from "../context/ThemeProvider";
 
 /**
  * Hook para usar SweetAlert2 con tema dinámico

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { useBranches } from "../hooks/useBranches";
-import BranchTable from "../components/branches/BranchTable";
-import BranchForm from "../components/branches/BranchForm";
-import { useToast } from "../utils/toastUtils";
-import { useAlert } from "../utils/alertUtils";
-import { useNotify } from "../utils/notifyUtils";
+import { useBranches } from "@/hooks/useBranches";
+import BranchTable from "@/components/client/branches/BranchTable";
+import BranchForm from "@/components/client/branches/BranchForm";
+import { useToast } from "@/utils/toastUtils";
+import { useAlert } from "@/utils/alertUtils";
+import { useNotify } from "@/utils/notifyUtils";
 
 export default function Branches() {
   const { branches, loading, addBranch, updateBranch, deleteBranch, toggleBranchStatus } =

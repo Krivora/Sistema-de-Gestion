@@ -8,8 +8,8 @@ import {
   Paper,
   CircularProgress,
 } from "@mui/material";
-import { useTheme } from "../providers/ThemeProvider";
-import { useAuth } from "../context/AuthProvider";
+import { useTheme } from "@/context/ThemeProvider";
+import { useAuth } from "@/context/AuthProvider";
 
 export default function Login() {
   const { darkMode } = useTheme();

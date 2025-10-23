@@ -15,8 +15,8 @@ import {
   Menu as MenuIcon,
   SupervisorAccount as Supervisor
 } from "@mui/icons-material";
-import { useTheme } from "../../providers/ThemeProvider";
-import { useAuth } from "../../context/AuthProvider";
+import { useTheme } from "@/context/ThemeProvider";
+import { useAuth } from "@/context/AuthProvider";
 
 /* -----------------------------
    🔗 Enlaces agrupados por sección con iconografía mejorada

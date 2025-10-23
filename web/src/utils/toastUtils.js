@@ -1,6 +1,6 @@
 import toast from "react-hot-toast";
 import { createElement } from "react";
-import { useTheme } from "../providers/ThemeProvider";
+import { useTheme } from "../context/ThemeProvider";
 
 /**
  * Hook personalizado para usar toasts temáticos

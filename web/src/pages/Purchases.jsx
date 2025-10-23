@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { usePurchases } from "../hooks/usePurchases";
-import { PurchasesApi } from "../api";
-import PurchaseTable from "../components/purchases/PurchaseTable";
-import PurchaseForm from "../components/purchases/PurchaseForm";
-import PurchaseDetails from "../components/purchases/PurchaseDetails";
-import { useToast } from "../utils/toastUtils";
-import { useAlert } from "../utils/alertUtils";
-import { useNotify } from "../utils/notifyUtils";
+import { usePurchases } from "@/hooks/usePurchases";
+import { PurchasesApi } from "@/api";
+import PurchaseTable from "@/components/client/purchases/PurchaseTable";
+import PurchaseForm from "@/components/client/purchases/PurchaseForm";
+import PurchaseDetails from "@/components/client/purchases/PurchaseDetails";
+import { useToast } from "@/utils/toastUtils";
+import { useAlert } from "@/utils/alertUtils";
+import { useNotify } from "@/utils/notifyUtils";
 
 export default function Purchases() {
   const { purchases, loading, createPurchase, deletePurchase } = usePurchases();

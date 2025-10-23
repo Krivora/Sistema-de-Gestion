@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { useCategories } from "../hooks/useCategories";
-import CategoryTable from "../components/categories/CategoryTable";
-import CategoryForm from "../components/categories/CategoryForm";
-import { useToast } from "../utils/toastUtils";
-import { useAlert } from "../utils/alertUtils";
-import { useNotify } from "../utils/notifyUtils";
+import { useCategories } from "@/hooks/useCategories";
+import CategoryTable from "@/components/client/categories/CategoryTable";
+import CategoryForm from "@/components/client/categories/CategoryForm";
+import { useToast } from "@/utils/toastUtils";
+import { useAlert } from "@/utils/alertUtils";
+import { useNotify } from "@/utils/notifyUtils";
 
 export default function Categories() {
   const { categories, loading, addCategory, updateCategory, deleteCategory, toggleCategoryStatus } = useCategories();

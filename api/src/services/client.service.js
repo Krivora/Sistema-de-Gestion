@@ -11,7 +11,6 @@ export async function getAllClients() {
 export async function getClientById(id) {
   return await ClientRepo.findById(id);
 }
-
 // 🧩 Crear cliente con código autogenerado y usuario admin principal
 export async function createClient(data) {
   // 🆔 Generar código antes de crear
@@ -30,7 +29,7 @@ export async function createClient(data) {
     name: data.admin_name,
     email: data.admin_email,
     password: hashed,
-    role_id: data.admin_role_id, // id del rol "admin"
+    role_id: 2, // id del rol "admin"
     client_id: client.id,
     branch_id: null,
   });
@@ -53,7 +52,13 @@ export async function updateClient(id, data) {
 
 // 🚫 Desactivar cliente
 export async function deactivateClient(id) {
-  return await ClientRepo.deactivate(id);
+  // Cambia el estado del cliente (toggle)
+  const client = await ClientRepo.deactivate(id);
+
+  // Desactiva o activa también los usuarios vinculados
+  await UserRepo.toggleByClient(id, client.is_active);
+
+  return client;
 }
 
 // 🔢 Generador de códigos autoincrementales

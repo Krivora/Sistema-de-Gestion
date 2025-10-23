@@ -3,9 +3,9 @@ import MenuIcon from "@mui/icons-material/Menu";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import ThemeToggle from "../ThemeToggle";
-import { useAuth } from "../../context/AuthProvider"; // 👈 nuevo import
-import { useTheme } from "../../providers/ThemeProvider";
+import ThemeToggle from ".//ThemeToggle";
+import { useAuth } from "@/context/AuthProvider"; // 👈 nuevo import
+import { useTheme } from "@/context/ThemeProvider";
 import { useNavigate } from "react-router-dom";
 
 export default function Navbar({ setOpen }) {

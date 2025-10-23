@@ -2,10 +2,10 @@ import { useState } from "react";
 import { Button, MenuItem, Select, FormControl, InputLabel } from "@mui/material";
 import { Download, Warehouse, Package, Tag, Building2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useReports } from "../hooks/useReports";
-import { useTheme } from "../providers/ThemeProvider";
-import InventoryReport from "../components/reports/InventoryReport";
-import ProductsReport from "../components/reports/ProductsReport";
+import { useReports } from "@/hooks/useReports";
+import { useTheme } from "@/context/ThemeProvider";
+import InventoryReport from "@/components/client/reports/InventoryReport";
+import ProductsReport from "@/components/client/reports/ProductsReport";
 
 export default function ReportsPage() {
   const { darkMode } = useTheme();

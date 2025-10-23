@@ -27,7 +27,6 @@ export function useClients() {
     try {
       const newClient = await ClientsApi.create(payload);
       setClients((prev) => [...prev, newClient]);
-      toast.success("Cliente creado correctamente");
     } catch (err) {
       toast.error(err.message);
     }
@@ -48,7 +47,6 @@ export function useClients() {
 
       const updated = await ClientsApi.update(id, cleanPayload);
       setClients((prev) => prev.map((c) => (c.id === id ? updated : c)));
-      toast.success("Cliente actualizado");
     } catch (err) {
       toast.error(err.message || "Error al actualizar el cliente");
     }
@@ -60,7 +58,6 @@ export function useClients() {
       setClients((prev) =>
         prev.map((c) => (c.id === id ? { ...c, is_active } : c))
       );
-      toast.success(is_active ? "Cliente activado" : "Cliente desactivado");
     } catch (err) {
       toast.error("Error al cambiar estado del cliente");
     }
@@ -70,7 +67,6 @@ export function useClients() {
     try {
       await ClientsApi.remove(id);
       setClients((prev) => prev.filter((c) => c.id !== id));
-      toast.success("Cliente eliminado");
     } catch (err) {
       toast.error("Error al eliminar cliente");
     }

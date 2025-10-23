@@ -1,13 +1,13 @@
 import { useState, useMemo } from "react";
 import { Button, MenuItem, TextField } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { useBranchProducts } from "../hooks/useBranchProducts";
-import { useBranches } from "../hooks/useBranches";
-import BranchProductTable from "../components/branchProducts/BranchProductTable";
-import BranchProductForm from "../components/branchProducts/BranchProductForm";
-import { useToast } from "../utils/toastUtils";
-import { useAlert } from "../utils/alertUtils";
-import { useNotify } from "../utils/notifyUtils";
+import { useBranchProducts } from "@/hooks/useBranchProducts";
+import { useBranches } from "@/hooks/useBranches";
+import BranchProductTable from "@/components/client/branchProducts/BranchProductTable";
+import BranchProductForm from "@/components/client/branchProducts/BranchProductForm";
+import { useToast } from "@/utils/toastUtils";
+import { useAlert } from "@/utils/alertUtils";
+import { useNotify } from "@/utils/notifyUtils";
 
 export default function BranchProducts() {
   const { branches } = useBranches();

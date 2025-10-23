@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { useSales } from "../hooks/useSales";
-import { SalesApi } from "../api";
-import SaleTable from "../components/sales/SaleTable";
-import SaleForm from "../components/sales/SaleForm";
-import SaleDetails from "../components/sales/SaleDetails";
-import useSalePrint from "../components/sales/SalePrint";
-import { useToast } from "../utils/toastUtils";
-import { useAlert } from "../utils/alertUtils";
-import { useNotify } from "../utils/notifyUtils";
+import { useSales } from "@/hooks/useSales";
+import { SalesApi } from "@/api";
+import SaleTable from "@/components/client/sales/SaleTable";
+import SaleForm from "@/components/client/sales/SaleForm";
+import SaleDetails from "@/components/client/sales/SaleDetails";
+import useSalePrint from "@/components/client/sales/SalePrint";
+import { useToast } from "@/utils/toastUtils";
+import { useAlert } from "@/utils/alertUtils";
+import { useNotify } from "@/utils/notifyUtils";
 
 export default function Sales() {
   const { sales, loading, createSale, deleteSale } = useSales();

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { useUsers } from "../hooks/useUsers";
-import UserTable from "../components/users/UserTable";
-import UserForm from "../components/users/UserForm";
-import { useToast } from "../utils/toastUtils";
-import { useAlert } from "../utils/alertUtils";
-import { useNotify } from "../utils/notifyUtils";
+import { useUsers } from "@/hooks/useUsers";
+import UserTable from "@/components/client/users/UserTable";
+import UserForm from "@/components/client/users/UserForm";
+import { useToast } from "@/utils/toastUtils";
+import { useAlert } from "@/utils/alertUtils";
+import { useNotify } from "@/utils/notifyUtils";
 
 export default function Users() {
   const { users, loading, createUser, updateUser, deleteUser, toggleUserStatus } = useUsers(); // 👈 agregamos toggle

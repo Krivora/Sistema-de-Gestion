@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { useToast } from "../../utils/toastUtils";
-import { useAlert } from "../../utils/alertUtils";
-import { useNotify } from "../../utils/notifyUtils";
+import { useToast } from "@/utils/toastUtils";
+import { useAlert } from "@/utils/alertUtils";
+import { useNotify } from "@/utils/notifyUtils";
 
 /**
  * Componente CRUD genérico para páginas que siguen el mismo patrón.

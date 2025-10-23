@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
-import { useTheme } from "../../providers/ThemeProvider";
+import { useTheme } from "@/context/ThemeProvider";
 
 export default function Layout() {
   const [open, setOpen] = useState(false);

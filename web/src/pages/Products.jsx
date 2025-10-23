@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { useProducts } from "../hooks/useProducts";
-import ProductTable from "../components/products/ProductTable";
-import ProductForm from "../components/products/ProductForm";
-import { useToast } from "../utils/toastUtils";
-import { useAlert } from "../utils/alertUtils";
-import { useNotify } from "../utils/notifyUtils";
+import { useProducts } from "@/hooks/useProducts";
+import ProductTable from "@/components/client/products/ProductTable";
+import ProductForm from "@/components/client/products/ProductForm";
+import { useToast } from "@/utils/toastUtils";
+import { useAlert } from "@/utils/alertUtils";
+import { useNotify } from "@/utils/notifyUtils";
 
 export default function Products() {
   const { products, loading, addProduct, updateProduct, deleteProduct, toggleProductStatus } =

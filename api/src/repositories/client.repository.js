@@ -43,7 +43,6 @@ export async function create({
   return rows[0];
 }
 
-
 // ✏️ Actualizar
 export async function update(id, data) {
   const fields = [];
@@ -63,11 +62,15 @@ export async function update(id, data) {
   const { rows } = await pool.query(query, [...values, id]);
   return rows[0];
 }
-
 // 🚫 Desactivar
 export async function deactivate(id) {
   const { rows } = await pool.query(
-    `UPDATE clients SET is_active = FALSE WHERE id = $1 RETURNING *`,
+    `
+    UPDATE clients
+    SET is_active = NOT is_active
+    WHERE id = $1
+    RETURNING *;
+    `,
     [id]
   );
   return rows[0];

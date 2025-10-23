@@ -94,3 +94,18 @@ export async function findByIdNoClient(id) {
   `, [id]);
   return rows[0];
 }
+
+
+// Activar/desactivar todos los usuarios de un cliente
+export async function toggleByClient(clientId, isActive) {
+  const { rows } = await pool.query(
+    `
+    UPDATE users
+    SET is_active = $1, updated_at = NOW()
+    WHERE client_id = $2
+    RETURNING id, name, email, is_active;
+    `,
+    [isActive, clientId]
+  );
+  return rows;
+}
