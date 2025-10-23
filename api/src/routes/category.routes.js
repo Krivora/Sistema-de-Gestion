@@ -1,7 +1,7 @@
 // src/routes/category.routes.js
 import { Router } from "express";
 import * as CategoryController from "../controllers/category.controller.js";
-import { authRequired } from "../middlewares/auth.middleware.js";
+import { authRequired } from "../middleware/auth.middleware.js";
 
 const router = Router();
 

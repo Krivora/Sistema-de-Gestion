@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider, useTheme } from "./providers/ThemeProvider";
+import { AuthProvider } from "./context/AuthProvider"; // 👈 importamos nuestro AuthProvider
 import Routes from "./routes";
 import { Toaster } from "react-hot-toast";
 import "./index.css";
@@ -39,8 +40,10 @@ function ThemedToaster() {
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ThemeProvider>
-      <Routes />
-      <ThemedToaster /> {/* 👈 dinámico y sincronizado con el modo oscuro */}
+      <AuthProvider> {/* 👈 Aquí envolvemos las rutas dentro del AuthProvider */}
+        <Routes />
+        <ThemedToaster />
+      </AuthProvider>
     </ThemeProvider>
   </StrictMode>
 );

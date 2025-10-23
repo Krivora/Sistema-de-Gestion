@@ -23,7 +23,6 @@ export function ThemeProvider({ children }) {
             setDarkMode(user.dark_mode);
             applyTheme(user.dark_mode);
           }
-
           // Pedir versión más fresca desde backend
           try {
             const freshUser = await UsersApi.get(user.id);
@@ -82,13 +81,67 @@ export function ThemeProvider({ children }) {
   const muiTheme = createTheme({
     palette: {
       mode: darkMode ? "dark" : "light",
-      primary: { main: "#800000ff" },
+      primary: { main: "#4529e6ff" }, // violeta principal
+      secondary: { main: "#03a9f4" }, // azul claro opcional
+      error: { main: "#f44336" }, // rojo estándar MUI
+      success: { main: "#4caf50" }, // verde éxito
       background: {
         default: darkMode ? "#121212" : "#f5f5f5",
         paper: darkMode ? "#1e1e1e" : "#ffffff",
       },
+      text: {
+        primary: darkMode ? "#f5f5f5" : "#1e1e1e",
+        secondary: darkMode ? "#b0b0b0" : "#555555",
+      },
     },
+
     shape: { borderRadius: 8 },
+
+    typography: {
+      fontFamily: "'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif",
+      fontSize: 14,
+      h1: { fontWeight: 600, fontSize: "2rem" },
+      h2: { fontWeight: 600, fontSize: "1.75rem" },
+      h3: { fontWeight: 600, fontSize: "1.5rem" },
+      button: { textTransform: "none", fontWeight: 500 },
+    },
+
+    components: {
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            borderRadius: 8,
+            padding: "6px 16px",
+            textTransform: "none",
+            fontWeight: 500,
+            transition: "all 0.2s ease",
+          },
+          containedPrimary: {
+            color: "#fff",
+            "&:hover": {
+              backgroundColor: "#4a36b3",
+            },
+          },
+        },
+      },
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            borderRadius: 10,
+            boxShadow: darkMode
+              ? "0 1px 3px rgba(0,0,0,0.4)"
+              : "0 1px 3px rgba(0,0,0,0.1)",
+          },
+        },
+      },
+      MuiDialog: {
+        styleOverrides: {
+          paper: {
+            borderRadius: 12,
+          },
+        },
+      },
+    },
   });
 
   // ⏳ Mostrar solo cuando el tema esté listo (sin flash)

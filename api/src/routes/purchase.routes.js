@@ -1,13 +1,13 @@
-// src/routes/purchase.routes.js
-import { Router } from "express";
+import express from "express";
+import { authRequired, requireRole } from "../middleware/auth.middleware.js";
 import * as PurchaseController from "../controllers/purchase.controller.js";
-import { authRequired } from "../middlewares/auth.middleware.js";
 
-const router = Router();
+const router = express.Router();
+router.use(authRequired);
 
-router.get("/", authRequired, PurchaseController.getPurchases);
-router.get("/:id", authRequired, PurchaseController.getPurchase);
-router.post("/", authRequired, PurchaseController.createPurchase);
-router.delete("/:id", authRequired, PurchaseController.deletePurchase);
+// Solo admin/superadmin
+router.get("/", requireRole("superadmin", "admin"), PurchaseController.list);
+router.get("/:id", requireRole("superadmin", "admin"), PurchaseController.getById);
+router.post("/", requireRole("superadmin", "admin"), PurchaseController.createAndPost);
 
 export default router;

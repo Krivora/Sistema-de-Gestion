@@ -1,16 +1,15 @@
-import { Router } from "express";
+import express from "express";
 import * as ProductController from "../controllers/product.controller.js";
-import { authRequired } from "../middlewares/auth.middleware.js";
+import { authRequired, requireRole } from "../middleware/auth.middleware.js";
 
-const router = Router();
+const router = express.Router();
+router.use(authRequired);
 
-router.get("/",authRequired, ProductController.getProducts);
-router.get("/:id",authRequired, ProductController.getProduct);
-router.post("/", authRequired, ProductController.createProduct);
-router.put("/:id",authRequired, ProductController.updateProduct);
-router.delete("/:id", authRequired, ProductController.deleteProduct);
-
-router.put("/:id/activate", authRequired, ProductController.activateProduct);
-router.put("/:id/deactivate", authRequired, ProductController.deactivateProduct);
+// Solo admins y superadmins gestionan productos
+router.get("/", requireRole("superadmin", "admin"), ProductController.getAll);
+router.get("/:id", requireRole("superadmin", "admin"), ProductController.getById);
+router.post("/", requireRole("superadmin", "admin"), ProductController.create);
+router.put("/:id", requireRole("superadmin", "admin"), ProductController.update);
+router.patch("/:id/deactivate", requireRole("superadmin", "admin"), ProductController.deactivate);
 
 export default router;

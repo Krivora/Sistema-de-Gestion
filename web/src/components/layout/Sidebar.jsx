@@ -13,104 +13,94 @@ import {
   Group as UsersIcon,
   Warehouse as WarehouseIcon,
   Menu as MenuIcon,
+  SupervisorAccount as Supervisor
 } from "@mui/icons-material";
 import { useTheme } from "../../providers/ThemeProvider";
+import { useAuth } from "../../context/AuthProvider";
 
 /* -----------------------------
    🔗 Enlaces agrupados por sección con iconografía mejorada
 ------------------------------ */
-const menuSections = [
-  {
-    title: "Principal",
-    items: [
-      {
-        to: "/",
-        label: "Dashboard",
-        icon: <DashboardIcon fontSize="small" />,
-      },
-    ],
-  },
-  {
-    title: "Gestión",
-    items: [
-      {
-        to: "/purchases",
-        label: "Compras",
-        icon: <ShoppingCartIcon fontSize="small" />, // 🛒 Compras
-      },
-      {
-        to: "/sales",
-        label: "Ventas",
-        icon: <ReceiptIcon fontSize="small" />, // 🧾 Ventas
-      },
-    ],
-  },
-  {
-    title: "Sucursales",
-    items: [
-      {
-        to: "/branches",
-        label: "Sucursales",
-        icon: <BranchIcon fontSize="small" />, // 🌿 Estructura de sucursales
-      },
-      {
-        to: "/branches-products",
-        label: "Productos Sucursal",
-        icon: <WarehouseIcon fontSize="small" />, // 🏢 Inventario en sucursal
-      },
-    ],
-  },
-  {
-    title: "Inventario",
-    items: [
-      {
-        to: "/inventory-transactions",
-        label: "Movimientos",
-        icon: <InventoryIcon fontSize="small" />, // 📦 Movimientos de stock
-      },
-    ],
-  },
-  {
-    title: "Productos",
-    items: [
-      {
-        to: "/categories",
-        label: "Categorías",
-        icon: <LayersIcon fontSize="small" />, // 🧩 Agrupaciones
-      },
-      {
-        to: "/products",
-        label: "Productos",
-        icon: <CategoryIcon fontSize="small" />, // 🏷️ Catálogo de productos
-      },
-    ],
-  },
-  {
-    title: "Usuarios",
-    items: [
-      {
-        to: "/users",
-        label: "Usuarios",
-        icon: <UsersIcon fontSize="small" />, // 👥 Gestión de usuarios
-      },
-      {
-        to: "/reports",
-        label: "Reportes",
-        icon: <ReportIcon fontSize="small" />, // 📊 Reportes / análisis
-      },
-    ],
-  },
-];
-
 
 export default function Sidebar({ open, setOpen, onCollapseChange }) {
   const { pathname } = useLocation();
   const { darkMode } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
-
+  const { user } = useAuth();
+  const role = user?.role_name;  
   useEffect(() => {
     if (onCollapseChange) onCollapseChange(collapsed);
   }, [collapsed]);
+
+  function getMenuByRole(role) {
+    const baseMenu = [
+      {
+        title: "Principal",
+        items: [{ to: "/", label: "Dashboard", icon: <DashboardIcon fontSize="small" /> }],
+      },
+    ];
+
+    const adminMenu = [
+      {
+        title: "Gestión",
+        items: [
+          { to: "/purchases", label: "Compras", icon: <ShoppingCartIcon fontSize="small" /> },
+          { to: "/sales", label: "Ventas", icon: <ReceiptIcon fontSize="small" /> },
+        ],
+      },
+      {
+        title: "Sucursales",
+        items: [
+          { to: "/branches", label: "Sucursales", icon: <BranchIcon fontSize="small" /> },
+          { to: "/branches-products", label: "Productos Sucursal", icon: <WarehouseIcon fontSize="small" /> },
+        ],
+      },
+      {
+        title: "Inventario",
+        items: [
+          { to: "/inventory-transactions", label: "Movimientos", icon: <InventoryIcon fontSize="small" /> },
+        ],
+      },
+      {
+        title: "Productos",
+        items: [
+          { to: "/categories", label: "Categorías", icon: <LayersIcon fontSize="small" /> },
+          { to: "/products", label: "Productos", icon: <CategoryIcon fontSize="small" /> },
+        ],
+      },
+      {
+        title: "Usuarios",
+        items: [
+          { to: "/users", label: "Usuarios", icon: <UsersIcon fontSize="small" /> },
+          { to: "/reports", label: "Reportes", icon: <ReportIcon fontSize="small" /> },
+        ],
+      },
+    ];
+
+    const userMenu = [
+      {
+        title: "Operaciones",
+        items: [
+          { to: "/sales", label: "Ventas", icon: <ReceiptIcon fontSize="small" /> },
+          { to: "/purchases", label: "Compras", icon: <ShoppingCartIcon fontSize="small" /> },
+          { to: "/inventory-transactions", label: "Movimientos", icon: <InventoryIcon fontSize="small" /> },
+        ],
+      },
+    ];
+
+    const superadminExtra = [
+      {
+        title: "Administración SaaS",
+        items: [
+          { to: "/clients", label: "Clientes", icon: <Supervisor fontSize="small" /> },
+        ],
+      },
+    ];
+
+    if (role === "superadmin") return [...baseMenu, ...superadminExtra,];
+    if (role === "admin") return [...baseMenu, ...adminMenu];
+    return [...baseMenu, ...userMenu];
+  }
 
   return (
     <aside
@@ -127,7 +117,7 @@ export default function Sidebar({ open, setOpen, onCollapseChange }) {
         className={`h-16 flex items-center justify-between px-4 border-b transition-colors duration-300
           ${darkMode ? "border-slate-800 text-white" : "border-slate-200 text-slate-800"}`}
       >
-        {!collapsed && <h2 className="font-semibold text-lg">Lechu'Snacks</h2>}
+        {!collapsed && <h2 className="font-semibold text-lg text-center">{user?.business_name || "Krivora Admin"}</h2>}
 
         {/* Botón colapsar/expandir */}
         <button
@@ -144,7 +134,7 @@ export default function Sidebar({ open, setOpen, onCollapseChange }) {
          📋 Navegación del menú
       ------------------------------ */}
       <nav className="mt-4 px-2 space-y-3">
-        {menuSections.map((section) => (
+        {getMenuByRole(role).map((section) => (
           <div key={section.title}>
             {/* 🔹 Subtítulo de sección */}
             {!collapsed && (

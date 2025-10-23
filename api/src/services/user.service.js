@@ -1,12 +1,19 @@
 import * as UserRepo from "../repositories/user.repository.js";
 import bcrypt from "bcrypt";
 
-export async function getAllUsers() {
-  return await UserRepo.findAll();
+export async function getAllUsers(clientId) {
+  return await UserRepo.findAll(clientId);
 }
 
-export async function getUserById(id) {
-  return await UserRepo.findById(id);
+export async function getUserById(id, clientId) {
+  if (!id) throw new Error("ID de usuario requerido");
+
+  if (clientId) {
+    return await UserRepo.findById(id, clientId);
+  } else {
+    // 👇 si es superadmin (sin client_id)
+    return await UserRepo.findByIdNoClient(id);
+  }
 }
 
 export async function createUser(data) {

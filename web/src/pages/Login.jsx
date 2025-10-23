@@ -9,11 +9,11 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { useTheme } from "../providers/ThemeProvider";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../context/AuthProvider";
 
 export default function Login() {
   const { darkMode } = useTheme();
-  const { handleLogin, loading } = useAuth();
+  const { login, loading } = useAuth(); // 👈 login viene de AuthProvider
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -22,9 +22,13 @@ export default function Login() {
 
   async function onSubmit(e) {
     e.preventDefault();
-    const ok = await handleLogin(email, password);
-    if (ok) navigate("/");
-    else setError("Credenciales inválidas");
+    setError("");
+    try {
+      await login(email, password); // 👈 usa la función del AuthProvider
+      navigate("/"); // redirige al dashboard principal
+    } catch (err) {
+      setError(err.message || "Credenciales inválidas");
+    }
   }
 
   return (
@@ -63,7 +67,7 @@ export default function Login() {
           sx={{ fontWeight: 500, mt: 1, mb: 3 }}
           color={darkMode ? "grey.300" : "text.secondary"}
         >
-          Lechu'Snacks
+          Inventario MultiSucursal
         </Typography>
 
         <form onSubmit={onSubmit}>
@@ -117,7 +121,7 @@ export default function Login() {
             color: darkMode ? "grey.500" : "text.secondary",
           }}
         >
-          © {new Date().getFullYear()} Lechu'Snacks — Todos los derechos reservados
+          © {new Date().getFullYear()} Krivora Mx — Todos los derechos reservados
         </Typography>
       </Paper>
     </Box>

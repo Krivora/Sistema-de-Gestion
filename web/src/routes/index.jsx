@@ -4,6 +4,7 @@ import ProtectedRoute from "../components/ProtectedRoute"; // 👈 asegúrate de
 import Branches from "../pages/Branches";
 import BranchProducts from "../pages/BranchProducts";
 import Categories from "../pages/Categories";
+import Clients from "../pages/Clients";
 import Dashboard from "../pages/Dashboard";
 import Login from "../pages/Login";
 import Products from "../pages/Products";
@@ -28,6 +29,7 @@ const router = createBrowserRouter([
       { index: true, element: <Dashboard /> },
       { path: "branches", element: <Branches /> },
       { path: "branches-products", element: <BranchProducts /> },
+      { path: "clients", element: <Clients /> },
       { path: "inventory-transactions", element: <InventoryTransactions /> },
       { path: "products", element: <Products /> },
       { path: "purchases", element: <Purchases /> },

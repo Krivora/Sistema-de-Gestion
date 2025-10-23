@@ -1,15 +1,15 @@
-// src/routes/branch.routes.js
-import { Router } from "express";
+import express from "express";
 import * as BranchController from "../controllers/branch.controller.js";
-import { authRequired } from "../middlewares/auth.middleware.js";
+import { authRequired, requireRole } from "../middleware/auth.middleware.js";
 
-const router = Router();
+const router = express.Router();
+router.use(authRequired);
 
-router.get("/", authRequired, BranchController.getBranches);
-router.get("/:id", authRequired, BranchController.getBranch);
-router.post("/", authRequired, BranchController.createBranch);
-router.put("/:id", authRequired, BranchController.updateBranch);
-router.delete("/:id", authRequired, BranchController.deleteBranch);
-router.put("/:id/status", authRequired, BranchController.toggleBranchStatus);
+// 🔒 Admins de cliente y superadmins pueden crear/editar
+router.get("/", requireRole("superadmin", "admin"), BranchController.getAll);
+router.get("/:id", requireRole("superadmin", "admin"), BranchController.getById);
+router.post("/", requireRole("superadmin", "admin"), BranchController.create);
+router.put("/:id", requireRole("superadmin", "admin"), BranchController.update);
+router.patch("/:id/deactivate", requireRole("superadmin", "admin"), BranchController.deactivate);
 
 export default router;

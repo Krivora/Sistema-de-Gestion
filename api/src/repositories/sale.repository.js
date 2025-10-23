@@ -1,108 +1,132 @@
 import pool from "../config/db.js";
 
-function getExecutor(client) {
-  return client || pool;
-}
+// Listar ventas por cliente (filtros opcionales)
+export async function findAll(clientId, { status, branch_id, date_from, date_to } = {}) {
+  const conds = ["s.client_id = $1"];
+  const params = [clientId];
+  let i = 2;
 
-// 🧾 Listar ventas
-export async function findAll(client = null) {
-  const executor = getExecutor(client);
-  const { rows } = await executor.query(`
-    SELECT 
-      s.*, 
-      b.name AS branch_name
+  if (status) { conds.push(`s.status = $${i++}`); params.push(status); }
+  if (branch_id) { conds.push(`s.branch_id = $${i++}`); params.push(branch_id); }
+  if (date_from) { conds.push(`s.created_at >= $${i++}`); params.push(date_from); }
+  if (date_to) { conds.push(`s.created_at < $${i++}`); params.push(date_to); }
+
+  const { rows } = await pool.query(
+    `
+    SELECT s.*, b.name AS branch_name
     FROM sales s
     LEFT JOIN branches b ON b.id = s.branch_id
-    ORDER BY s.created_at DESC
-  `);
+    WHERE ${conds.join(" AND ")}
+    ORDER BY s.id DESC
+    `,
+    params
+  );
   return rows;
 }
 
-// 📄 Buscar venta por ID (incluye datos de sucursal)
-export async function findById(id, client = null) {
-  const executor = getExecutor(client);
-  const { rows } = await executor.query(`
-    SELECT 
-      s.*, 
-      b.name AS branch_name,
-      b.address AS branch_address,
-      b.phone AS branch_phone
-    FROM sales s
-    LEFT JOIN branches b ON b.id = s.branch_id
-    WHERE s.id = $1
-  `, [id]);
-  return rows[0];
-}
-
-// 🧾 Crear venta (con cliente, totales y método de pago)
-export async function createSale(
-  { branch_id, doc_no = null, status = "open", customer_name, customer_phone, payment_method = "EFECTIVO", subtotal = 0, total = 0 },
-  client = null
-) {
-  const executor = getExecutor(client);
-
-  // 📄 Generar folio automático si no se envía
-  if (!doc_no) {
-    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-    doc_no = `VT-${random}`;
-  }
-
-  const { rows } = await executor.query(
-    `
-    INSERT INTO sales 
-      (branch_id, doc_no, status, customer_name, customer_phone, payment_method, subtotal, total)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-    RETURNING *
-    `,
-    [branch_id, doc_no, status, customer_name, customer_phone, payment_method, subtotal, total]
-  );
-
-  return rows[0];
-}
-
-// 🧾 Agregar ítem
-export async function addItem(sale_id, { product_id, qty, unit_price }, client = null) {
-  const executor = getExecutor(client);
-  const { rows } = await executor.query(
-    `
-    INSERT INTO sale_items (sale_id, product_id, qty, unit_price)
-    VALUES ($1,$2,$3,$4)
-    RETURNING *
-    `,
-    [sale_id, product_id, qty, unit_price]
+export async function findById(id, clientId) {
+  const { rows } = await pool.query(
+    `SELECT * FROM sales WHERE id = $1 AND client_id = $2`,
+    [id, clientId]
   );
   return rows[0];
 }
 
-// 🔍 Obtener ítems con nombres de producto
-export async function findItems(sale_id, client = null) {
-  const executor = getExecutor(client);
-  const { rows } = await executor.query(`
-    SELECT 
-      i.*, 
-      p.name AS product_name
-    FROM sale_items i
-    JOIN products p ON p.id = i.product_id
-    WHERE i.sale_id = $1
-  `, [sale_id]);
+export async function findItems(saleId, clientId) {
+  const { rows } = await pool.query(
+    `
+    SELECT si.*, p.name AS product_name, p.sku
+    FROM sale_items si
+    JOIN products p ON p.id = si.product_id
+    WHERE si.sale_id = $1 AND si.client_id = $2
+    ORDER BY si.id ASC
+    `,
+    [saleId, clientId]
+  );
   return rows;
 }
 
-// 🧾 Obtener venta con ítems (para el ticket)
-export async function findWithItems(id, client = null) {
-  const sale = await findById(id, client);
-  if (!sale) return null;
-  const items = await findItems(id, client);
-  return { ...sale, items };
+export async function createHeader(client, payload) {
+  const { doc_no, branch_id, customer_id, customer_name, customer_phone, payment_method, subtotal, total } = payload;
+  const { rows } = await client.query(
+    `
+    INSERT INTO sales (doc_no, branch_id, client_id, user_id, customer_id, customer_name, customer_phone, payment_method, subtotal, total)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,COALESCE($9,0),COALESCE($10,0))
+    RETURNING *
+    `,
+    [
+      doc_no || null,
+      payload.branch_id,
+      payload.client_id,
+      payload.user_id || null,
+      customer_id || null,
+      customer_name || null,
+      customer_phone || null,
+      payment_method || "EFECTIVO",
+      subtotal || 0,
+      total || 0
+    ]
+  );
+  return rows[0];
 }
 
-// 🗑️ Eliminar venta completa
-export async function removeSale(id, client = null) {
-  const executor = getExecutor(client);
-  await executor.query(`DELETE FROM sale_items WHERE sale_id=$1`, [id]);
-  const { rows } = await executor.query(
-    "DELETE FROM sales WHERE id=$1 RETURNING *",
-    [id]
+export async function addItem(client, { sale_id, product_id, qty, unit_price, client_id }) {
+  const { rows } = await client.query(
+    `
+    INSERT INTO sale_items (sale_id, product_id, qty, unit_price, client_id)
+    VALUES ($1,$2,$3,$4,$5)
+    RETURNING *
+    `,
+    [sale_id, product_id, qty, unit_price, client_id]
+  );
+  return rows[0];
+}
+
+export async function updateTotals(client, sale_id, client_id) {
+  const { rows } = await client.query(
+    `
+    UPDATE sales s
+    SET subtotal = t.subtotal,
+        total = t.total,
+        updated_at = NOW()
+    FROM (
+      SELECT si.sale_id,
+             SUM(si.qty * si.unit_price)::numeric(10,2) AS subtotal,
+             SUM(si.qty * si.unit_price)::numeric(10,2) AS total
+      FROM sale_items si
+      WHERE si.sale_id = $1 AND si.client_id = $2
+      GROUP BY si.sale_id
+    ) t
+    WHERE s.id = t.sale_id AND s.client_id = $2
+    RETURNING s.*
+    `,
+    [sale_id, client_id]
+  );
+  return rows[0];
+}
+
+export async function setPosted(client, sale_id, client_id) {
+  const { rows } = await client.query(
+    `
+    UPDATE sales
+    SET status = 'posted', posted_at = NOW()
+    WHERE id = $1 AND client_id = $2
+    RETURNING *
+    `,
+    [sale_id, client_id]
+  );
+  return rows[0];
+}
+
+export async function setOpen(client, sale_id, client_id) {
+  const { rows } = await client.query(
+    `
+    UPDATE sales
+    SET status = 'open', posted_at = NULL
+    WHERE id = $1 AND client_id = $2
+    RETURNING *
+    `,
+    [sale_id, client_id]
   );
   return rows[0];
 }

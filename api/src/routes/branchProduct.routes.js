@@ -1,6 +1,6 @@
 import { Router } from "express";
 import * as BranchProductController from "../controllers/branchProduct.controller.js";
-import { authRequired } from "../middlewares/auth.middleware.js";
+import { authRequired } from "../middleware/auth.middleware.js";
 
 const router = Router();
 

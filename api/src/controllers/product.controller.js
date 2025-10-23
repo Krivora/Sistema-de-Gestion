@@ -1,17 +1,21 @@
 import * as ProductService from "../services/product.service.js";
 
-export async function getProducts(req, res, next) {
+export async function getAll(req, res, next) {
   try {
-    const products = await ProductService.listProducts();
-    res.json(products);
+    const data = await ProductService.getAllProducts(req.user.client_id, req.user.role_name);
+    res.json(data);
   } catch (err) {
     next(err);
   }
 }
 
-export async function getProduct(req, res, next) {
+export async function getById(req, res, next) {
   try {
-    const product = await ProductService.getProduct(req.params.id);
+    const product = await ProductService.getProductById(
+      req.params.id,
+      req.user.client_id,
+      req.user.role_name
+    );
     if (!product) return res.status(404).json({ error: "Producto no encontrado" });
     res.json(product);
   } catch (err) {
@@ -19,51 +23,37 @@ export async function getProduct(req, res, next) {
   }
 }
 
-export async function createProduct(req, res, next) {
+export async function create(req, res, next) {
   try {
-    const product = await ProductService.addProduct(req.body);
+    const product = await ProductService.createProduct(req.body, req.user.client_id, req.user.role_name);
     res.status(201).json(product);
   } catch (err) {
-    next(err);
+    res.status(400).json({ error: err.message });
   }
 }
 
-export async function updateProduct(req, res, next) {
+export async function update(req, res, next) {
   try {
-    const product = await ProductService.editProduct(req.params.id, req.body);
-    if (!product) return res.status(404).json({ error: "Producto no encontrado" });
-    res.json(product);
+    const updated = await ProductService.updateProduct(
+      req.params.id,
+      req.body,
+      req.user.client_id,
+      req.user.role_name
+    );
+    res.json(updated);
   } catch (err) {
     next(err);
   }
 }
 
-export async function deleteProduct(req, res, next) {
+export async function deactivate(req, res, next) {
   try {
-    const product = await ProductService.removeProduct(req.params.id);
-    if (!product) return res.status(404).json({ error: "Producto no encontrado" });
-    res.json(product);
-  } catch (err) {
-    next(err);
-  }
-}
-
-// ⚡ Activar / Inhabilitar
-export async function activateProduct(req, res, next) {
-  try {
-    const product = await ProductService.activateProduct(req.params.id);
-    if (!product) return res.status(404).json({ error: "Producto no encontrado" });
-    res.json(product);
-  } catch (err) {
-    next(err);
-  }
-}
-
-export async function deactivateProduct(req, res, next) {
-  try {
-    const product = await ProductService.deactivateProduct(req.params.id);
-    if (!product) return res.status(404).json({ error: "Producto no encontrado" });
-    res.json(product);
+    const deactivated = await ProductService.deactivateProduct(
+      req.params.id,
+      req.user.client_id,
+      req.user.role_name
+    );
+    res.json(deactivated);
   } catch (err) {
     next(err);
   }

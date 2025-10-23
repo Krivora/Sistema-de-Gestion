@@ -1,5 +1,5 @@
 // src/api/client.js
-const API_URL = import.meta.env.VITE_API_URL
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
 
 export async function apiFetch(endpoint, options = {}) {
   const token = localStorage.getItem("token");
@@ -14,6 +14,12 @@ export async function apiFetch(endpoint, options = {}) {
   };
 
   const res = await fetch(`${API_URL}${endpoint}`, config);
+  if (res.status === 401) {
+    // Token inválido o expirado → limpiar sesión
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+    return;
+  }
 
   if (!res.ok) {
     let errorMsg = `Error ${res.status}`;
@@ -24,8 +30,8 @@ export async function apiFetch(endpoint, options = {}) {
     throw new Error(errorMsg);
   }
 
-  // Evita error si no hay JSON (p.ej. DELETE 204)
+  // No hay contenido
   if (res.status === 204) return null;
 
-  return res.json();
+  return await res.json();
 }

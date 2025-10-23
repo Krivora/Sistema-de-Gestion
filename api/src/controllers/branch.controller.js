@@ -1,19 +1,17 @@
 import * as BranchService from "../services/branch.service.js";
 
-// 📋 Listar todas
-export async function getBranches(req, res, next) {
+export async function getAll(req, res, next) {
   try {
-    const branches = await BranchService.listBranches();
-    res.json(branches);
+    const data = await BranchService.getAllBranches(req.user.client_id, req.user.role_name);
+    res.json(data);
   } catch (err) {
     next(err);
   }
 }
 
-// 🔍 Obtener una
-export async function getBranch(req, res, next) {
+export async function getById(req, res, next) {
   try {
-    const branch = await BranchService.getBranch(req.params.id);
+    const branch = await BranchService.getBranchById(req.params.id, req.user.client_id, req.user.role_name);
     if (!branch) return res.status(404).json({ error: "Sucursal no encontrada" });
     res.json(branch);
   } catch (err) {
@@ -21,44 +19,37 @@ export async function getBranch(req, res, next) {
   }
 }
 
-// 🆕 Crear
-export async function createBranch(req, res, next) {
+export async function create(req, res, next) {
   try {
-    const branch = await BranchService.addBranch(req.body);
+    const branch = await BranchService.createBranch(req.body, req.user.client_id, req.user.role_name);
     res.status(201).json(branch);
   } catch (err) {
-    next(err);
+    res.status(400).json({ error: err.message });
   }
 }
 
-// ✏️ Actualizar
-export async function updateBranch(req, res, next) {
+export async function update(req, res, next) {
   try {
-    const branch = await BranchService.editBranch(req.params.id, req.body);
-    if (!branch) return res.status(404).json({ error: "Sucursal no encontrada" });
-    res.json(branch);
+    const updated = await BranchService.updateBranch(
+      req.params.id,
+      req.user.client_id,
+      req.user.role_name,
+      req.body
+    );
+    res.json(updated);
   } catch (err) {
     next(err);
   }
 }
 
-// 🔄 Activar / Desactivar
-export async function toggleBranchStatus(req, res, next) {
+export async function deactivate(req, res, next) {
   try {
-    const branch = await BranchService.toggleBranchStatus(req.params.id, req.body.is_active);
-    if (!branch) return res.status(404).json({ error: "Sucursal no encontrada" });
-    res.json(branch);
-  } catch (err) {
-    next(err);
-  }
-}
-
-// 🗑️ Eliminar
-export async function deleteBranch(req, res, next) {
-  try {
-    const branch = await BranchService.removeBranch(req.params.id);
-    if (!branch) return res.status(404).json({ error: "Sucursal no encontrada" });
-    res.json(branch);
+    const deactivated = await BranchService.deactivateBranch(
+      req.params.id,
+      req.user.client_id,
+      req.user.role_name
+    );
+    res.json(deactivated);
   } catch (err) {
     next(err);
   }

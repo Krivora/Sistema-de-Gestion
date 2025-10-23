@@ -1,45 +1,31 @@
 import * as PurchaseService from "../services/purchase.service.js";
 
-// 🔹 GET /purchases
-export async function getPurchases(req, res, next) {
+export async function list(req, res, next) {
   try {
-    const data = await PurchaseService.listPurchases();
+    const filters = {
+      status: req.query.status,
+      branch_id: req.query.branch_id,
+      date_from: req.query.date_from,
+      date_to: req.query.date_to
+    };
+    const data = await PurchaseService.listPurchases(req.user.client_id, filters);
     res.json(data);
-  } catch (err) {
-    next(err);
-  }
+  } catch (e) { next(e); }
 }
 
-// 🔹 GET /purchases/:id
-export async function getPurchase(req, res, next) {
+export async function getById(req, res, next) {
   try {
-    const purchase = await PurchaseService.getPurchase(req.params.id);
-    if (!purchase)
-      return res.status(404).json({ error: "Compra no encontrada" });
-    res.json(purchase);
-  } catch (err) {
-    next(err);
-  }
+    const data = await PurchaseService.getPurchaseById(req.params.id, req.user.client_id);
+    if (!data) return res.status(404).json({ error: "Compra no encontrada" });
+    res.json(data);
+  } catch (e) { next(e); }
 }
 
-// 🔹 POST /purchases
-export async function createPurchase(req, res, next) {
+export async function createAndPost(req, res, next) {
   try {
-    const purchase = await PurchaseService.createPurchase(req.body);
-    res.status(201).json(purchase);
-  } catch (err) {
-    next(err);
-  }
-}
-
-// 🔹 DELETE /purchases/:id
-export async function deletePurchase(req, res, next) {
-  try {
-    const purchase = await PurchaseService.removePurchase(req.params.id);
-    if (!purchase)
-      return res.status(404).json({ error: "Compra no encontrada" });
-    res.json(purchase);
-  } catch (err) {
-    next(err);
+    const data = await PurchaseService.createAndPostPurchase(req.body, req.user);
+    res.status(201).json(data);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 }

@@ -1,39 +1,31 @@
-import * as SalesService from "../services/sale.service.js";
+import * as SaleService from "../services/sale.service.js";
 
-export async function getSales(req, res, next) {
+export async function list(req, res, next) {
   try {
-    const data = await SalesService.listSales();
+    const filters = {
+      status: req.query.status,
+      branch_id: req.query.branch_id,
+      date_from: req.query.date_from,
+      date_to: req.query.date_to
+    };
+    const data = await SaleService.listSales(req.user.client_id, filters);
     res.json(data);
-  } catch (err) {
-    next(err);
-  }
+  } catch (e) { next(e); }
 }
 
-export async function getSale(req, res, next) {
+export async function getById(req, res, next) {
   try {
-    const sale = await SalesService.getSale(req.params.id);
-    if (!sale) return res.status(404).json({ error: "Venta no encontrada" });
-    res.json(sale);
-  } catch (err) {
-    next(err);
-  }
+    const data = await SaleService.getSaleById(req.params.id, req.user.client_id);
+    if (!data) return res.status(404).json({ error: "Venta no encontrada" });
+    res.json(data);
+  } catch (e) { next(e); }
 }
 
-export async function createSale(req, res, next) {
+export async function createAndPost(req, res, next) {
   try {
-    const sale = await SalesService.createSale(req.body);
-    res.status(201).json(sale);
-  } catch (err) {
-    next(err);
-  }
-}
-
-export async function deleteSale(req, res, next) {
-  try {
-    const sale = await SalesService.removeSale(req.params.id);
-    if (!sale) return res.status(404).json({ error: "Venta no encontrada" });
-    res.json(sale);
-  } catch (err) {
-    next(err);
+    const data = await SaleService.createAndPostSale(req.body, req.user);
+    res.status(201).json(data);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 }

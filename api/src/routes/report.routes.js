@@ -1,7 +1,7 @@
 // src/api/reports.routes.js
 import { Router } from "express";
 import { ReportsController } from "../controllers/report.controller.js";
-import { authRequired } from "../middlewares/auth.middleware.js";
+import { authRequired } from "../middleware/auth.middleware.js";
 
 const router = Router();
 

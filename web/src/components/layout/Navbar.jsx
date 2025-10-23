@@ -4,16 +4,18 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ThemeToggle from "../ThemeToggle";
-import { useAuth } from "../../hooks/useAuth";
-import { useTheme } from "../../providers/ThemeProvider"; // 👈 Importa el provider
+import { useAuth } from "../../context/AuthProvider"; // 👈 nuevo import
+import { useTheme } from "../../providers/ThemeProvider";
+import { useNavigate } from "react-router-dom";
 
 export default function Navbar({ setOpen }) {
-  const { user, handleLogout } = useAuth();
-  const { darkMode } = useTheme(); // 👈 Obtener el estado del tema
+  const { user, logout } = useAuth(); // 👈 logout en lugar de handleLogout
+  const { darkMode } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const navigate = useNavigate();
 
-  // Cierra el menú si clic fuera
+  // Cierra el menú si se hace click fuera
   useEffect(() => {
     function handleClickOutside(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -24,15 +26,18 @@ export default function Navbar({ setOpen }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true }); // 👈 redirige al login
+  };
+
   return (
     <header
       className={`sticky top-0 z-30 backdrop-blur-md transition-colors duration-300 ${
-        darkMode
-          ? "bg-black text-white"
-          : "bg-white/80  text-slate-900"
+        darkMode ? "bg-black text-white" : "bg-white/80 text-slate-900"
       }`}
     >
-
       <div className="h-16 max-w-7xl mx-auto px-4 flex items-center justify-between relative">
         {/* Botón Sidebar (solo móvil) */}
         <button
@@ -86,7 +91,7 @@ export default function Navbar({ setOpen }) {
                 }`}
               >
                 <button
-                  onClick={handleLogout}
+                  onClick={handleLogout} // 👈 usa logout directo
                   className={`w-full flex items-center gap-2 px-4 py-2 text-left text-sm transition ${
                     darkMode
                       ? "hover:bg-slate-800"

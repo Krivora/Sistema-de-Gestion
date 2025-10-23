@@ -1,77 +1,71 @@
 import pool from "../config/db.js";
 
-// 🔹 Listar todas las sucursales
-export async function findAll() {
-  const { rows } = await pool.query("SELECT * FROM branches ORDER BY id");
+// 🧩 Listar sucursales (global o por cliente)
+export async function findAll(clientId = null) {
+  const query = clientId
+    ? `
+      SELECT b.*, c.name AS client_name
+      FROM branches b
+      JOIN clients c ON c.id = b.client_id
+      WHERE b.client_id = $1
+      ORDER BY b.id ASC
+    `
+    : `
+      SELECT b.*, c.name AS client_name
+      FROM branches b
+      JOIN clients c ON c.id = b.client_id
+      ORDER BY b.id ASC
+    `;
+  const { rows } = await pool.query(query, clientId ? [clientId] : []);
   return rows;
 }
 
-// 🔹 Buscar por ID
-export async function findById(id) {
-  const { rows } = await pool.query("SELECT * FROM branches WHERE id = $1", [id]);
+// 🧩 Buscar por ID (validando client)
+export async function findById(id, clientId = null) {
+  const query = clientId
+    ? "SELECT * FROM branches WHERE id = $1 AND client_id = $2"
+    : "SELECT * FROM branches WHERE id = $1";
+  const { rows } = await pool.query(query, clientId ? [id, clientId] : [id]);
   return rows[0];
 }
 
-// 🔹 Crear sucursal con código automático
-export async function create({ code, name, address, phone, is_active = true }) {
-  let finalCode = code;
-
-  // Si no se envía código, lo generamos automáticamente
-  if (!finalCode) {
-    const prefix = name
-      .trim()
-      .substring(0, 3)
-      .toUpperCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, ""); // elimina acentos
-
-    const { rows } = await pool.query(
-      `SELECT COUNT(*)::int AS total FROM branches WHERE code ILIKE $1`,
-      [`${prefix}%`]
-    );
-    const count = rows[0].total + 1;
-
-    finalCode = `${prefix}-${String(count).padStart(3, "0")}`;
-  }
-
+// 🧩 Crear sucursal
+export async function create({ code, name, address, phone, client_id }) {
   const { rows } = await pool.query(
-    `INSERT INTO branches (code, name, address, phone, is_active)
+    `INSERT INTO branches (code, name, address, phone, client_id)
      VALUES ($1, $2, $3, $4, $5)
      RETURNING *`,
-    [finalCode, name, address, phone, is_active]
+    [code, name, address, phone, client_id]
   );
   return rows[0];
 }
 
-// 🔹 Actualizar sucursal
-export async function update(id, { code, name, address, phone, is_active }) {
-  const { rows } = await pool.query(
-    `UPDATE branches 
-     SET code=$1, name=$2, address=$3, phone=$4, is_active=$5, updated_at=NOW()
-     WHERE id=$6
-     RETURNING *`,
-    [code, name, address, phone, is_active, id]
-  );
+// 🧩 Actualizar
+export async function update(id, clientId, data) {
+  const fields = [];
+  const values = [];
+  let i = 1;
+  for (const [key, value] of Object.entries(data)) {
+    fields.push(`${key} = $${i++}`);
+    values.push(value);
+  }
+
+  const query = `
+    UPDATE branches
+    SET ${fields.join(", ")}, updated_at = NOW()
+    WHERE id = $${i} AND client_id = $${i + 1}
+    RETURNING *;
+  `;
+
+  const { rows } = await pool.query(query, [...values, id, clientId]);
   return rows[0];
 }
 
-// 🔹 Eliminar sucursal
-export async function remove(id) {
+// 🧩 Desactivar
+export async function deactivate(id, clientId) {
   const { rows } = await pool.query(
-    "DELETE FROM branches WHERE id=$1 RETURNING *",
-    [id]
-  );
-  return rows[0];
-}
-
-// 🔹 Cambiar estado (activar/desactivar)
-export async function toggleStatus(id, newStatus) {
-  const { rows } = await pool.query(
-    `UPDATE branches
-     SET is_active = $1, updated_at = NOW()
-     WHERE id = $2
-     RETURNING *`,
-    [newStatus, id]
+    `UPDATE branches SET is_active = FALSE WHERE id = $1 AND client_id = $2 RETURNING *`,
+    [id, clientId]
   );
   return rows[0];
 }

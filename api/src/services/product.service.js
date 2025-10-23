@@ -1,29 +1,33 @@
 import * as ProductRepo from "../repositories/product.repository.js";
 
-export async function listProducts() {
-  return await ProductRepo.findAll();
+export async function getAllProducts(clientId, roleName) {
+  if (roleName === "superadmin") return await ProductRepo.findAll();
+  return await ProductRepo.findAll(clientId);
 }
 
-export async function getProduct(id) {
-  return await ProductRepo.findById(id);
+export async function getProductById(id, clientId, roleName) {
+  if (roleName === "superadmin") return await ProductRepo.findById(id);
+  return await ProductRepo.findById(id, clientId);
 }
 
-export async function addProduct(data) {
-  return await ProductRepo.create(data);
+export async function createProduct(data, clientId, roleName) {
+  const targetClient = roleName === "superadmin" ? data.client_id : clientId;
+
+  return await ProductRepo.create({
+    sku: data.sku,
+    name: data.name,
+    description: data.description || null,
+    category_id: data.category_id || null,
+    client_id: targetClient,
+  });
 }
 
-export async function editProduct(id, data) {
-  return await ProductRepo.update(id, data);
+export async function updateProduct(id, data, clientId, roleName) {
+  const targetClient = roleName === "superadmin" ? data.client_id : clientId;
+  return await ProductRepo.update(id, targetClient, data);
 }
 
-export async function removeProduct(id) {
-  return await ProductRepo.remove(id);
-}
-
-export async function activateProduct(id) {
-  return await ProductRepo.activate(id);
-}
-
-export async function deactivateProduct(id) {
-  return await ProductRepo.deactivate(id);
+export async function deactivateProduct(id, clientId, roleName) {
+  const targetClient = roleName === "superadmin" ? null : clientId;
+  return await ProductRepo.deactivate(id, targetClient);
 }

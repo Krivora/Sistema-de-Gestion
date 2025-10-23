@@ -1,84 +1,89 @@
 import pool from "../config/db.js";
 
-function getExecutor(client) {
-  return client || pool;
-}
+export async function findAll(clientId, { status, branch_id, date_from, date_to } = {}) {
+  const conds = ["p.client_id = $1"];
+  const params = [clientId];
+  let i = 2;
 
-// 🧾 Listar compras
-export async function findAll(client = null) {
-  const executor = getExecutor(client);
-  const { rows } = await executor.query(`
-    SELECT p.* , b.name AS branch_name
-    FROM purchases p
-    LEFT JOIN branches b ON b.id = p.branch_id
-    ORDER BY p.created_at DESC
-  `);
-  return rows;
-}
+  if (status) { conds.push(`p.status = $${i++}`); params.push(status); }
+  if (branch_id) { conds.push(`p.branch_id = $${i++}`); params.push(branch_id); }
+  if (date_from) { conds.push(`p.created_at >= $${i++}`); params.push(date_from); }
+  if (date_to) { conds.push(`p.created_at < $${i++}`); params.push(date_to); }
 
-// 📄 Buscar una compra
-export async function findById(id, client = null) {
-  const executor = getExecutor(client);
-  const { rows } = await executor.query(`
+  const { rows } = await pool.query(
+    `
     SELECT p.*, b.name AS branch_name
     FROM purchases p
     LEFT JOIN branches b ON b.id = p.branch_id
-    WHERE p.id = $1
-  `, [id]);
-  return rows[0];
-}
-
-// 📦 Crear una compra (encabezado)
-export async function createPurchase({branch_id, doc_no = null, status = "open" }, client = null) {
-  const executor = getExecutor(client);
-  // 🔹 Si no se proporciona doc_no, generar uno aleatorio
-  if (!doc_no) {
-    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-    doc_no = `CP-${random}`; // ejemplo: CP-A1B2C3
-  }
-
-  const { rows } = await executor.query(
-    `INSERT INTO purchases (branch_id, doc_no, status)
-     VALUES ($1,$2,$3)
-     RETURNING *`,
-    [branch_id, doc_no, status]
+    WHERE ${conds.join(" AND ")}
+    ORDER BY p.id DESC
+    `,
+    params
   );
-
-  return rows[0];
-}
-
-
-// 📦 Agregar ítem
-export async function addItem(purchase_id, { product_id, qty, unit_cost }, client = null) {
-  const executor = getExecutor(client);
-  const { rows } = await executor.query(
-    `INSERT INTO purchase_items (purchase_id, product_id, qty, unit_cost)
-     VALUES ($1,$2,$3,$4)
-     RETURNING *`,
-    [purchase_id, product_id, qty, unit_cost]
-  );
-  return rows[0];
-}
-
-// 🔍 Obtener ítems de una compra
-export async function findItems(purchase_id, client = null) {
-  const executor = getExecutor(client);
-  const { rows } = await executor.query(`
-    SELECT i.*, p.name AS product_name, p.sku
-    FROM purchase_items i
-    JOIN products p ON p.id = i.product_id
-    WHERE i.purchase_id = $1
-  `, [purchase_id]);
   return rows;
 }
 
-// 🗑️ Eliminar compra completa (sin movimientos)
-export async function removePurchase(id, client = null) {
-  const executor = getExecutor(client);
-  await executor.query(`DELETE FROM purchase_items WHERE purchase_id=$1`, [id]);
-  const { rows } = await executor.query(
-    "DELETE FROM purchases WHERE id=$1 RETURNING *",
-    [id]
+export async function findById(id, clientId) {
+  const { rows } = await pool.query(
+    `SELECT * FROM purchases WHERE id = $1 AND client_id = $2`,
+    [id, clientId]
+  );
+  return rows[0];
+}
+
+export async function findItems(purchaseId, clientId) {
+  const { rows } = await pool.query(
+    `
+    SELECT pi.*, p.name AS product_name, p.sku
+    FROM purchase_items pi
+    JOIN products p ON p.id = pi.product_id
+    WHERE pi.purchase_id = $1 AND pi.client_id = $2
+    ORDER BY pi.id ASC
+    `,
+    [purchaseId, clientId]
+  );
+  return rows;
+}
+
+export async function createHeader(client, payload) {
+  const { rows } = await client.query(
+    `
+    INSERT INTO purchases (doc_no, branch_id, client_id, user_id, supplier_id, created_at)
+    VALUES ($1,$2,$3,$4,$5, NOW())
+    RETURNING *
+    `,
+    [
+      payload.doc_no || null,
+      payload.branch_id,
+      payload.client_id,
+      payload.user_id || null,
+      payload.supplier_id || null
+    ]
+  );
+  return rows[0];
+}
+
+export async function addItem(client, { purchase_id, product_id, qty, unit_cost, client_id }) {
+  const { rows } = await client.query(
+    `
+    INSERT INTO purchase_items (purchase_id, product_id, qty, unit_cost, client_id)
+    VALUES ($1,$2,$3,$4,$5)
+    RETURNING *
+    `,
+    [purchase_id, product_id, qty, unit_cost, client_id]
+  );
+  return rows[0];
+}
+
+export async function setPosted(client, purchase_id, client_id) {
+  const { rows } = await client.query(
+    `
+    UPDATE purchases
+    SET status = 'posted', posted_at = NOW()
+    WHERE id = $1 AND client_id = $2
+    RETURNING *
+    `,
+    [purchase_id, client_id]
   );
   return rows[0];
 }
