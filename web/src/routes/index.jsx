@@ -11,6 +11,7 @@ import Clients from "@/pages/admin/Clients";
 import Products from "@/pages/Products";
 import Purchases from "@/pages/Purchases";
 import Sales from "@/pages/Sales";
+import Transfers from "@/pages/user/Transfers";
 import Users from "@/pages/Users";
 import Reports from "@/pages/Reports";
 import InventoryTransactions from "@/pages/InventoryTransactions";
@@ -36,6 +37,7 @@ const router = createBrowserRouter([
       { path: "purchases", element: <Purchases /> },
       { path: "sales", element: <Sales /> },
       { path: "inventory-transactions", element: <InventoryTransactions /> },
+      { path: "transfers", element: <Transfers /> },
 
       // 🔐 Solo superadmin
       {

@@ -16,18 +16,19 @@ export function useSales() {
   }
 
   async function createSale(sale) {
-    const created = await SalesApi.create(sale);
-    setSales((prev) => [created, ...prev]);
+    try {
+      const created = await SalesApi.create(sale);
+      await fetchSales();
+      return created;
+    } catch (err) {
+      console.error("Error en createSale:", err);
+    }
   }
 
-  async function deleteSale(id) {
-    await SalesApi.remove(id);
-    setSales((prev) => prev.filter((s) => s.id !== id));
-  }
 
   useEffect(() => {
     fetchSales();
   }, []);
 
-  return { sales, loading, createSale, deleteSale };
+  return { sales, loading, createSale };
 }

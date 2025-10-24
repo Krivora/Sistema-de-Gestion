@@ -10,7 +10,6 @@ import {
 
 export default function SaleDetails({ open, onClose, sale }) {
   if (!sale) return null;
-
   const total = sale.items?.reduce((acc, i) => acc + i.qty * i.unit_price, 0) || 0;
 
   return (

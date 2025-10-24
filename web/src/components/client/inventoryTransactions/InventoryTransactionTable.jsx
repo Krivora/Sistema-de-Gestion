@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
-import { ArrowDownward, ArrowUpward, Delete } from "@mui/icons-material";
+import { ArrowDownward, ArrowUpward } from "@mui/icons-material";
 import { Skeleton, IconButton, Tooltip } from "@mui/material";
 import { useTheme } from "@/context/ThemeProvider";
 import TableFilters from "@/components/common/TableFilters";
 import Pagination from "@/components/common/TablePagination";
 
-export default function InventoryTransactionTable({ transactions = [], loading, onDelete }) {
+export default function InventoryTransactionTable({ transactions = [], loading }) {
   const { darkMode } = useTheme();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -161,14 +161,13 @@ export default function InventoryTransactionTable({ transactions = [], loading, 
                       {typeLabel}
                     </span>
                   </td>
-                  <td className="px-6 py-4">{t.qty}</td>
+                  <td className="px-6 py-4">
+                    {Number(t.qty).toLocaleString("es-MX", { maximumFractionDigits: 2 })}
+                  </td>
+
                   <td className="px-6 py-4">{t.note || "—"}</td>
                   <td className="px-6 py-4 text-right">
-                    <Tooltip title="Eliminar">
-                      <IconButton size="small" onClick={() => onDelete(t.id)} className={actionBtn}>
-                        <Delete fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
+      
                   </td>
                 </tr>
               );
@@ -228,11 +227,7 @@ export default function InventoryTransactionTable({ transactions = [], loading, 
               )}
 
               <div className="flex justify-end gap-2 mt-2 flex-wrap">
-                <Tooltip title="Eliminar">
-                  <IconButton size="small" onClick={() => onDelete(t.id)} className={actionBtn}>
-                    <Delete fontSize="small" />
-                  </IconButton>
-                </Tooltip>
+                
               </div>
             </div>
           );

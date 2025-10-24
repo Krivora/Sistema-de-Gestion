@@ -16,7 +16,7 @@ export async function getAll(req, res, next) {
 
 export async function create(req, res, next) {
   try {
-    const tx = await InventoryService.createTransaction(req.body, req.user.client_id);
+    const tx = await InventoryService.createTransaction(req.body, req.user.client_id, req.user.id);
     res.status(201).json(tx);
   } catch (err) {
     res.status(400).json({ error: err.message });

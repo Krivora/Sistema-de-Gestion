@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
-import { Delete, Visibility } from "@mui/icons-material";
+import { Visibility } from "@mui/icons-material";
 import { Skeleton, Tooltip, IconButton } from "@mui/material";
 import { useTheme } from "@/context/ThemeProvider";
 import TableFilters from "@/components/common/TableFilters";
 import Pagination from "@/components/common/TablePagination";
 
-export default function PurchaseTable({ purchases = [], loading, onDelete, onView  }) {
+export default function PurchaseTable({ purchases = [], loading, onView  }) {
   const { darkMode } = useTheme();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -112,11 +112,6 @@ export default function PurchaseTable({ purchases = [], loading, onDelete, onVie
                       <Visibility fontSize="small" />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="Eliminar">
-                    <IconButton size="small" onClick={() => onDelete(p.id)} className={actionBtn}>
-                      <Delete fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
                 </td>
               </tr>
             ))}
@@ -158,15 +153,6 @@ export default function PurchaseTable({ purchases = [], loading, onDelete, onVie
               <Tooltip title="Ver detalles">
                 <IconButton size="small" onClick={() => onView(p)} className={actionBtn}>
                   <Visibility fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Eliminar">
-                <IconButton
-                  size="small"
-                  onClick={() => onDelete(p.id)}
-                  className={actionBtn}
-                >
-                  <Delete fontSize="small" />
                 </IconButton>
               </Tooltip>
             </div>

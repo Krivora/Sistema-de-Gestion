@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
-import { Delete, Visibility,Download } from "@mui/icons-material";
+import { Visibility,Download } from "@mui/icons-material";
 import { Skeleton, Tooltip, IconButton } from "@mui/material";
 import { useTheme } from "@/context/ThemeProvider";
 import TableFilters from "@/components/common/TableFilters";
 import Pagination from "@/components/common/TablePagination";
 
-export default function SaleTable({ sales = [], loading, onDelete, onView, onDownload }) {
+export default function SaleTable({ sales = [], loading, onView, onDownload }) {
   const { darkMode } = useTheme();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -104,6 +104,7 @@ export default function SaleTable({ sales = [], loading, onDelete, onView, onDow
               <th className="px-6 py-3">Metodo</th>
               <th className="px-6 py-3">Estado</th>
               <th className="px-6 py-3">Fecha</th>
+              <th className="px-6 py-3">Responsable</th>
               <th className="px-6 py-3 text-right">Acciones</th>
             </tr>
           </thead>
@@ -119,8 +120,8 @@ export default function SaleTable({ sales = [], loading, onDelete, onView, onDow
               >
                 <td className="px-6 py-4 font-medium">{s.doc_no}</td>
                 <td className="px-6 py-4 font-medium">{s.customer_name}</td>
-                <td className="px-6 py-4">{s.payment_method}</td>
                 <td className="px-6 py-4">{s.branch_name ?? "—"}</td>
+                <td className="px-6 py-4">{s.payment_method}</td>
                 <td className="px-6 py-4">
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-semibold ${s.status === "open"
@@ -136,6 +137,7 @@ export default function SaleTable({ sales = [], loading, onDelete, onView, onDow
                     new Date(s.created_at).getTime() - 7 * 60 * 60 * 1000
                   ).toLocaleString("es-MX")}
                 </td>
+                <td className="px-6 py-4 font-medium">{s.user_name}</td>
                 <td className="px-6 py-4 text-right space-x-1">
                   <Tooltip title="Ver detalles">
                     <IconButton size="small" onClick={() => onView(s)}>
@@ -145,11 +147,6 @@ export default function SaleTable({ sales = [], loading, onDelete, onView, onDow
                   <Tooltip title="Descargar PDF">
                     <IconButton size="small" onClick={() => onDownload(s)} className={actionBtn}>
                       <Download fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Eliminar">
-                    <IconButton size="small" onClick={() => onDelete(s.id)} className={actionBtn}>
-                      <Delete fontSize="small" />
                     </IconButton>
                   </Tooltip>
                 </td>
@@ -212,11 +209,6 @@ export default function SaleTable({ sales = [], loading, onDelete, onView, onDow
               <Tooltip title="Descargar PDF">
                 <IconButton size="small" onClick={() => onDownload(s)} className={actionBtn}>
                   <Download fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Eliminar">
-                <IconButton size="small" onClick={() => onDelete(s.id)} className={actionBtn}>
-                  <Delete fontSize="small" />
                 </IconButton>
               </Tooltip>
             </div>

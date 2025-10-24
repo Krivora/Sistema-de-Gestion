@@ -13,9 +13,12 @@ export async function findAll(clientId, { status, branch_id, date_from, date_to 
 
   const { rows } = await pool.query(
     `
-    SELECT s.*, b.name AS branch_name
+    SELECT s.*, 
+    b.name AS branch_name,
+    u.name AS user_name
     FROM sales s
     LEFT JOIN branches b ON b.id = s.branch_id
+    LEFT JOIN users u ON u.id = s.user_id
     WHERE ${conds.join(" AND ")}
     ORDER BY s.id DESC
     `,
@@ -26,11 +29,24 @@ export async function findAll(clientId, { status, branch_id, date_from, date_to 
 
 export async function findById(id, clientId) {
   const { rows } = await pool.query(
-    `SELECT * FROM sales WHERE id = $1 AND client_id = $2`,
+    `
+    SELECT 
+      s.*,
+      b.name AS branch_name,
+      b.code AS branch_code,
+      u.name AS user_name,
+      c.name AS customer_name_full
+    FROM sales s
+    LEFT JOIN branches b ON b.id = s.branch_id
+    LEFT JOIN users u ON u.id = s.user_id
+    LEFT JOIN customers c ON c.id = s.customer_id
+    WHERE s.id = $1 AND s.client_id = $2
+    `,
     [id, clientId]
   );
   return rows[0];
 }
+
 
 export async function findItems(saleId, clientId) {
   const { rows } = await pool.query(
@@ -45,18 +61,27 @@ export async function findItems(saleId, clientId) {
   );
   return rows;
 }
-
 export async function createHeader(client, payload) {
-  const { doc_no, branch_id, customer_id, customer_name, customer_phone, payment_method, subtotal, total } = payload;
+  let { doc_no, branch_id, customer_id, customer_name, customer_phone, payment_method, subtotal, total } = payload;
+
+  // 📄 Generar folio automático si no se envía
+  if (!doc_no) {
+    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+    doc_no = `VT-${random}`;
+  }
+
   const { rows } = await client.query(
     `
-    INSERT INTO sales (doc_no, branch_id, client_id, user_id, customer_id, customer_name, customer_phone, payment_method, subtotal, total)
+    INSERT INTO sales (
+      doc_no, branch_id, client_id, user_id, customer_id,
+      customer_name, customer_phone, payment_method, subtotal, total
+    )
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,COALESCE($9,0),COALESCE($10,0))
     RETURNING *
     `,
     [
-      doc_no || null,
-      payload.branch_id,
+      doc_no,
+      branch_id,
       payload.client_id,
       payload.user_id || null,
       customer_id || null,
@@ -67,6 +92,7 @@ export async function createHeader(client, payload) {
       total || 0
     ]
   );
+
   return rows[0];
 }
 

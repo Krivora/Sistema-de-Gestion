@@ -310,7 +310,11 @@ export default function SaleForm({ open, onClose, onSave }) {
 
       <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>
-        <Button variant="contained" onClick={handleSubmit}>
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={!form.branch_id || form.items.length === 0}
+        >
           Guardar Venta
         </Button>
       </DialogActions>

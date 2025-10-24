@@ -23,7 +23,6 @@ export default function BranchProductTable({
   const [search, setSearch] = useState("");
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [page, setPage] = useState(1);
-
   const filtered = useMemo(() => {
     return items.filter((r) => {
       const full = `${r.sku ?? ""} ${r.product_name ?? ""} ${r.branch_name ?? ""} ${r.currency ?? ""}`.toLowerCase();
@@ -135,10 +134,16 @@ export default function BranchProductTable({
                 <td className="px-6 py-4">{r.branch_name ?? "—"}</td>
                 <td className="px-6 py-4">{money(r.cost, r.currency)}</td>
                 <td className="px-6 py-4">{money(r.price, r.currency)}</td>
-                <td className="px-6 py-4">{r.min_stock ?? "—"}</td>
-                <td className="px-6 py-4">{r.reorder_point ?? "—"}</td>
-                <td className="px-6 py-4">{r.currency}</td>
-                <td className="px-6 py-4">{r.current_stock ?? 0}</td>
+                <td className="px-12 py-4">
+                  {Number(r.min_stock ?? "—").toLocaleString("es-MX", { maximumFractionDigits: 2 })}
+                </td>
+                <td className="px-12 py-4">
+                  {Number(r.reorder_point ?? "—").toLocaleString("es-MX", { maximumFractionDigits: 2 })}
+                </td>
+                <td className="px-8 py-4">{r.currency}</td>
+                 <td className="px-12 py-4">
+                  {Number(r.current_stock ?? "—").toLocaleString("es-MX", { maximumFractionDigits: 2 })}
+                </td>
                 <td className="px-6 py-4">
                   <Chip
                     label={r.is_active ? "Activo" : "Inactivo"}

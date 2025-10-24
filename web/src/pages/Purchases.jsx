@@ -7,16 +7,14 @@ import PurchaseTable from "@/components/client/purchases/PurchaseTable";
 import PurchaseForm from "@/components/client/purchases/PurchaseForm";
 import PurchaseDetails from "@/components/client/purchases/PurchaseDetails";
 import { useToast } from "@/utils/toastUtils";
-import { useAlert } from "@/utils/alertUtils";
 import { useNotify } from "@/utils/notifyUtils";
 
 export default function Purchases() {
-  const { purchases, loading, createPurchase, deletePurchase } = usePurchases();
+  const { purchases, loading, createPurchase} = usePurchases();
   const [open, setOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const toast = useToast();
-  const alert = useAlert();
   const notify = useNotify();
 
   const handleSave = async (data) => {
@@ -26,20 +24,6 @@ export default function Purchases() {
       setOpen(false);
     } catch {
       toast.error("Error al guardar la compra");
-    }
-  };
-
-  const handleDelete = async (id) => {
-    const confirmed = await alert.confirm({
-      title: "¿Eliminar compra?",
-      text: "Esta acción también eliminará los movimientos de inventario asociados.",
-    });
-    if (!confirmed) return;
-    try {
-      await deletePurchase(id);
-      notify.warning("Compra eliminada", "La compra fue eliminada correctamente");
-    } catch {
-      toast.error("Error al eliminar la compra");
     }
   };
 
@@ -62,7 +46,7 @@ export default function Purchases() {
         </Button>
       </div>
 
-      <PurchaseTable purchases={purchases} loading={loading} onDelete={handleDelete} onView={handleView} />
+      <PurchaseTable purchases={purchases} loading={loading} onView={handleView} />
 
       <PurchaseForm open={open} onClose={() => setOpen(false)} onSave={handleSave} />
 

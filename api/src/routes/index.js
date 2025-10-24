@@ -1,5 +1,6 @@
 import { Router } from "express";
 import activityRoutes from "./activity.routes.js";
+import adjustmentRoutes from "./adjustment.routes.js";
 import branchRoutes from "./branch.routes.js";
 import categoryRoutes from "./category.routes.js";
 import clientRoutes from "./client.routes.js";
@@ -19,6 +20,7 @@ const router = Router();
 
 router.use("/auth", authRoutes);
 router.use("/activities", activityRoutes);
+router.use("/adjustments", adjustmentRoutes);
 router.use("/branches", branchRoutes);
 router.use("/categories", categoryRoutes);
 router.use("/clients", clientRoutes);

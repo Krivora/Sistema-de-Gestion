@@ -3,74 +3,96 @@ import * as InventoryRepo from "../repositories/inventory.repository.js";
 import pool from "../config/db.js";
 
 /**
- * Crear transferencia completa
+ * 🧩 Crear transferencia entre sucursales (manejo unificado de inventario)
  */
 export async function createTransfer(data, user) {
   const { from_branch_id, to_branch_id, items, note } = data;
-  const client_id = user.client_id;
+  const { client_id, id: user_id } = user;
 
   if (from_branch_id === to_branch_id)
     throw new Error("No puedes transferir a la misma sucursal");
 
-  // Validar que ambas sucursales pertenezcan al cliente
-  const { rows: branches } = await pool.query(
-    `SELECT id FROM branches WHERE id IN ($1,$2) AND client_id = $3`,
-    [from_branch_id, to_branch_id, client_id]
-  );
-  if (branches.length < 2) throw new Error("Sucursales inválidas para este cliente");
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
 
-  // Crear transferencia
-  const transfer = await TransferRepo.createTransfer({
-    client_id,
-    from_branch_id,
-    to_branch_id,
-    note,
-    created_by: user.id,
-  });
+    if (!items?.length) throw new Error("La transferencia requiere productos");
 
-  // Procesar cada producto
-  for (const item of items) {
-    const { product_id, qty } = item;
-
-    await TransferRepo.addItem(transfer.id, product_id, qty);
-
-    // Registrar salida
-    await InventoryRepo.create({
-      branch_id: from_branch_id,
-      product_id,
-      type: "TRANSFER_OUT",
-      qty,
-      unit_cost: 0,
-      note: `Salida transferencia #${transfer.id}`,
+    // Crear encabezado
+    const transfer = await TransferRepo.createTransfer({
       client_id,
-      ref_type: "transfer",
-      ref_id: transfer.id,
+      from_branch_id,
+      to_branch_id,
+      note,
+      created_by: user_id,
     });
 
-    // Registrar entrada
-    await InventoryRepo.create({
-      branch_id: to_branch_id,
-      product_id,
-      type: "TRANSFER_IN",
-      qty,
-      unit_cost: 0,
-      note: `Entrada transferencia #${transfer.id}`,
+    // Procesar productos
+    for (const item of items) {
+      const qty = Number(item.qty);
+      if (qty <= 0) throw new Error("Cantidad inválida en item");
+
+      await TransferRepo.addItem(transfer.id, item.product_id, qty);
+
+      // 🚚 Salida (TRANSFER_OUT)
+      await InventoryRepo.createAndApply(
+        client, // 🔹 ejecuta dentro de la misma transacción
+        {
+          branch_id: from_branch_id,
+          product_id: item.product_id,
+          qty,
+          type: "TRANSFER_OUT",
+          unit_cost: 0,
+          note: `Salida transferencia #${transfer.id}`,
+          ref_type: "transfers",
+          ref_id: transfer.id,
+        },
+        client_id,
+        user_id
+      );
+
+      // 🚚 Entrada (TRANSFER_IN)
+      await InventoryRepo.createAndApply(
+        client, // 🔹 también dentro de la misma transacción
+        {
+          branch_id: to_branch_id,
+          product_id: item.product_id,
+          qty,
+          type: "TRANSFER_IN",
+          unit_cost: 0,
+          note: `Entrada transferencia #${transfer.id}`,
+          ref_type: "transfers",
+          ref_id: transfer.id,
+        },
+        client_id,
+        user_id
+      );
+    }
+
+    // Registrar log general
+    await InventoryRepo.logActivity(
+      client,
+      user_id,
       client_id,
-      ref_type: "transfer",
-      ref_id: transfer.id,
-    });
+      "CREATE_TRANSFER",
+      `Transferencia #${transfer.id} creada (${items.length} productos)`,
+      "transfers",
+      transfer.id
+    );
 
-    // Actualizar stock origen y destino
-    const currentOut = await InventoryRepo.getBranchStock(from_branch_id, product_id);
-    await InventoryRepo.updateBranchStock(from_branch_id, product_id, currentOut - Number(qty));
-
-    const currentIn = await InventoryRepo.getBranchStock(to_branch_id, product_id);
-    await InventoryRepo.updateBranchStock(to_branch_id, product_id, currentIn + Number(qty));
+    await client.query("COMMIT");
+    return transfer;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
   }
-
-  return transfer;
 }
 
+/**
+ * 📋 Listar y obtener transferencias
+ */
 export async function getAllTransfers(clientId) {
   return await TransferRepo.findAll(clientId);
 }

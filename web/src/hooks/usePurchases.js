@@ -22,13 +22,8 @@ export function usePurchases() {
   // 🔹 Crear
   async function createPurchase(purchase) {
     const created = await PurchasesApi.create(purchase);
-    setPurchases((prev) => [created, ...prev]);
-  }
-
-  // 🔹 Eliminar
-  async function deletePurchase(id) {
-    await PurchasesApi.remove(id);
-    setPurchases((prev) => prev.filter((p) => p.id !== id));
+    await fetchPurchases(); // refresca lista completa
+    return created;
   }
 
   useEffect(() => {
@@ -41,6 +36,5 @@ export function usePurchases() {
     error,
     fetchPurchases,
     createPurchase,
-    deletePurchase,
   };
 }

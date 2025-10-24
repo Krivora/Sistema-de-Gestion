@@ -33,20 +33,6 @@ export default function InventoryTransactions() {
     }
   };
 
-  const handleDelete = async (id) => {
-    const confirmed = await alert.confirm({
-      title: "¿Eliminar movimiento?",
-      text: "Esta acción no se puede deshacer.",
-    });
-    if (!confirmed) return;
-    try {
-      await deleteTransaction(id);
-      notify.warning("Movimiento eliminado", "El registro fue eliminado del sistema");
-    } catch {
-      toast.error("Error al eliminar el movimiento");
-    }
-  };
-
   return (
     <div className="p-4 sm:p-6 space-y-4 max-w-full overflow-x-hidden">
       {/* 🧭 Header responsive */}
@@ -119,7 +105,6 @@ export default function InventoryTransactions() {
       <InventoryTransactionTable
         transactions={transactions}
         loading={loading}
-        onDelete={handleDelete}
       />
 
       {/* 📦 Formulario */}

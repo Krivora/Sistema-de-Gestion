@@ -14,9 +14,4 @@ export const PurchasesApi = {
       body: JSON.stringify(payload),
     }),
 
-  // 🗑️ Eliminar compra
-  remove: (id) =>
-    apiFetch(`/purchases/${id}`, {
-      method: "DELETE",
-    }),
 };

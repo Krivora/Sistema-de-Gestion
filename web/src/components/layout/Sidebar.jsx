@@ -2,7 +2,6 @@ import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
   Dashboard as DashboardIcon,
-  Store as StoreIcon,
   ShoppingCart as ShoppingCartIcon,
   ReceiptLong as ReceiptIcon,
   Inventory2 as InventoryIcon,
@@ -13,7 +12,8 @@ import {
   Group as UsersIcon,
   Warehouse as WarehouseIcon,
   Menu as MenuIcon,
-  SupervisorAccount as Supervisor
+  SupervisorAccount as Supervisor,
+  SwapHoriz
 } from "@mui/icons-material";
 import { useTheme } from "@/context/ThemeProvider";
 import { useAuth } from "@/context/AuthProvider";
@@ -46,6 +46,7 @@ export default function Sidebar({ open, setOpen, onCollapseChange }) {
         items: [
           { to: "/purchases", label: "Compras", icon: <ShoppingCartIcon fontSize="small" /> },
           { to: "/sales", label: "Ventas", icon: <ReceiptIcon fontSize="small" /> },
+          { to: "/transfers", label: "Transferencias", icon: <SwapHoriz fontSize="small" /> },
         ],
       },
       {

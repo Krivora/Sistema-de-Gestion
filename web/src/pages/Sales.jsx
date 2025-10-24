@@ -8,7 +8,6 @@ import SaleForm from "@/components/client/sales/SaleForm";
 import SaleDetails from "@/components/client/sales/SaleDetails";
 import useSalePrint from "@/components/client/sales/SalePrint";
 import { useToast } from "@/utils/toastUtils";
-import { useAlert } from "@/utils/alertUtils";
 import { useNotify } from "@/utils/notifyUtils";
 
 export default function Sales() {
@@ -19,7 +18,6 @@ export default function Sales() {
   const { handleDownloadPDF  } = useSalePrint();
 
   const toast = useToast();
-  const alert = useAlert();
   const notify = useNotify();
 
   const handleSave = async (data) => {
@@ -29,20 +27,6 @@ export default function Sales() {
       setOpen(false);
     } catch {
       toast.error("Error al guardar la venta");
-    }
-  };
-
-  const handleDelete = async (id) => {
-    const confirmed = await alert.confirm({
-      title: "¿Eliminar venta?",
-      text: "Esta acción también eliminará los movimientos de inventario asociados.",
-    });
-    if (!confirmed) return;
-    try {
-      await deleteSale(id);
-      notify.warning("Venta eliminada", "La venta fue eliminada correctamente");
-    } catch {
-      toast.error("Error al eliminar la venta");
     }
   };
 
@@ -66,7 +50,7 @@ export default function Sales() {
         </Button>
       </div>
 
-      <SaleTable sales={sales} loading={loading} onDelete={handleDelete} onView={handleView}  onDownload={(s) => handleDownloadPDF(s.id)} />
+      <SaleTable sales={sales} loading={loading} onView={handleView}  onDownload={(s) => handleDownloadPDF(s.id)} />
 
       <SaleForm open={open} onClose={() => setOpen(false)} onSave={handleSave} />
 
