@@ -9,7 +9,7 @@ import { useAlert } from "@/utils/alertUtils";
 import { useNotify } from "@/utils/notifyUtils";
 
 export default function Users() {
-  const { users, loading, createUser, updateUser, deleteUser, toggleUserStatus } = useUsers(); // 👈 agregamos toggle
+  const { users, loading, createUser, updateUser, toggleUserStatus } = useUsers(); // 👈 agregamos toggle
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const toast = useToast();
@@ -28,22 +28,6 @@ export default function Users() {
       setOpen(false);
     } catch {
       toast.error("Error al guardar el usuario");
-    }
-  };
-
-  const handleDelete = async (id) => {
-    const confirmed = await alert.confirm({
-      title: "¿Eliminar usuario?",
-      text: "Esta acción no se puede deshacer.",
-    });
-    if (!confirmed) return;
-
-    try {
-      await deleteUser(id);
-      notify.warning("Usuario eliminado", "El registro fue eliminado del sistema");
-    } catch {
-      notify.error("Error al eliminar", "No se pudo eliminar el usuario");
-      toast.error("Error al eliminar el usuario");
     }
   };
 
@@ -92,7 +76,6 @@ export default function Users() {
           setEditing(u);
           setOpen(true);
         }}
-        onDelete={handleDelete}
         onToggleStatus={handleToggleStatus} // 👈 se pasa la función
       />
 

@@ -27,7 +27,6 @@ export async function updateProduct(id, data, clientId, roleName) {
   return await ProductRepo.update(id, targetClient, data);
 }
 
-export async function deactivateProduct(id, clientId, roleName) {
-  const targetClient = roleName === "superadmin" ? null : clientId;
-  return await ProductRepo.deactivate(id, targetClient);
+export async function desactivateProduct(id) {
+  return await ProductRepo.desactivate(id);
 }

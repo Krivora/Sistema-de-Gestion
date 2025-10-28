@@ -46,14 +46,11 @@ export async function update(req, res, next) {
   }
 }
 
-export async function deactivate(req, res, next) {
+export async function desactivateProduct(req, res, next) {
   try {
-    const deactivated = await ProductService.deactivateProduct(
-      req.params.id,
-      req.user.client_id,
-      req.user.role_name
-    );
-    res.json(deactivated);
+    const product = await ProductService.desactivateProduct(req.params.id);
+    if (!product) return res.status(404).json({ error: "Producto no encontrada" });
+    res.json(product);
   } catch (err) {
     next(err);
   }

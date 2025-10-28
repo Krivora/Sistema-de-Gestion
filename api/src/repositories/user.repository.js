@@ -95,12 +95,6 @@ export async function findByIdNoClient(id) {
   return rows[0];
 }
 
-// 🚫 Eliminación real (solo si la necesitas)
-export async function remove(id) {
-  const { rowCount } = await pool.query("DELETE FROM users WHERE id = $1", [id]);
-  return rowCount > 0;
-}
-
 // Activar/desactivar todos los usuarios de un cliente
 export async function toggleByClient(clientId, isActive) {
   const { rows } = await pool.query(

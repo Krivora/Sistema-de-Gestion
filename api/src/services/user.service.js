@@ -31,10 +31,6 @@ export async function deactivateUser(id) {
 export async function activateUser(id) {
   return await UserRepo.activate(id);
 }
-export async function deleteUser(id) {
-  return await UserRepo.remove(id);
-}
-
 // ✅ Cambiar dark mode
 export async function changeDarkMode(userId, darkMode) {
   return await UserRepo.updateDarkMode(userId, darkMode);

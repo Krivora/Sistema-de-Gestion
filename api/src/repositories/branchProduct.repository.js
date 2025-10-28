@@ -1,42 +1,75 @@
 import pool from "../config/db.js";
 
-// 📋 Listar todos (opcional)
-export async function findAll() {
-  const { rows } = await pool.query(`
-    SELECT 
-      bp.*, 
-      p.name AS product_name, 
-      p.sku, 
-      b.name AS branch_name,
-      COALESCE((
-        SELECT SUM(
-          CASE 
-            WHEN t.type IN ('PURCHASE','ADJUSTMENT_IN','TRANSFER_IN') THEN t.qty
-            WHEN t.type IN ('SALE','ADJUSTMENT_OUT','TRANSFER_OUT') THEN -t.qty
-            ELSE 0
-          END
-        )
-        FROM inventory_transactions t
-        WHERE t.product_id = bp.product_id
-          AND t.branch_id = bp.branch_id
-      ), 0) AS current_stock
-    FROM branch_products bp
-    JOIN products p ON p.id = bp.product_id
-    JOIN branches b ON b.id = bp.branch_id
-    ORDER BY b.name, p.name
-  `);
+// 📦 Listar todos los productos por sucursal (opcionalmente filtrados por cliente)
+export async function findAll(clientId = null) {
+  const query = clientId
+    ? `
+      SELECT 
+        bp.*, 
+        p.name AS product_name, 
+        p.sku, 
+        b.name AS branch_name,
+        c.name AS client_name,
+        COALESCE((
+          SELECT SUM(
+            CASE 
+              WHEN t.type IN ('PURCHASE','ADJUSTMENT_IN','TRANSFER_IN') THEN t.qty
+              WHEN t.type IN ('SALE','ADJUSTMENT_OUT','TRANSFER_OUT') THEN -t.qty
+              ELSE 0
+            END
+          )
+          FROM inventory_transactions t
+          WHERE t.product_id = bp.product_id
+            AND t.branch_id = bp.branch_id
+            AND t.client_id = bp.client_id
+        ), 0) AS current_stock
+      FROM branch_products bp
+      JOIN products p ON p.id = bp.product_id
+      JOIN branches b ON b.id = bp.branch_id
+      JOIN clients c ON c.id = bp.client_id
+      WHERE bp.client_id = $1
+      ORDER BY b.name, p.name
+    `
+    : `
+      SELECT 
+        bp.*, 
+        p.name AS product_name, 
+        p.sku, 
+        b.name AS branch_name,
+        c.name AS client_name,
+        COALESCE((
+          SELECT SUM(
+            CASE 
+              WHEN t.type IN ('PURCHASE','ADJUSTMENT_IN','TRANSFER_IN') THEN t.qty
+              WHEN t.type IN ('SALE','ADJUSTMENT_OUT','TRANSFER_OUT') THEN -t.qty
+              ELSE 0
+            END
+          )
+          FROM inventory_transactions t
+          WHERE t.product_id = bp.product_id
+            AND t.branch_id = bp.branch_id
+            AND t.client_id = bp.client_id
+        ), 0) AS current_stock
+      FROM branch_products bp
+      JOIN products p ON p.id = bp.product_id
+      JOIN branches b ON b.id = bp.branch_id
+      JOIN clients c ON c.id = bp.client_id
+      ORDER BY c.name, b.name, p.name
+    `;
+
+  const { rows } = await pool.query(query, clientId ? [clientId] : []);
   return rows;
 }
 
 // 📍 Listar productos por sucursal
-export async function findByBranch(branchId) {
-  const { rows } = await pool.query(
-    `
+export async function findByBranch(branchId, clientId = null) {
+  const query = `
     SELECT 
       bp.*, 
       p.name AS product_name, 
       p.sku,
       b.name AS branch_name,
+      c.name AS client_name,
       COALESCE((
         SELECT SUM(
           CASE 
@@ -48,27 +81,42 @@ export async function findByBranch(branchId) {
         FROM inventory_transactions t
         WHERE t.product_id = bp.product_id
           AND t.branch_id = bp.branch_id
+          AND t.client_id = bp.client_id
       ), 0) AS current_stock
     FROM branch_products bp
     JOIN products p ON p.id = bp.product_id
     JOIN branches b ON b.id = bp.branch_id
+    JOIN clients c ON c.id = bp.client_id
     WHERE bp.branch_id = $1
+    ${clientId ? "AND bp.client_id = $2" : ""}
     ORDER BY p.name
-  `,
-    [branchId]
+  `;
+
+  const { rows } = await pool.query(
+    clientId ? [branchId, clientId] : [branchId]
   );
   return rows;
 }
 
-// 🔍 Buscar por ID
-export async function findById(id) {
+// 🔍 Buscar producto por ID (con client_id opcional)
+export async function findById(id, clientId = null) {
+  const query = `
+    SELECT 
+      bp.*, 
+      p.name AS product_name, 
+      p.sku, 
+      b.name AS branch_name,
+      c.name AS client_name
+    FROM branch_products bp
+    JOIN products p ON p.id = bp.product_id
+    JOIN branches b ON b.id = bp.branch_id
+    JOIN clients c ON c.id = bp.client_id
+    WHERE bp.id = $1
+    ${clientId ? "AND bp.client_id = $2" : ""}
+  `;
+
   const { rows } = await pool.query(
-    `SELECT bp.*, p.name AS product_name, p.sku, b.name AS branch_name
-     FROM branch_products bp
-     JOIN products p ON p.id = bp.product_id
-     JOIN branches b ON b.id = bp.branch_id
-     WHERE bp.id = $1`,
-    [id]
+    clientId ? [id, clientId] : [id]
   );
   return rows[0];
 }
@@ -82,15 +130,21 @@ export async function create({
   min_stock,
   reorder_point,
   currency,
+  client_id, // 👈 nuevo parámetro
 }) {
   const { rows } = await pool.query(
-    `INSERT INTO branch_products (branch_id, product_id, price, cost, min_stock, reorder_point, currency)
-     VALUES ($1,$2,$3,$4,$5,$6,$7)
-     RETURNING *`,
-    [branch_id, product_id, price, cost, min_stock, reorder_point, currency]
+    `
+    INSERT INTO branch_products 
+      (branch_id, product_id, price, cost, min_stock, reorder_point, currency, client_id)
+    VALUES 
+      ($1,$2,$3,$4,$5,$6,$7,$8)
+    RETURNING *
+    `,
+    [branch_id, product_id, price, cost, min_stock, reorder_point, currency, client_id]
   );
   return rows[0];
 }
+
 
 // ✏️ Actualizar
 export async function update(id, {

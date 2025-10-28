@@ -20,17 +20,10 @@ export const BranchesApi = {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
-
-  // Cambiar estado (activar/desactivar)
-  toggleStatus: (id, is_active) =>
-    apiFetch(`/branches/${id}/status`, {
-      method: "PUT",
-      body: JSON.stringify({ is_active }),
-    }),
-
-  // Eliminar
+    
+  // Eliminar categoría (borrado físico)
   remove: (id) =>
-    apiFetch(`/branches/${id}`, {
-      method: "DELETE",
+    apiFetch(`/branches/${id}/desactivate`, {
+      method: "PUT",
     }),
 };

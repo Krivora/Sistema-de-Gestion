@@ -11,7 +11,7 @@ export default function UserForm({ open, onClose, onSave, user }) {
 
   useEffect(() => {
   if (!open) {
-      setForm({ name: "", email: "", role: "user", password: "" });
+      setForm({ name: "", email: "", role: "", password: "" });
     }
   }, [open]);
 

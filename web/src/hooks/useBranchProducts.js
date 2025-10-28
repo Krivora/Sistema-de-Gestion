@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { BranchProductsApi } from "../api";
+import { useAuth } from "@/context/AuthProvider";
 
 export function useBranchProducts(defaultBranchId = "") {
   const [items, setItems] = useState([]);
   const [branchId, setBranchId] = useState(defaultBranchId);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { user: currentUser } = useAuth();
 
   // 🔹 Cargar productos por sucursal cuando cambia el branchId
   useEffect(() => {
@@ -31,11 +33,17 @@ export function useBranchProducts(defaultBranchId = "") {
 
   // 🧾 CRUD helpers
   const createItem = async (payload) => {
-    const created = await BranchProductsApi.create(payload);
+    const created = await BranchProductsApi.create({
+      ...payload,
+      client_id: currentUser?.client_id ?? null, // 👈 se pasa automático
+    });
+
+    // actualizar listado si corresponde a la sucursal actual
     if (!branchId || Number(branchId) === Number(created.branch_id)) {
       setItems((prev) => [created, ...prev]);
     }
   };
+
 
   const updateItem = async (id, payload) => {
     const updated = await BranchProductsApi.update(id, payload);

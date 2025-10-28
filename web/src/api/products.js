@@ -14,11 +14,7 @@ export const ProductsApi = {
       body: JSON.stringify(payload),
     }),
   remove: (id) =>
-    apiFetch(`/products/${id}`, {
-      method: "DELETE",
-    }),
-  toggleStatus: (id, newStatus) =>
-    apiFetch(`/products/${id}/${newStatus ? "activate" : "deactivate"}`, {
+    apiFetch(`/products/${id}/desactivate`, {
       method: "PUT",
     }),
 };

@@ -21,15 +21,9 @@ export const CategoriesApi = {
       body: JSON.stringify(payload),
     }),
 
-  // Eliminar categoría (borrado físico)
+  // Eliminar categoría (borrado logico)
   remove: (id) =>
-    apiFetch(`/categories/${id}`, {
-      method: "DELETE",
-    }),
-
-  // ✅ Activar / Inhabilitar categoría (soft delete)
-  toggleStatus: (id, newStatus) =>
-    apiFetch(`/categories/${id}/${newStatus ? "activate" : "deactivate"}`, {
+    apiFetch(`/categories/${id}/desactivate`, {
       method: "PUT",
     }),
 };

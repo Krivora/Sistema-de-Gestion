@@ -43,7 +43,14 @@ export default function SaleDetails({ open, onClose, sale }) {
             <Typography variant="body1" fontWeight="500">
               {sale.customer_name || "Público General"}
             </Typography>
+
+            {sale.customer_phone && (
+              <Typography variant="body2" color="text.secondary">
+                {sale.customer_phone}
+              </Typography>
+            )}
           </div>
+
 
           <div>
             <Typography variant="subtitle2" color="text.secondary">

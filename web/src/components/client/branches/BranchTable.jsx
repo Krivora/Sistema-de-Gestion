@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
-import { Edit, Delete, PowerSettingsNew } from "@mui/icons-material";
+import { Edit, Delete } from "@mui/icons-material";
 import { Chip, IconButton, Skeleton, Tooltip } from "@mui/material";
 import { useTheme } from "@/context/ThemeProvider";
 import TableFilters from "@/components/common/TableFilters";
 import Pagination from "@/components/common/TablePagination";
 
-export default function BranchTable({ branches = [], loading, onEdit, onDelete, onToggleStatus }) {
+export default function BranchTable({ branches = [], loading, onEdit, onDelete }) {
   const { darkMode } = useTheme();
   const [search, setSearch] = useState("");
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -45,7 +45,6 @@ export default function BranchTable({ branches = [], loading, onEdit, onDelete, 
               <th className="px-6 py-3">Nombre</th>
               <th className="px-6 py-3">Dirección</th>
               <th className="px-6 py-3">Teléfono</th>
-              <th className="px-6 py-3">Estado</th>
               <th className="px-6 py-3 text-right">Acciones</th>
             </tr>
           </thead>
@@ -106,7 +105,6 @@ export default function BranchTable({ branches = [], loading, onEdit, onDelete, 
               <th className="px-6 py-3">Nombre</th>
               <th className="px-6 py-3">Dirección</th>
               <th className="px-6 py-3">Teléfono</th>
-              <th className="px-6 py-3">Estado</th>
               <th className="px-6 py-3 text-right">Acciones</th>
             </tr>
           </thead>
@@ -127,27 +125,8 @@ export default function BranchTable({ branches = [], loading, onEdit, onDelete, 
                 </td>
                 <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>{b.address}</td>
                 <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>{b.phone}</td>
-                <td className="px-6 py-4">
-                  <Chip
-                    label={b.is_active ? "Activa" : "Inactiva"}
-                    size="small"
-                    sx={{
-                      fontWeight: 500,
-                      bgcolor: b.is_active ? "#22c55e33" : "#6b728033",
-                      color: b.is_active ? "#22c55e" : darkMode ? "#9ca3af" : "#4b5563",
-                    }}
-                  />
-                </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-2">
-                      <Tooltip title={b.is_active ? "Inhabilitar" : "Habilitar"}>
-                          <IconButton size="small" onClick={() => onToggleStatus(b)} className={actionBtn}>
-                          <PowerSettingsNew
-                              fontSize="small"
-                              color={b.is_active ? "error" : "success"}
-                          />
-                          </IconButton>
-                      </Tooltip>
                     <button onClick={() => onEdit(b)} className={actionBtn}>
                       <Edit fontSize="small" />
                     </button>
@@ -173,15 +152,6 @@ export default function BranchTable({ branches = [], loading, onEdit, onDelete, 
           >
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-semibold text-sm">{b.name}</h3>
-              <Chip
-                label={b.is_active ? "Activa" : "Inactiva"}
-                size="small"
-                sx={{
-                  fontWeight: 500,
-                  bgcolor: b.is_active ? "#22c55e33" : "#6b728033",
-                  color: b.is_active ? "#22c55e" : darkMode ? "#9ca3af" : "#4b5563",
-                }}
-              />
             </div>
 
             <p className="text-xs text-gray-400 mb-1">{b.code || "—"}</p>
@@ -191,13 +161,7 @@ export default function BranchTable({ branches = [], loading, onEdit, onDelete, 
             <p className={`text-xs mb-1 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
               Teléfono: {b.phone || "—"}
             </p>
-
             <div className="flex justify-end gap-2 mt-2 flex-wrap">
-              <Tooltip title={b.is_active ? "Inhabilitar" : "Habilitar"}>
-                <IconButton size="small" onClick={() => onToggleStatus(b)} className={actionBtn}>
-                  <PowerSettingsNew fontSize="small" color={b.is_active ? "error" : "success"} />
-                </IconButton>
-              </Tooltip>
               <IconButton size="small" onClick={() => onEdit(b)} className={actionBtn}>
                 <Edit fontSize="small" />
               </IconButton>

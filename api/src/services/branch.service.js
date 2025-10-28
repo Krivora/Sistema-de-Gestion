@@ -5,20 +5,36 @@ import pool from "../config/db.js";
  * Validar límite de sucursales antes de crear
  */
 async function checkClientBranchLimit(client_id) {
+  // Obtener límite configurado en el cliente
   const { rows: clientRows } = await pool.query(
     "SELECT max_branches FROM clients WHERE id = $1",
     [client_id]
   );
-  const limit = clientRows[0]?.max_branches ?? 1;
 
+  // Si no tiene registro de límite, permitir solo 1
+  const limit = Number(clientRows[0]?.max_branches ?? 1);
+
+  // Contar sucursales activas o totales
   const { rows: countRows } = await pool.query(
-    "SELECT COUNT(*) AS total FROM branches WHERE client_id = $1",
+    `
+    SELECT COUNT(*)::int AS total
+    FROM branches
+    WHERE client_id = $1
+      AND is_active = TRUE
+    `,
     [client_id]
   );
   const total = Number(countRows[0].total);
 
+  // Validar límite
   if (total >= limit) {
-    throw new Error(`El cliente ha alcanzado su límite máximo de sucursales (${limit})`);
+    const message =
+      `❌ No se puede crear más sucursales. ` +
+      `El cliente ha alcanzado su límite máximo de ${limit} sucursales.\n` +
+      `Si crees que se trata de un error, por favor comunícate con soporte.`;
+    const error = new Error(message);
+    error.status = 400; // 🔸 HTTP 400 Bad Request
+    throw error;
   }
 }
 
@@ -44,13 +60,11 @@ export async function createBranch(data, clientId, userRole) {
     client_id: targetClient,
   });
 }
-
 export async function updateBranch(id, clientId, userRole, data) {
   const targetClient = userRole === "superadmin" ? data.client_id : clientId;
   return await BranchRepo.update(id, targetClient, data);
 }
 
-export async function deactivateBranch(id, clientId, userRole) {
-  const targetClient = userRole === "superadmin" ? null : clientId;
-  return await BranchRepo.deactivate(id, targetClient);
+export async function desactivateBranch(id) {
+  return await BranchRepo.desactivate(id);
 }

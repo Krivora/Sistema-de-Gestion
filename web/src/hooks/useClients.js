@@ -7,11 +7,8 @@ export function useClients() {
   const [loading, setLoading] = useState(true);
   const toast = useToast();
 
-  useEffect(() => {
-    loadClients();
-  }, []);
-
-  async function loadClients() {
+  // 🔹 Cargar clientes
+  const loadClients = async () => {
     setLoading(true);
     try {
       const data = await ClientsApi.list();
@@ -21,18 +18,20 @@ export function useClients() {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  async function createClient(payload) {
+  // 🔹 Crear cliente
+  const createClient = async (payload) => {
     try {
       const newClient = await ClientsApi.create(payload);
       setClients((prev) => [...prev, newClient]);
     } catch (err) {
       toast.error(err.message);
     }
-  }
+  };
 
-  async function updateClient(id, payload) {
+  // 🔹 Actualizar cliente
+  const updateClient = async (id, payload) => {
     try {
       // 🧼 Limpiar datos antes de enviarlos
       const {
@@ -50,9 +49,10 @@ export function useClients() {
     } catch (err) {
       toast.error(err.message || "Error al actualizar el cliente");
     }
-  }
+  };
 
-  async function toggleClientStatus(id, is_active) {
+  // 🔹 Activar / Desactivar cliente
+  const toggleClientStatus = async (id, is_active) => {
     try {
       await ClientsApi.toggleStatus(id, is_active);
       setClients((prev) =>
@@ -61,16 +61,21 @@ export function useClients() {
     } catch (err) {
       toast.error("Error al cambiar estado del cliente");
     }
-  }
+  };
 
-  async function deleteClient(id) {
+  // 🔹 Eliminar cliente
+  const deleteClient = async (id) => {
     try {
       await ClientsApi.remove(id);
       setClients((prev) => prev.filter((c) => c.id !== id));
     } catch (err) {
       toast.error("Error al eliminar cliente");
     }
-  }
+  };
+
+  useEffect(() => {
+    loadClients();
+  }, []);
 
   return {
     clients,

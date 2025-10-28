@@ -58,16 +58,6 @@ export async function activateUser(req, res, next) {
   }
 }
 
-export async function remove(req, res, next) {
-  try {
-    const deleted = await UserService.deleteUser(req.params.id);
-    if (!deleted) return res.status(404).json({ error: "Usuario no encontrado" });
-    res.status(204).send();
-  } catch (err) {
-    next(err);
-  }
-}
-
 // ✅ Actualizar modo oscuro
 export async function updateDarkMode(req, res, next) {
   try {

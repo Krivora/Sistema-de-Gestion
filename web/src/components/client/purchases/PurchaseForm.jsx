@@ -209,7 +209,7 @@ export default function PurchaseForm({ open, onClose, onSave }) {
       <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>
         <Button variant="contained" onClick={handleSubmit} disabled={!form.branch_id || form.items.length === 0}>
-          Guardar Compra
+          Procesar Compra
         </Button>
       </DialogActions>
     </Dialog>

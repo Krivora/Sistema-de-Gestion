@@ -141,16 +141,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Lists */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ChartCard title="Productos con bajo stock" loading={bpLoading}>
-          <LowStockList items={lowStock} loading={bpLoading} />
-        </ChartCard>
-
-    {/*     <ChartCard title="Inventario total por sucursal" loading={bpLoading}>
-          <InventoryByBranch data={resumeByBranch(branchProducts)} />
-        </ChartCard> */}
-      </div>
     </DashboardLayout>
   );
 }

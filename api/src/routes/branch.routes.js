@@ -10,6 +10,5 @@ router.get("/", requireRole("superadmin", "admin"), BranchController.getAll);
 router.get("/:id", requireRole("superadmin", "admin"), BranchController.getById);
 router.post("/", requireRole("superadmin", "admin"), BranchController.create);
 router.put("/:id", requireRole("superadmin", "admin"), BranchController.update);
-router.patch("/:id/deactivate", requireRole("superadmin", "admin"), BranchController.deactivate);
-
+router.put("/:id/desactivate", authRequired, BranchController.desactivateBranch);
 export default router;

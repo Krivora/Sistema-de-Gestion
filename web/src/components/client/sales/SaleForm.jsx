@@ -9,6 +9,7 @@ import {
   IconButton,
   Tooltip,
   Autocomplete,
+  Alert,
 } from "@mui/material";
 import { useEffect, useState, useMemo } from "react";
 import { Add, Delete } from "@mui/icons-material";
@@ -17,6 +18,7 @@ import { useBranchProducts } from "@/hooks/useBranchProducts";
 
 export default function SaleForm({ open, onClose, onSave }) {
   const { branches } = useBranches();
+  const { items: branchProducts, setBranchId } = useBranchProducts();
 
   const [form, setForm] = useState({
     branch_id: "",
@@ -27,16 +29,14 @@ export default function SaleForm({ open, onClose, onSave }) {
     items: [],
   });
 
-  // 🧩 Hook dinámico: carga productos según la sucursal
-  const { items: branchProducts, setBranchId } = useBranchProducts();
-
   const [newItem, setNewItem] = useState({ product_id: "", qty: "", unit_price: "" });
   const [query, setQuery] = useState("");
+  const [stockWarning, setStockWarning] = useState(null);
 
   // 🔹 Filtramos productos dinámicamente
   const filteredProducts = useMemo(() => {
     if (!branchProducts) return [];
-    if (!query) return branchProducts.slice(0, 15); // 👈 solo los primeros 15
+    if (!query) return branchProducts.slice(0, 15);
     return branchProducts
       .filter((p) =>
         p.product_name.toLowerCase().includes(query.toLowerCase())
@@ -44,7 +44,7 @@ export default function SaleForm({ open, onClose, onSave }) {
       .slice(0, 15);
   }, [query, branchProducts]);
 
-  // 🧠 Cuando cambia el producto seleccionado → poner el precio automático según sucursal
+  // 🧠 Cuando cambia producto → actualizar precio automático
   useEffect(() => {
     if (newItem.product_id) {
       const bp = branchProducts.find(
@@ -59,7 +59,7 @@ export default function SaleForm({ open, onClose, onSave }) {
     }
   }, [newItem.product_id, branchProducts]);
 
-  // 🔹 Reset al cerrar modal
+  // ♻️ Reset al cerrar modal
   useEffect(() => {
     if (!open) {
       setForm({
@@ -72,38 +72,61 @@ export default function SaleForm({ open, onClose, onSave }) {
       });
       setNewItem({ product_id: "", qty: "", unit_price: "" });
       setQuery("");
+      setStockWarning(null);
     }
   }, [open]);
 
-  // ➕ Agregar producto
+  // ➕ Agregar producto con validación de stock
   const handleAddItem = () => {
     if (!newItem.product_id || !newItem.qty || !newItem.unit_price) return;
 
     const product = branchProducts.find(
       (p) => p.product_id === Number(newItem.product_id)
     );
+    const qty = Number(newItem.qty);
+    const stock = Number(product?.stock ?? 0);
+
+    if (!product) {
+      setStockWarning("Producto no encontrado en la sucursal seleccionada.");
+      return;
+    }
+
+    if (qty > stock) {
+      setStockWarning(`Stock insuficiente para "${product.product_name}". Solo hay ${stock} unidades disponibles.`);
+      return;
+    }
+
+    // Si todo bien, limpiar advertencia
+    setStockWarning(null);
 
     const item = {
       ...newItem,
-      product_name: product?.product_name || "",
+      product_name: product.product_name,
       product_id: Number(newItem.product_id),
-      qty: Number(newItem.qty),
+      qty,
       unit_price: Number(newItem.unit_price),
     };
 
-    setForm({ ...form, items: [...form.items, item] });
+    setForm((prev) => ({ ...prev, items: [...prev.items, item] }));
     setNewItem({ product_id: "", qty: "", unit_price: "" });
     setQuery("");
   };
 
+  // ❌ Eliminar producto
   const handleRemoveItem = (index) => {
-    setForm({ ...form, items: form.items.filter((_, i) => i !== index) });
+    setForm((prev) => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index),
+    }));
   };
 
+  // 💰 Calcular total
   const total = form.items.reduce((acc, i) => acc + i.qty * i.unit_price, 0);
 
+  // 💾 Enviar
   const handleSubmit = () => {
     if (!form.branch_id || form.items.length === 0) return;
+
     const payload = {
       ...form,
       subtotal: total,
@@ -116,22 +139,20 @@ export default function SaleForm({ open, onClose, onSave }) {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Nueva Venta</DialogTitle>
-      <DialogContent
-        sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
-      >
+      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
         {/* Datos generales */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
           <TextField
             select
             label="Sucursal"
-            name="branch_id"
             value={form.branch_id}
             onChange={(e) => {
               const val = e.target.value;
-              setForm({ ...form, branch_id: val });
-              setBranchId(val); // carga productos de la sucursal
+              setForm((prev) => ({ ...prev, branch_id: val }));
+              setBranchId(val);
             }}
             fullWidth
+            required
           >
             {branches.map((b) => (
               <MenuItem key={b.id} value={b.id}>
@@ -142,7 +163,6 @@ export default function SaleForm({ open, onClose, onSave }) {
 
           <TextField
             label="Folio (opcional)"
-            name="doc_no"
             placeholder="(Se genera automático si se deja vacío)"
             value={form.doc_no}
             onChange={(e) => setForm({ ...form, doc_no: e.target.value })}
@@ -154,26 +174,39 @@ export default function SaleForm({ open, onClose, onSave }) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <TextField
             label="Cliente"
-            name="customer_name"
             value={form.customer_name}
-            onChange={(e) =>
-              setForm({ ...form, customer_name: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, customer_name: e.target.value })}
             fullWidth
           />
           <TextField
             label="Teléfono"
-            name="customer_phone"
             value={form.customer_phone}
-            onChange={(e) =>
-              setForm({ ...form, customer_phone: e.target.value })
-            }
+            onChange={(e) => {
+              const input = e.target.value.replace(/\D/g, ""); // eliminar todo lo que no sea número
+              let formatted = input;
+
+              if (input.length > 0) {
+                // (###)
+                formatted = "(" + input.substring(0, 3);
+              }
+              if (input.length >= 4) {
+                // (###)-###
+                formatted += ")-" + input.substring(3, 6);
+              }
+              if (input.length >= 7) {
+                // (###)-###-####
+                formatted += "-" + input.substring(6, 10);
+              }
+
+              setForm({ ...form, customer_phone: formatted });
+            }}
             fullWidth
+            inputProps={{ maxLength: 14 }} // opcional: limita la longitud
           />
+
           <TextField
             select
             label="Método de Pago"
-            name="payment_method"
             value={form.payment_method}
             onChange={(e) =>
               setForm({ ...form, payment_method: e.target.value })
@@ -185,6 +218,13 @@ export default function SaleForm({ open, onClose, onSave }) {
             <MenuItem value="TARJETA">Tarjeta</MenuItem>
           </TextField>
         </div>
+
+        {/* ⚠️ Advertencia de stock */}
+        {stockWarning && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            {stockWarning}
+          </Alert>
+        )}
 
         {/* Productos */}
         <div className="mt-4 border-t pt-3">
@@ -229,7 +269,6 @@ export default function SaleForm({ open, onClose, onSave }) {
                   ? "Sin resultados"
                   : "Escribe para buscar..."
               }
-              sx={{ width: "100%" }}
             />
 
             <TextField
@@ -266,6 +305,7 @@ export default function SaleForm({ open, onClose, onSave }) {
             </Button>
           </div>
 
+          {/* Tabla de productos */}
           {form.items.length > 0 && (
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
@@ -315,7 +355,7 @@ export default function SaleForm({ open, onClose, onSave }) {
           onClick={handleSubmit}
           disabled={!form.branch_id || form.items.length === 0}
         >
-          Guardar Venta
+          Procesar Venta
         </Button>
       </DialogActions>
     </Dialog>

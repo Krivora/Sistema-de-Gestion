@@ -22,7 +22,7 @@ export default function ProductForm({ open, onClose, onSave, product }) {
   // 🔽 Cargar categorías para el select
   const { categories } = useCategories();
   const activeCategories = useMemo(
-    () => categories?.filter((c) => c.status) ?? [],
+    () => categories?.filter((c) => c.is_active) ?? [],
     [categories]
   );
 

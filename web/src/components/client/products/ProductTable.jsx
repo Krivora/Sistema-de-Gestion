@@ -1,16 +1,15 @@
 import { useMemo, useState } from "react";
-import { Edit, Delete, PowerSettingsNew } from "@mui/icons-material";
+import { Edit, Delete } from "@mui/icons-material";
 import { IconButton, Skeleton, Tooltip } from "@mui/material";
 import { useTheme } from "@/context/ThemeProvider";
 import TableFilters from "@/components/common/TableFilters";
 import Pagination from "@/components/common/TablePagination";
 
-export default function ProductTable({products = [],loading,onEdit,onDelete,onToggleStatus,}) {
+export default function ProductTable({products = [],loading,onEdit,onDelete}) {
   const { darkMode } = useTheme();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
   // 🔎 Filtro
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -42,7 +41,7 @@ export default function ProductTable({products = [],loading,onEdit,onDelete,onTo
             }`}
           >
             <tr>
-              {["Nombre", "SKU", "Categoría", "Descripción", "Estado", "Acciones"].map((h) => (
+              {["Nombre", "SKU", "Categoría", "Descripción", "Acciones"].map((h) => (
                 <th key={h} className="px-6 py-3">{h}</th>
               ))}
             </tr>
@@ -50,7 +49,7 @@ export default function ProductTable({products = [],loading,onEdit,onDelete,onTo
           <tbody>
             {Array.from({ length: 5 }).map((_, i) => (
               <tr key={i}>
-                {Array.from({ length: 6 }).map((__, j) => (
+                {Array.from({ length: 5 }).map((__, j) => (
                   <td key={j} className="px-6 py-4">
                     <Skeleton variant="text" width={100} />
                   </td>
@@ -112,7 +111,6 @@ export default function ProductTable({products = [],loading,onEdit,onDelete,onTo
               <th className="px-6 py-3">SKU</th>
               <th className="px-6 py-3">Categoría</th>
               <th className="px-6 py-3">Descripción</th>
-              <th className="px-6 py-3">Estado</th>
               <th className="px-6 py-3 text-right">Acciones</th>
             </tr>
           </thead>
@@ -136,23 +134,7 @@ export default function ProductTable({products = [],loading,onEdit,onDelete,onTo
                     <span className="italic text-gray-400">Sin descripción</span>
                   }
                 </td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                      p.is_active
-                        ? "bg-green-200 text-green-700"
-                        : "bg-red-200 text-red-700"
-                    }`}
-                  >
-                    {p.is_active ? "Activo" : "Inactivo"}
-                  </span>
-                </td>
                 <td className="px-6 py-4 text-right space-x-1">
-                  <Tooltip title={p.is_active ? "Inhabilitar" : "Habilitar"}>
-                    <IconButton size="small" onClick={() => onToggleStatus(p)} className={actionBtn}>
-                      <PowerSettingsNew fontSize="small" color={p.is_active ? "error" : "success"} />
-                    </IconButton>
-                  </Tooltip>
                   <Tooltip title="Editar">
                     <IconButton size="small" onClick={() => onEdit(p)} className={actionBtn}>
                       <Edit fontSize="small" />
@@ -183,15 +165,6 @@ export default function ProductTable({products = [],loading,onEdit,onDelete,onTo
           >
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-semibold text-sm break-words">{p.name}</h3>
-              <span
-                className={`text-xs px-2 py-1 rounded-full ${
-                  p.is_active
-                    ? "bg-green-200 text-green-700"
-                    : "bg-red-200 text-red-700"
-                }`}
-              >
-                {p.is_active ? "Activo" : "Inactivo"}
-              </span>
             </div>
 
             <p className="text-xs text-gray-400 break-all">
@@ -212,19 +185,6 @@ export default function ProductTable({products = [],loading,onEdit,onDelete,onTo
             )}
 
             <div className="flex justify-end gap-2 mt-2 flex-wrap">
-              <Tooltip title={p.is_active ? "Inhabilitar" : "Habilitar"}>
-                <IconButton
-                  size="small"
-                  onClick={() => onToggleStatus(p)}
-                  className={actionBtn}
-                >
-                  <PowerSettingsNew
-                    fontSize="small"
-                    color={p.is_active ? "error" : "success"}
-                  />
-                </IconButton>
-              </Tooltip>
-
               <Tooltip title="Editar">
                 <IconButton size="small" onClick={() => onEdit(p)} className={actionBtn}>
                   <Edit fontSize="small" />

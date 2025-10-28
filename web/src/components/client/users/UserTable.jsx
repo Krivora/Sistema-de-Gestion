@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Edit, Delete, PowerSettingsNew } from "@mui/icons-material";
+import { Edit, PowerSettingsNew } from "@mui/icons-material";
 import { Skeleton, Chip, Tooltip, IconButton } from "@mui/material";
 import { useTheme } from "@/context/ThemeProvider";
 import TableFilters from "@/components/common/TableFilters";
@@ -9,14 +9,13 @@ export default function UserTable({
   users = [],
   loading,
   onEdit,
-  onDelete,
   onToggleStatus, // 👈 nueva prop
 }) {
   const { darkMode } = useTheme();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
+  console.log(users);
   // 🔍 Filtrar usuarios
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
@@ -141,7 +140,7 @@ export default function UserTable({
                   {u.email}
                 </td>
                 <td className={`px-6 py-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
-                  {u.role}
+                  {u.role_name}
                 </td>
 
                 {/* 🟢 Estado */}
@@ -176,10 +175,6 @@ export default function UserTable({
 
                     <button onClick={() => onEdit(u)} className={actionBtn}>
                       <Edit fontSize="small" />
-                    </button>
-
-                    <button onClick={() => onDelete(u.id)} className={actionBtn}>
-                      <Delete fontSize="small" />
                     </button>
                   </div>
                 </td>
@@ -236,12 +231,6 @@ export default function UserTable({
               <Tooltip title="Editar">
                 <IconButton size="small" onClick={() => onEdit(u)} className={actionBtn}>
                   <Edit fontSize="small" />
-                </IconButton>
-              </Tooltip>
-
-              <Tooltip title="Eliminar">
-                <IconButton size="small" onClick={() => onDelete(u.id)} className={actionBtn}>
-                  <Delete fontSize="small" />
                 </IconButton>
               </Tooltip>
             </div>

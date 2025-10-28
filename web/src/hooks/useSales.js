@@ -1,34 +1,56 @@
 import { useEffect, useState } from "react";
 import { SalesApi } from "../api";
+import { useAuth } from "@/context/AuthProvider"; // 👈 para obtener el cliente actual
 
 export function useSales() {
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(false);
+  const { user: currentUser } = useAuth(); // 👈 usuario logueado
 
-  async function fetchSales() {
+  // 🔹 Obtener todas las ventas del cliente actual
+  const fetchSales = async () => {
+    if (!currentUser?.client_id) return; // evita llamadas si no hay cliente activo
     setLoading(true);
     try {
-      const data = await SalesApi.list();
+      const data = await SalesApi.list({
+        client_id: currentUser.client_id, // 👈 filtro automático
+      });
       setSales(data);
+    } catch (err) {
+      console.error("Error al cargar ventas:", err);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  async function createSale(sale) {
+  // 🔹 Crear nueva venta
+  const createSale = async (sale) => {
+    if (!currentUser?.client_id) return;
+
     try {
-      const created = await SalesApi.create(sale);
-      await fetchSales();
+      const created = await SalesApi.create({
+        ...sale,
+        client_id: currentUser.client_id, // 👈 se adjunta automáticamente
+      });
+
+      // Actualizar en memoria
+      setSales((prev) => [created, ...prev]);
+      await fetchSales(); // refresca lista completa
       return created;
     } catch (err) {
       console.error("Error en createSale:", err);
     }
-  }
+  };
 
-
+  // 🔹 Cargar ventas al montar o cuando cambie el cliente
   useEffect(() => {
     fetchSales();
-  }, []);
+  }, [currentUser?.client_id]);
 
-  return { sales, loading, createSale };
+  return {
+    sales,
+    loading,
+    fetchSales,
+    createSale,
+  };
 }

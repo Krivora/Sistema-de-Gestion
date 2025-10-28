@@ -21,10 +21,18 @@ export async function getById(req, res, next) {
 
 export async function create(req, res, next) {
   try {
-    const branch = await BranchService.createBranch(req.body, req.user.client_id, req.user.role_name);
-    res.status(201).json(branch);
+    const newBranch = await BranchService.createBranch(
+      req.body,
+      req.user.client_id,
+      req.user.role_name
+    );
+    res.status(201).json(newBranch);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    // Si es un error de límite, devolver mensaje claro al cliente
+    if (err.status === 400) {
+      return res.status(400).json({ error: err.message });
+    }
+    next(err);
   }
 }
 
@@ -42,14 +50,11 @@ export async function update(req, res, next) {
   }
 }
 
-export async function deactivate(req, res, next) {
+export async function desactivateBranch(req, res, next) {
   try {
-    const deactivated = await BranchService.deactivateBranch(
-      req.params.id,
-      req.user.client_id,
-      req.user.role_name
-    );
-    res.json(deactivated);
+    const branch = await BranchService.desactivateBranch(req.params.id);
+    if (!branch) return res.status(404).json({ error: "Sucursal no encontrada" });
+    res.json(branch);
   } catch (err) {
     next(err);
   }

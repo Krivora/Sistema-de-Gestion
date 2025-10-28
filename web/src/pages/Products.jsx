@@ -9,7 +9,7 @@ import { useAlert } from "@/utils/alertUtils";
 import { useNotify } from "@/utils/notifyUtils";
 
 export default function Products() {
-  const { products, loading, addProduct, updateProduct, deleteProduct, toggleProductStatus } =
+  const { products, loading, addProduct, updateProduct, deleteProduct } =
     useProducts();
   
   const [open, setOpen] = useState(false);
@@ -49,28 +49,6 @@ export default function Products() {
     }
   };
 
-  const handleToggleStatus = async (product) => {
-    const confirmed = await alert.confirm({
-      title: product.is_active ? "¿Inhabilitar producto?" : "¿Habilitar producto?",
-      text: product.is_active
-        ? "El producto será inhabilitado y no se mostrará en los listados."
-        : "El producto será habilitado nuevamente.",
-    });
-    if (!confirmed) return;
-
-    try {
-      await toggleProductStatus(product.id, !product.is_active);
-      notify.info(
-        product.is_active ? "Producto inhabilitado" : "Producto habilitado",
-        product.is_active
-          ? "El producto fue desactivado correctamente"
-          : "El producto fue activado correctamente"
-      );
-    } catch {
-      toast.error("Error al cambiar el estado del producto");
-    }
-  };
-
 
   return (
     <div className="p-4 sm:p-6 space-y-4 max-w-full overflow-x-hidden">
@@ -96,7 +74,6 @@ export default function Products() {
           setOpen(true);
         }}
         onDelete={handleDelete}
-        onToggleStatus={handleToggleStatus}
       />
 
       <ProductForm

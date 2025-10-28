@@ -11,6 +11,5 @@ router.put("/:id", authRequired, UserController.update);
 router.put("/:id/deactivate", UserController.deactivateUser);
 router.put("/:id/activate", UserController.activateUser);
 router.put("/:id/dark-mode", authRequired, UserController.updateDarkMode);
-router.delete("/:id", authRequired, UserController.remove);
 
 export default router;

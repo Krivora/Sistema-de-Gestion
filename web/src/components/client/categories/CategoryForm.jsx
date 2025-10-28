@@ -1,11 +1,10 @@
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack } from "@mui/material";
 import { useState, useEffect } from "react";
 
 export default function CategoryForm({ open, onClose, onSave, category }) {
   const [form, setForm] = useState({
     name: "",
     description: "",
-    code: "",
     status: true,
   });
 
@@ -21,7 +20,6 @@ export default function CategoryForm({ open, onClose, onSave, category }) {
       setForm({
         name: "",
         description: "",
-        code: "",
         status: true,
       });
   }, [category]);
@@ -31,7 +29,6 @@ export default function CategoryForm({ open, onClose, onSave, category }) {
       setForm({
         name: "",
         description: "",
-        code: "",
         status: true,
       });
   }, [open]);
@@ -48,36 +45,27 @@ export default function CategoryForm({ open, onClose, onSave, category }) {
   return (
     <Dialog open={open} onClose={onClose} fullWidth>
       <DialogTitle>{category ? "Editar Categoría" : "Nueva Categoría"}</DialogTitle>
-      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-        <TextField
-          name="name"
-          label="Nombre de la categoría"
-          value={form.name}
-          onChange={handleChange}
-          fullWidth
-        />
-
-        <TextField
-            name="code"
-            label="Código interno"
-            value={form.code}
+      <DialogContent>
+        <Stack spacing={2} mt={1}>
+          <TextField
+            name="name"
+            label="Nombre de la categoría"
+            value={form.name}
             onChange={handleChange}
             fullWidth
-            disabled
-            helperText="Se genera automáticamente al guardar"
-        />
-
-
-        <TextField
-          name="description"
-          label="Descripción"
-          value={form.description}
-          onChange={handleChange}
-          fullWidth
-          multiline
-          minRows={3}
-        />
+          />
+          <TextField
+            name="description"
+            label="Descripción"
+            value={form.description}
+            onChange={handleChange}
+            fullWidth
+            multiline
+            minRows={3}
+          />
+        </Stack>
       </DialogContent>
+
 
       <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>

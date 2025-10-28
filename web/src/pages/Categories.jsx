@@ -9,7 +9,7 @@ import { useAlert } from "@/utils/alertUtils";
 import { useNotify } from "@/utils/notifyUtils";
 
 export default function Categories() {
-  const { categories, loading, addCategory, updateCategory, deleteCategory, toggleCategoryStatus } = useCategories();
+  const { categories, loading, addCategory, updateCategory, deleteCategory } = useCategories();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const toast = useToast();
@@ -25,9 +25,11 @@ export default function Categories() {
         await addCategory(data);
         notify.success("Categoría creada", "La categoría se agregó correctamente");
       }
+
       setOpen(false);
-    } catch {
-      toast.error("Error al guardar la categoría");
+    } catch (err) {
+      // 👇 aquí se muestra el mensaje del backend
+      notify.error("Error al guardar", err.message || "No se pudo guardar la categoría");
     }
   };
 
@@ -44,28 +46,6 @@ export default function Categories() {
     } catch {
       notify.error("Error al eliminar", "No se pudo eliminar la categoría");
       toast.error("Error al eliminar la categoría");
-    }
-  };
-
-  const handleToggleStatus = async (category) => {
-    const confirmed = await alert.confirm({
-      title: category.status ? "¿Inhabilitar categoría?" : "¿Habilitar categoría?",
-      text: category.status
-        ? "La categoría será inhabilitada y no se mostrará en los listados."
-        : "La categoría será habilitada nuevamente.",
-    });
-    if (!confirmed) return;
-
-    try {
-      await toggleCategoryStatus(category.id, !category.status);
-      notify.info(
-        category.status ? "Categoría inhabilitada" : "Categoría habilitada",
-        category.status
-          ? "La categoría fue desactivada correctamente"
-          : "La categoría fue activada correctamente"
-      );
-    } catch {
-      toast.error("Error al cambiar el estado de la categoría");
     }
   };
 
@@ -93,7 +73,6 @@ export default function Categories() {
           setOpen(true);
         }}
         onDelete={handleDelete}
-        onToggleStatus={handleToggleStatus} // ⚡ nuevo handler
       />
 
       <CategoryForm

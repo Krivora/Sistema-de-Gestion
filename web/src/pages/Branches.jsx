@@ -9,7 +9,7 @@ import { useAlert } from "@/utils/alertUtils";
 import { useNotify } from "@/utils/notifyUtils";
 
 export default function Branches() {
-  const { branches, loading, addBranch, updateBranch, deleteBranch, toggleBranchStatus } =
+  const { branches, loading, addBranch, updateBranch, deleteBranch } =
     useBranches();
 
   const [open, setOpen] = useState(false);
@@ -28,11 +28,20 @@ export default function Branches() {
         await addBranch(data);
         notify.success("Sucursal creada", "La sucursal se agregó correctamente");
       }
+
       setOpen(false);
-    } catch {
-      toast.error("Error al guardar la sucursal");
+    } catch (err) {
+      // 👇 Capturamos el mensaje exacto del backend
+      const errorMsg =
+        err?.message ||
+        err?.response?.data?.error || // si usas fetch o axios, puede venir así
+        "Error al guardar la sucursal";
+
+      // 👇 Mostrarlo bonito en pantalla
+      notify.error("No se pudo crear la sucursal", errorMsg);
     }
   };
+
 
   const handleDelete = async (id) => {
     const confirmed = await alert.confirm({
@@ -47,28 +56,6 @@ export default function Branches() {
     } catch {
       notify.error("Error al eliminar", "No se pudo eliminar la sucursal");
       toast.error("Error al eliminar la sucursal");
-    }
-  };
-
-  const handleToggleStatus = async (branch) => {
-    const confirmed = await alert.confirm({
-      title: branch.is_active ? "¿Inhabilitar sucursal?" : "¿Habilitar sucursal?",
-      text: branch.is_active
-        ? "La sucursal será inhabilitada temporalmente."
-        : "La sucursal será habilitada nuevamente.",
-    });
-    if (!confirmed) return;
-
-    try {
-      await toggleBranchStatus(branch.id, !branch.is_active);
-      notify.info(
-        branch.is_active ? "Sucursal inhabilitada" : "Sucursal habilitada",
-        branch.is_active
-          ? "La sucursal fue desactivada correctamente"
-          : "La sucursal fue activada correctamente"
-      );
-    } catch {
-      toast.error("Error al cambiar el estado de la sucursal");
     }
   };
 
@@ -96,7 +83,6 @@ export default function Branches() {
           setOpen(true);
         }}
         onDelete={handleDelete}
-        onToggleStatus={handleToggleStatus}
       />
 
       <BranchForm

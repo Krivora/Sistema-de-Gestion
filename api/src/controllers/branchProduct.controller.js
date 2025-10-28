@@ -1,29 +1,42 @@
 import * as BranchProductService from "../services/branchProduct.service.js";
 
-// 📋 Listar todos
+
+// 📋 Listar todos los productos por sucursales
 export async function getAll(req, res, next) {
   try {
-    const rows = await BranchProductService.listAllBranchProducts();
+    const rows = await BranchProductService.listAllBranchProducts(
+      req.user.client_id,     // 👈 cliente actual
+      req.user.role_name      // 👈 rol del usuario (admin / superadmin)
+    );
     res.json(rows);
   } catch (err) {
     next(err);
   }
 }
 
-// 📍 Listar por sucursal
+// 📍 Listar productos por sucursal
 export async function getByBranch(req, res, next) {
   try {
-    const rows = await BranchProductService.listByBranch(req.params.branchId);
+    const rows = await BranchProductService.listByBranch(
+      req.params.branchId,
+      req.user.client_id,     // 👈 cliente actual
+      req.user.role_name      // 👈 rol del usuario
+    );
     res.json(rows);
   } catch (err) {
     next(err);
   }
 }
 
-// 🔍 Obtener uno
+// 🔍 Obtener un producto de sucursal por ID
 export async function getOne(req, res, next) {
   try {
-    const row = await BranchProductService.getBranchProduct(req.params.id);
+    const row = await BranchProductService.getBranchProduct(
+      req.params.id,
+      req.user.client_id,     // 👈 cliente actual
+      req.user.role_name      // 👈 rol del usuario
+    );
+
     if (!row) return res.status(404).json({ error: "Registro no encontrado" });
     res.json(row);
   } catch (err) {

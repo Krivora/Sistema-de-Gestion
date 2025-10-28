@@ -1,15 +1,28 @@
 import * as BranchProductRepo from "../repositories/branchProduct.repository.js";
 
-export async function listAllBranchProducts() {
-  return await BranchProductRepo.findAll();
+export async function listAllBranchProducts(clientId, userRole) {
+  // 🔸 Superadmin puede ver todos los clientes
+  if (userRole === "superadmin") {
+    return await BranchProductRepo.findAll();
+  }
+  // 🔹 Usuarios normales ven solo sus productos
+  return await BranchProductRepo.findAll(clientId);
 }
 
-export async function listByBranch(branchId) {
-  return await BranchProductRepo.findByBranch(branchId);
+// 📍 Listar productos por sucursal
+export async function listByBranch(branchId, clientId, userRole) {
+  if (userRole === "superadmin") {
+    return await BranchProductRepo.findByBranch(branchId);
+  }
+  return await BranchProductRepo.findByBranch(branchId, clientId);
 }
 
-export async function getBranchProduct(id) {
-  return await BranchProductRepo.findById(id);
+// 🔍 Obtener producto de sucursal por ID
+export async function getBranchProduct(id, clientId, userRole) {
+  if (userRole === "superadmin") {
+    return await BranchProductRepo.findById(id);
+  }
+  return await BranchProductRepo.findById(id, clientId);
 }
 
 export async function addBranchProduct(data) {

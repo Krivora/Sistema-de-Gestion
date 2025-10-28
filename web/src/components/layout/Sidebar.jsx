@@ -13,7 +13,7 @@ import {
   Warehouse as WarehouseIcon,
   Menu as MenuIcon,
   SupervisorAccount as Supervisor,
-  SwapHoriz
+  SwapHoriz, Handyman
 } from "@mui/icons-material";
 import { useTheme } from "@/context/ThemeProvider";
 import { useAuth } from "@/context/AuthProvider";
@@ -47,19 +47,15 @@ export default function Sidebar({ open, setOpen, onCollapseChange }) {
           { to: "/purchases", label: "Compras", icon: <ShoppingCartIcon fontSize="small" /> },
           { to: "/sales", label: "Ventas", icon: <ReceiptIcon fontSize="small" /> },
           { to: "/transfers", label: "Transferencias", icon: <SwapHoriz fontSize="small" /> },
-        ],
-      },
-      {
-        title: "Sucursales",
-        items: [
-          { to: "/branches", label: "Sucursales", icon: <BranchIcon fontSize="small" /> },
-          { to: "/branches-products", label: "Productos Sucursal", icon: <WarehouseIcon fontSize="small" /> },
+          { to: "/adjustments", label: "Ajustes", icon: <Handyman fontSize="small" /> },
         ],
       },
       {
         title: "Inventario",
         items: [
-          { to: "/inventory-transactions", label: "Movimientos", icon: <InventoryIcon fontSize="small" /> },
+          { to: "/branches", label: "Sucursales", icon: <BranchIcon fontSize="small" /> },
+          { to: "/branches-products", label: "Productos Sucursal", icon: <WarehouseIcon fontSize="small" /> },
+           { to: "/inventory-transactions", label: "Movimientos", icon: <InventoryIcon fontSize="small" /> },
         ],
       },
       {

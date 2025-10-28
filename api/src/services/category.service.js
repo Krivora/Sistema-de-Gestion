@@ -1,11 +1,21 @@
 import * as CategoryRepo from "../repositories/category.repository.js";
 
-export async function listCategories() {
-  return await CategoryRepo.findAll();
+// 📋 Listar categorías (filtradas por cliente si aplica)
+export async function listCategories(clientId, userRole) {
+  if (userRole === "superadmin") {
+    // 🔹 Superadmin ve todas las categorías
+    return await CategoryRepo.findAll();
+  }
+  // 🔹 Clientes normales solo ven sus categorías
+  return await CategoryRepo.findAll(clientId);
 }
 
-export async function getCategory(id) {
-  return await CategoryRepo.findById(id);
+// 🔍 Obtener categoría por ID (validando cliente)
+export async function getCategory(id, clientId, userRole) {
+  if (userRole === "superadmin") {
+    return await CategoryRepo.findById(id);
+  }
+  return await CategoryRepo.findById(id, clientId);
 }
 
 export async function addCategory(data) {
@@ -16,14 +26,6 @@ export async function editCategory(id, data) {
   return await CategoryRepo.update(id, data);
 }
 
-export async function deactivateCategory(id) {
-  return await CategoryRepo.deactivate(id);
-}
-
-export async function activateCategory(id) {
-  return await CategoryRepo.activate(id);
-}
-
-export async function removeCategory(id) {
-  return await CategoryRepo.remove(id);
+export async function desactivateCategory(id) {
+  return await CategoryRepo.desactivate(id);
 }

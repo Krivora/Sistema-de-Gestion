@@ -19,7 +19,6 @@ import { useBranchProducts } from "@/hooks/useBranchProducts";
 export default function TransferForm({ open, onClose, onSave }) {
   const { branches } = useBranches();
   const { items: branchProducts, setBranchId } = useBranchProducts();
-  console.log("Branch Products:", branchProducts);
   const [form, setForm] = useState({
     from_branch_id: "",
     to_branch_id: "",

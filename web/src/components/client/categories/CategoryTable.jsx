@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Edit, Delete, PowerSettingsNew } from "@mui/icons-material";
+import { Edit, Delete } from "@mui/icons-material";
 import { Skeleton, IconButton, Tooltip } from "@mui/material";
 import { useTheme } from "@/context/ThemeProvider";
 import TableFilters from "@/components/common/TableFilters";
@@ -14,7 +14,6 @@ export default function CategoryTable({
   loading,
   onEdit,
   onDelete,
-  onToggleStatus,
 }) {
   const { darkMode } = useTheme();
   const [search, setSearch] = useState("");
@@ -120,7 +119,6 @@ export default function CategoryTable({
               <th className="px-6 py-3">Nombre</th>
               <th className="px-6 py-3">Código</th>
               <th className="px-6 py-3">Descripción</th>
-              <th className="px-6 py-3">Estado</th>
               <th className="px-6 py-3 text-right">Acciones</th>
             </tr>
           </thead>
@@ -144,31 +142,7 @@ export default function CategoryTable({
                     <span className="italic text-gray-400">Sin descripción</span>
                   )}
                 </td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                      c.status
-                        ? "bg-green-200 text-green-700"
-                        : "bg-red-200 text-red-700"
-                    }`}
-                  >
-                    {c.status ? "Activa" : "Inactiva"}
-                  </span>
-                </td>
                 <td className="px-6 py-4 text-right space-x-1">
-                  <Tooltip title={c.status ? "Inhabilitar" : "Habilitar"}>
-                    <IconButton
-                      size="small"
-                      onClick={() => onToggleStatus(c)}
-                      className={actionBtn}
-                    >
-                      <PowerSettingsNew
-                        fontSize="small"
-                        color={c.status ? "error" : "success"}
-                      />
-                    </IconButton>
-                  </Tooltip>
-
                   <Tooltip title="Editar">
                     <IconButton size="small" onClick={() => onEdit(c)} className={actionBtn}>
                       <Edit fontSize="small" />
@@ -200,17 +174,7 @@ export default function CategoryTable({
           >
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-semibold text-sm break-words">{truncate(c.name, 60)}</h3>
-              <span
-                className={`text-xs px-2 py-1 rounded-full ${
-                  c.status
-                    ? "bg-green-200 text-green-700"
-                    : "bg-red-200 text-red-700"
-                }`}
-              >
-                {c.status ? "Activa" : "Inactiva"}
-              </span>
             </div>
-
             {c.code && (
               <p className="text-xs text-gray-400 break-all mb-1">
                 Código: <span className="font-mono">{truncate(c.code, 20)}</span>
@@ -227,19 +191,6 @@ export default function CategoryTable({
             )}
 
             <div className="flex justify-end gap-2 mt-2 flex-wrap">
-              <Tooltip title={c.status ? "Inhabilitar" : "Habilitar"}>
-                <IconButton
-                  size="small"
-                  onClick={() => onToggleStatus(c)}
-                  className={actionBtn}
-                >
-                  <PowerSettingsNew
-                    fontSize="small"
-                    color={c.status ? "error" : "success"}
-                  />
-                </IconButton>
-              </Tooltip>
-
               <Tooltip title="Editar">
                 <IconButton size="small" onClick={() => onEdit(c)} className={actionBtn}>
                   <Edit fontSize="small" />

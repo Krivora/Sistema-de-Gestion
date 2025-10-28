@@ -12,6 +12,7 @@ import Products from "@/pages/Products";
 import Purchases from "@/pages/Purchases";
 import Sales from "@/pages/Sales";
 import Transfers from "@/pages/user/Transfers";
+import Adjustments from "@/pages/user/Adjustment";
 import Users from "@/pages/Users";
 import Reports from "@/pages/Reports";
 import InventoryTransactions from "@/pages/InventoryTransactions";
@@ -35,6 +36,7 @@ const router = createBrowserRouter([
       { path: "categories", element: <Categories /> },
       { path: "products", element: <Products /> },
       { path: "purchases", element: <Purchases /> },
+      { path: "adjustments", element: <Adjustments /> },
       { path: "sales", element: <Sales /> },
       { path: "inventory-transactions", element: <InventoryTransactions /> },
       { path: "transfers", element: <Transfers /> },

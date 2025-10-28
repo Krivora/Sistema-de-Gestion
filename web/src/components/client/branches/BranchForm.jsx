@@ -60,7 +60,31 @@ export default function BranchForm({ open, onClose, onSave, branch }) {
           multiline
           minRows={2}
         />
-        <TextField name="phone" label="Teléfono" value={form.phone} onChange={handleChange} fullWidth />
+        <TextField
+            label="Teléfono"
+            value={form.phone}
+            onChange={(e) => {
+              const input = e.target.value.replace(/\D/g, ""); // eliminar todo lo que no sea número
+              let formatted = input;
+
+              if (input.length > 0) {
+                // (###)
+                formatted = "(" + input.substring(0, 3);
+              }
+              if (input.length >= 4) {
+                // (###)-###
+                formatted += ")-" + input.substring(3, 6);
+              }
+              if (input.length >= 7) {
+                // (###)-###-####
+                formatted += "-" + input.substring(6, 10);
+              }
+
+              setForm({ ...form, phone: formatted });
+            }}
+            fullWidth
+            inputProps={{ maxLength: 14 }} // opcional: limita la longitud
+          />
       </DialogContent>
 
       <DialogActions>

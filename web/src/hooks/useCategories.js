@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { CategoriesApi } from "../api";
+import { useAuth } from "@/context/AuthProvider";
 
 export function useCategories() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const { user: currentUser } = useAuth();
   // 🔹 Obtener todas
   const fetchCategories = async () => {
     try {
@@ -21,9 +22,20 @@ export function useCategories() {
 
   // 🔹 Crear
   const addCategory = async (payload) => {
-    const newCategory = await CategoriesApi.create(payload);
-    setCategories((prev) => [...prev, newCategory]);
+    try {
+      const newCategory = await CategoriesApi.create({
+        ...payload,
+        client_id: currentUser?.client_id ?? null,
+      });
+      setCategories((prev) => [...prev, newCategory]);
+      return newCategory; // 👈 importante: devuelve el resultado
+    } catch (err) {
+      console.error("Error creando categoría:", err);
+      throw err; // 👈 re-lanza el error para manejarlo en la page
+    }
   };
+
+
 
   // 🔹 Actualizar
   const updateCategory = async (id, payload) => {
@@ -39,13 +51,6 @@ export function useCategories() {
     setCategories((prev) => prev.filter((cat) => cat.id !== id));
   };
 
-  // 🔹 Activar / Inhabilitar categoría
-  const toggleCategoryStatus = async (id, newStatus) => {
-    const updated = await CategoriesApi.toggleStatus(id, newStatus);
-    setCategories((prev) =>
-      prev.map((cat) => (cat.id === id ? updated : cat))
-    );
-  };
 
   useEffect(() => {
     fetchCategories();
@@ -59,6 +64,5 @@ export function useCategories() {
     addCategory,
     updateCategory,
     deleteCategory,
-    toggleCategoryStatus, // 👈 ahora disponible para la UI
   };
 }

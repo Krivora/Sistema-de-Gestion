@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { UsersApi } from "../api";
-
+import { useAuth } from "@/context/AuthProvider";
 export function useUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  const { user: currentUser } = useAuth();
   // 🔹 Obtener todos
   async function fetchUsers() {
     setLoading(true);
@@ -20,10 +20,19 @@ export function useUsers() {
   }
 
   // 🔹 Crear
-  async function createUser(user) {
-    const newUser = await UsersApi.create(user);
+  async function createUser(newData) {
+    // Mapeo de roles (2 = admin, 3 = user)
+    const role_id = newData.role === "admin" ? 2 : 3;
+    // 🚀 Enviar con client_id del usuario logueado
+    const newUser = await UsersApi.create({
+      ...newData,
+      role_id,
+      branch_id: newData.branch_id ?? null,
+      client_id: currentUser?.client_id ?? null, // 👈 automático desde el contexto
+    });
     setUsers((prev) => [...prev, newUser]);
   }
+
 
   // 🔹 Actualizar
   async function updateUser(id, updated) {
