@@ -1,21 +1,23 @@
 import { useState, useMemo } from "react";
-import { Edit, PowerSettingsNew } from "@mui/icons-material";
+import { Edit, PowerSettingsNew, Delete  } from "@mui/icons-material";
 import { Skeleton, Chip, Tooltip, IconButton } from "@mui/material";
 import { useTheme } from "@/context/ThemeProvider";
 import TableFilters from "@/components/common/TableFilters";
 import Pagination from "@/components/common/TablePagination";
+import { fmtDate } from "@/utils/formatters"; // ajusta la ruta según tu estructura
 
 export default function UserTable({
   users = [],
   loading,
+  status,
   onEdit,
-  onToggleStatus, // 👈 nueva prop
+  onDesactivate,
+  onDelete,
 }) {
   const { darkMode } = useTheme();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  console.log(users);
   // 🔍 Filtrar usuarios
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
@@ -49,6 +51,7 @@ export default function UserTable({
               <th className="px-6 py-3">Correo</th>
               <th className="px-6 py-3">Rol</th>
               <th className="px-6 py-3">Estado</th>
+              <th className="px-6 py-3">Fecha Alta</th>
               <th className="px-6 py-3 text-right">Acciones</th>
             </tr>
           </thead>
@@ -117,7 +120,10 @@ export default function UserTable({
               <th className="px-6 py-3">Correo</th>
               <th className="px-6 py-3">Rol</th>
               <th className="px-6 py-3">Estado</th>
-              <th className="px-6 py-3 text-right">Acciones</th>
+              <th className="px-6 py-3">
+                {status === "inactive" ? "Fecha de baja" : "Fecha de alta"}
+              </th>
+              {status === "active" && <th className="px-13 py-3 text-right">Acciones</th>}
             </tr>
           </thead>
 
@@ -146,38 +152,64 @@ export default function UserTable({
                 {/* 🟢 Estado */}
                 <td className="px-6 py-4">
                   <Chip
-                    label={u.is_active ? "Activo" : "Inactivo"}
-                    color={u.is_active ? "success" : "default"}
+                    label={u.status === "active" ? "Activo" : "Inactivo"}
+                    color={u.status === "active" ? "success" : "default"}
                     size="small"
                     sx={{
                       fontWeight: 500,
-                      bgcolor: u.is_active ? "#22c55e33" : "#6b728033",
-                      color: u.is_active ? "#22c55e" : darkMode ? "#9ca3af" : "#4b5563",
+                      bgcolor: u.status === "active" ? "#22c55e33" : "#6b728033",
+                      color: u.status === "active" ? "#22c55e" : darkMode ? "#9ca3af" : "#4b5563",
                     }}
                   />
                 </td>
-
-                {/* ⚙️ Acciones */}
-                <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end gap-2">
-                    <Tooltip title={u.is_active ? "Inhabilitar" : "Habilitar"}>
-                      <IconButton
-                        size="small"
-                        onClick={() => onToggleStatus(u)}
-                        className={actionBtn}
-                      >
-                        <PowerSettingsNew
-                          fontSize="small"
-                          color={u.is_active ? "error" : "success"}
-                        />
-                      </IconButton>
-                    </Tooltip>
-
-                    <button onClick={() => onEdit(u)} className={actionBtn}>
-                      <Edit fontSize="small" />
-                    </button>
-                  </div>
+                <td className="px-6 py-4">
+                  {status === "inactive"
+                    ? fmtDate(u.desactivated_at)
+                    : fmtDate(u.created_at)}
                 </td>
+                {/* ⚙️ Acciones */}
+                {status === "active" && (
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-2">
+                      {u.status === "active" && (
+                        <>
+                          {/* 🔹 Desactivar */}
+                          <Tooltip title="Desactivar usuario">
+                            <IconButton
+                              size="small"
+                              onClick={() => onDesactivate(u)}
+                              className={actionBtn}
+                            >
+                              <PowerSettingsNew fontSize="small" color="error" />
+                            </IconButton>
+                          </Tooltip>
+
+                          {/* ✏️ Editar */}
+                          <Tooltip title="Editar">
+                            <IconButton
+                              size="small"
+                              onClick={() => onEdit(u)}
+                              className={actionBtn}
+                            >
+                              <Edit fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+
+                          {/* 🗑️ Eliminar */}
+                          <Tooltip title="Eliminar usuario">
+                            <IconButton
+                              size="small"
+                              onClick={() => onDelete(u)}
+                              className={actionBtn}
+                            >
+                              <Delete fontSize="small" color="action" />
+                            </IconButton>
+                          </Tooltip>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -196,44 +228,50 @@ export default function UserTable({
           >
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-semibold text-sm break-words">{u.name}</h3>
-              <span
-                className={`text-xs px-2 py-1 rounded-full ${
-                  u.is_active
-                    ? "bg-green-200 text-green-700"
-                    : "bg-red-200 text-red-700"
-                }`}
-              >
-                {u.is_active ? "Activo" : "Inactivo"}
-              </span>
+             <span
+              className={`text-xs px-2 py-1 rounded-full ${
+                u.status === "active"
+                  ? "bg-green-200 text-green-700"
+                  : "bg-red-200 text-red-700"
+              }`}
+            >
+              {u.status === "active" ? "Activo" : "Inactivo"}
+            </span>
             </div>
-
             <p className="text-xs text-gray-400 break-all">
               {u.email}
             </p>
             <p className="text-xs text-gray-400 mt-0.5">
-              Rol: {u.role}
+              Rol: {u.role_name}
             </p>
-
             <div className="flex justify-end gap-2 mt-2 flex-wrap">
-              <Tooltip title={u.is_active ? "Inhabilitar" : "Habilitar"}>
-                <IconButton
-                  size="small"
-                  onClick={() => onToggleStatus(u)}
-                  className={actionBtn}
-                >
-                  <PowerSettingsNew
-                    fontSize="small"
-                    color={u.is_active ? "error" : "success"}
-                  />
-                </IconButton>
-              </Tooltip>
+              {u.status === "active" && (
+                <>
+                  <Tooltip title="Desactivar usuario">
+                    <IconButton
+                      size="small"
+                      onClick={() => onDesactivate(u)}
+                      className={actionBtn}
+                    >
+                      <PowerSettingsNew fontSize="small" color="error" />
+                    </IconButton>
+                  </Tooltip>
 
-              <Tooltip title="Editar">
-                <IconButton size="small" onClick={() => onEdit(u)} className={actionBtn}>
-                  <Edit fontSize="small" />
-                </IconButton>
-              </Tooltip>
+                  <Tooltip title="Editar">
+                    <IconButton size="small" onClick={() => onEdit(u)} className={actionBtn}>
+                      <Edit fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+
+                  <Tooltip title="Eliminar usuario">
+                    <IconButton size="small" onClick={() => onDelete(u)} className={actionBtn}>
+                      <Delete fontSize="small" color="action" />
+                    </IconButton>
+                  </Tooltip>
+                </>
+              )}
             </div>
+
           </div>
         ))}
       </div>

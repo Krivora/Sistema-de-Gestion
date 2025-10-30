@@ -56,11 +56,13 @@ export default function PurchaseTable({ purchases = [], loading, onView  }) {
       </div>
     );
   }
-
   if (!purchases || purchases.length === 0) {
-    return <div className={`p-4 text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>No hay compras registradas.</div>;
+    return (
+      <div className={`p-4 text-sm text-center rounded-lg ${darkMode ? "text-gray-400 bg-[#1a1a1a]" : "text-gray-600 bg-gray-50"}`}>
+        No hay compras registradas.
+      </div>
+    );
   }
-
   return (
     <div
       className={`rounded-xl border shadow-sm transition-all ${

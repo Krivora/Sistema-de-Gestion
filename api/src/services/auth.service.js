@@ -55,7 +55,7 @@ export async function login({ email, password }) {
   const match = await bcrypt.compare(password, user.password);
   if (!match) throw new Error("Contraseña incorrecta.");
 
-  if (!user.is_active) throw new Error("Usuario inactivo. Contacte al administrador.");
+  if (!user.status==='active') throw new Error("Usuario inactivo. Contacte al administrador.");
 
   const token = jwt.sign(
     {

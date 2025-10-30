@@ -9,7 +9,7 @@ router.get("/:id", authRequired, UserController.getById);
 router.post("/", authRequired, UserController.create);
 router.put("/:id", authRequired, UserController.update);
 router.put("/:id/deactivate", UserController.deactivateUser);
-router.put("/:id/activate", UserController.activateUser);
+router.put("/:id/delete", UserController.deleteUser);
 router.put("/:id/dark-mode", authRequired, UserController.updateDarkMode);
 
 export default router;

@@ -61,12 +61,11 @@ export default function TransferTable({ transfers = [], loading }) {
 
   if (!transfers || transfers.length === 0) {
     return (
-      <div className={`p-4 text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+      <div className={`p-4 text-sm text-center rounded-lg ${darkMode ? "text-gray-400 bg-[#1a1a1a]" : "text-gray-600 bg-gray-50"}`}>
         No hay transferencias registradas aún.
       </div>
     );
   }
-
   return (
     <div
       className={`rounded-xl border shadow-sm transition-all ${

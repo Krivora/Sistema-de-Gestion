@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button } from "@mui/material";
+import { Button, Tabs, Tab } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { useUsers } from "@/hooks/useUsers";
 import UserTable from "@/components/client/users/UserTable";
@@ -9,7 +9,17 @@ import { useAlert } from "@/utils/alertUtils";
 import { useNotify } from "@/utils/notifyUtils";
 
 export default function Users() {
-  const { users, loading, createUser, updateUser, toggleUserStatus } = useUsers(); // 👈 agregamos toggle
+  const {
+    users,
+    loading,
+    createUser,
+    updateUser,
+    desactiveUser,
+    deleteUser,
+    status,
+    setStatus,
+  } = useUsers();
+
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const toast = useToast();
@@ -26,30 +36,42 @@ export default function Users() {
         notify.success("Usuario creado", "El usuario se agregó correctamente");
       }
       setOpen(false);
-    } catch {
-      toast.error("Error al guardar el usuario");
+    } catch (err) {
+      const errorMsg =
+        err?.message ||
+        err?.response?.data?.error ||
+        "Error al guardar el usuario";
+      notify.error("No se pudo guardar el usuario", errorMsg);
     }
   };
 
-  const handleToggleStatus = async (user) => {
+  const handleDesactivate = async (user) => {
     const confirmed = await alert.confirm({
-      title: user.is_active ? "¿Inhabilitar usuario?" : "¿Habilitar usuario?",
-      text: user.is_active
-        ? "El usuario será inhabilitado y no podrá acceder al sistema."
-        : "El usuario será reactivado y podrá acceder nuevamente.",
+      title: "¿Desactivar usuario?",
+      text: "El usuario será inhabilitado y no podrá acceder al sistema.",
     });
     if (!confirmed) return;
 
     try {
-      await toggleUserStatus(user.id, !user.is_active);
-      notify.info(
-        user.is_active ? "Usuario inhabilitado" : "Usuario habilitado",
-        user.is_active
-          ? "El usuario ya no puede acceder al sistema"
-          : "El usuario fue reactivado correctamente"
-      );
+      await desactiveUser(user.id);
+      notify.info("Usuario desactivado", "El usuario ya no puede acceder al sistema");
     } catch {
-      toast.error("Error al cambiar el estado del usuario");
+      toast.error("Error al desactivar el usuario");
+    }
+  };
+
+  const handleDelete = async (user) => {
+    const confirmed = await alert.confirm({
+      title: "¿Eliminar usuario?",
+      text: "El usuario será eliminado completamente.",
+    });
+    if (!confirmed) return;
+
+    try {
+      await deleteUser(user.id);
+      notify.warning("Usuario eliminado", "El usuario fue eliminado correctamente");
+    } catch {
+      toast.error("Error al eliminar el usuario");
     }
   };
 
@@ -69,16 +91,30 @@ export default function Users() {
         </Button>
       </div>
 
+      {/* 🔹 Tabs de filtro */}
+      <Tabs
+        value={status}
+        onChange={(e, newValue) => setStatus(newValue)}
+        className="mb-4"
+      >
+        <Tab label="En funcion" value="active" />
+        <Tab label="Inactivos" value="inactive" />
+      </Tabs>
+
+      {/* 🔹 Tabla */}
       <UserTable
         users={users}
         loading={loading}
+        status={status}
         onEdit={(u) => {
           setEditing(u);
           setOpen(true);
         }}
-        onToggleStatus={handleToggleStatus} // 👈 se pasa la función
+        onDesactivate={handleDesactivate}
+        onDelete={handleDelete}
       />
 
+      {/* 🔹 Formulario */}
       <UserForm
         open={open}
         onClose={() => setOpen(false)}

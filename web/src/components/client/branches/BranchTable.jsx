@@ -64,9 +64,9 @@ export default function BranchTable({ branches = [], loading, onEdit, onDelete }
     );
   }
 
-  if (!branches || branches.length === 0) {
+   if (!branches || branches.length === 0) {
     return (
-      <div className={`p-4 text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+      <div className={`p-4 text-sm text-center rounded-lg ${darkMode ? "text-gray-400 bg-[#1a1a1a]" : "text-gray-600 bg-gray-50"}`}>
         No hay sucursales registradas aún.
       </div>
     );

@@ -136,7 +136,7 @@ export default function ClientForm({ open, onClose, onSave, client }) {
               variant="subtitle1"
               sx={{ fontWeight: 600, mb: 1, color: "text.secondary" }}
             >
-              Usuario Administrador Principal
+              Administrador Principal
             </Typography>
             <Grid container spacing={2}>
               <Grid  size={{ xs: 12}}>

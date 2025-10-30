@@ -27,7 +27,6 @@ export function useBranches() {
         ...payload,
         client_id: currentUser?.client_id ?? null,
       });
-
       setBranches((prev) => [...prev, newBranch]);
       return newBranch; // 👈 importante
     } catch (err) {

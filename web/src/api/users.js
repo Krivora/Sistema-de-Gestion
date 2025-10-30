@@ -1,9 +1,8 @@
-// src/api/users.js
 import { apiFetch } from "./client";
 
 export const UsersApi = {
   // Listar todos
-  list: () => apiFetch("/users"),
+  list: (status = "active") => apiFetch(`/users?status=${status}`),
 
   // Obtener uno
   get: (id) => apiFetch(`/users/${id}`),
@@ -22,22 +21,22 @@ export const UsersApi = {
       body: JSON.stringify(payload),
     }),
 
-  // Eliminar
-  remove: (id) =>
-    apiFetch(`/users/${id}`, {
-      method: "DELETE",
+  // Desactivar usuario (status = 'inactive')
+  desactive: (id) =>
+    apiFetch(`/users/${id}/deactivate`, {
+      method: "PUT",
     }),
 
-  // Cambiar modo oscuro
+  // Eliminar usuario (status = 'deleted')
+  remove: (id) =>
+    apiFetch(`/users/${id}/delete`, {
+      method: "PUT",
+    }),
+
+  // Cambiar modo oscuro (opcional)
   updateDarkMode: (userId, darkMode) =>
     apiFetch(`/users/${userId}/dark-mode`, {
       method: "PUT",
       body: JSON.stringify({ darkMode }),
-    }),
-
-  // ✅ Activar / Inhabilitar (soft delete)
-  toggleStatus: (id, newStatus) =>
-    apiFetch(`/users/${id}/${newStatus ? "activate" : "deactivate"}`, {
-      method: "PUT",
     }),
 };

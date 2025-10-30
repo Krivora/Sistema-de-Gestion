@@ -2,7 +2,8 @@ import * as UserService from "../services/user.service.js";
 
 export async function getAll(req, res, next) {
   try {
-    const users = await UserService.getAllUsers(req.user.client_id);
+    const { status = "active" } = req.query; // 👈 valor por defecto
+    const users = await UserService.getAllUsers(req.user.client_id, req.user.role_name, status);
     res.json(users);
   } catch (err) {
     next(err);
@@ -21,9 +22,19 @@ export async function getById(req, res, next) {
 
 export async function create(req, res, next) {
   try {
-    const newUser = await UserService.createUser(req.body);
+    const newUser = await UserService.createUser(
+      req.body,              // 🔹 datos del nuevo usuario
+      req.user.client_id,    // 🔹 client_id desde el token/session
+      req.user.role_name     // 🔹 rol del usuario autenticado
+    );
+
     res.status(201).json(newUser);
   } catch (err) {
+    // 🔸 Error claro cuando se supera el límite de usuarios
+    if (err.status === 400) {
+      return res.status(400).json({ error: err.message });
+    }
+
     next(err);
   }
 }
@@ -48,9 +59,9 @@ export async function deactivateUser(req, res, next) {
   }
 }
 
-export async function activateUser(req, res, next) {
+export async function deleteUser(req, res, next) {
   try {
-    const user = await UserService.activateUser(req.params.id);
+    const user = await UserService.deleteUser(req.params.id);
     if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
     res.json(user);
   } catch (err) {
