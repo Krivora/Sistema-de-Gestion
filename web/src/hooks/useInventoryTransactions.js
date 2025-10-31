@@ -24,24 +24,6 @@ export function useInventoryTransactions() {
       setLoading(false);
     }
   };
-
-  // 🔹 Crear movimiento
-  const createTransaction = async (payload) => {
-    if (!currentUser?.client_id) return;
-    const newTx = await InventoryTransactionsApi.create({
-      ...payload,
-      client_id: currentUser.client_id, // 👈 se adjunta automáticamente
-    });
-    setTransactions((prev) => [newTx, ...prev]);
-    await fetchTransactions(); // refresca lista
-  };
-
-  // 🔹 Eliminar movimiento
-  const deleteTransaction = async (id) => {
-    await InventoryTransactionsApi.remove(id);
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
-  };
-
   // 🔹 Cargar automáticamente al montar
   useEffect(() => {
     fetchTransactions();
@@ -52,7 +34,5 @@ export function useInventoryTransactions() {
     loading,
     error,
     fetchTransactions,
-    createTransaction,
-    deleteTransaction,
   };
 }

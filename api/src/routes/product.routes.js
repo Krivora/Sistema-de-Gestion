@@ -10,5 +10,7 @@ router.get("/", requireRole("superadmin", "admin"), ProductController.getAll);
 router.get("/:id", requireRole("superadmin", "admin"), ProductController.getById);
 router.post("/", requireRole("superadmin", "admin"), ProductController.create);
 router.put("/:id", requireRole("superadmin", "admin"), ProductController.update);
-router.put("/:id/desactivate", requireRole("superadmin", "admin"), ProductController.desactivateProduct);
+router.put("/:id/activate", authRequired, requireRole("superadmin", "admin"), ProductController.activateProduct);
+router.put("/:id/desactivate", authRequired, requireRole("superadmin", "admin"), ProductController.desactivateProduct);
+router.put("/:id/delete", authRequired, requireRole("superadmin", "admin"), ProductController.deleteProduct);
 export default router;

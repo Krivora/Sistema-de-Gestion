@@ -21,9 +21,21 @@ export const CategoriesApi = {
       body: JSON.stringify(payload),
     }),
 
-  // Eliminar categoría (borrado logico)
-  remove: (id) =>
+  // 🟢 Activar
+  activate: (id) =>
+    apiFetch(`/categories/${id}/activate`, {
+      method: "PUT",
+    }),
+
+  // 🟠 Desactivar
+  desactivate: (id) =>
     apiFetch(`/categories/${id}/desactivate`, {
+      method: "PUT",
+    }),
+
+  // Eliminar (soft delete real)
+  delete: (id) =>
+    apiFetch(`/categories/${id}/delete`, {
       method: "PUT",
     }),
 };

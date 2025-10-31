@@ -46,11 +46,49 @@ export async function update(req, res, next) {
   }
 }
 
+// 🟢 Activar
+export async function activateProduct(req, res, next) {
+  try {
+    const product = await ProductService.activateProduct(req.params.id);
+    if (!product) return res.status(404).json({ error: "Producto no encontrado" });
+
+    res.json({
+      success: true,
+      message: `El producto "${product.name}" fue activado correctamente.`,
+      product,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// 🟠 Desactivar
 export async function desactivateProduct(req, res, next) {
   try {
     const product = await ProductService.desactivateProduct(req.params.id);
-    if (!product) return res.status(404).json({ error: "Producto no encontrada" });
-    res.json(product);
+    if (!product) return res.status(404).json({ error: "Producto no encontrado" });
+
+    res.json({
+      success: true,
+      message: `El producto "${product.name}" fue desactivado correctamente.`,
+      product,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// 🔴 Eliminar
+export async function deleteProduct(req, res, next) {
+  try {
+    const product = await ProductService.deleteProduct(req.params.id);
+    if (!product) return res.status(404).json({ error: "Producto no encontrado" });
+
+    res.json({
+      success: true,
+      message: `El producto "${product.name}" fue eliminado correctamente.`,
+      product,
+    });
   } catch (err) {
     next(err);
   }

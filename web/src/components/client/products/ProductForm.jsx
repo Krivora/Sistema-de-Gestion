@@ -16,13 +16,14 @@ export default function ProductForm({ open, onClose, onSave, product }) {
     name: "",
     description: "",
     category_id: "",
-    is_active: true,
+    status: "active",
   });
 
   // 🔽 Cargar categorías para el select
   const { categories } = useCategories();
+  console.log(categories);
   const activeCategories = useMemo(
-    () => categories?.filter((c) => c.is_active) ?? [],
+    () => categories?.filter((c) => c.status === "active") ?? [],
     [categories]
   );
 
@@ -33,7 +34,7 @@ export default function ProductForm({ open, onClose, onSave, product }) {
         name: product.name || "",
         description: product.description || "",
         category_id: product.category_id || "",
-        is_active: product.is_active ?? true,
+        status: product.status || "active",
       });
     } else {
       setForm({
@@ -41,7 +42,7 @@ export default function ProductForm({ open, onClose, onSave, product }) {
         name: "",
         description: "",
         category_id: "",
-        is_active: true,
+        status: "active",
       });
     }
   }, [product]);

@@ -8,15 +8,15 @@ export async function findAll(clientId = null) {
       FROM categories c
       JOIN clients cl ON cl.id = c.client_id
       WHERE c.client_id = $1
-        AND c.is_active = TRUE         -- 👈 solo categorías activas
-      ORDER BY c.name ASC
+        AND (c.status = 'active' OR c.status = 'inactive')
+      ORDER BY c.status ASC, c.name ASC
     `
     : `
       SELECT c.*, cl.name AS client_name
       FROM categories c
       JOIN clients cl ON cl.id = c.client_id
-      WHERE c.is_active = TRUE         -- 👈 solo categorías activas
-      ORDER BY c.name ASC
+      WHERE c.status = 'active' OR c.status = 'inactive'
+      ORDER BY c.status ASC, c.name ASC
     `;
 
   const { rows } = await pool.query(query, clientId ? [clientId] : []);
@@ -32,14 +32,14 @@ export async function findById(id, clientId = null) {
       JOIN clients cl ON cl.id = c.client_id
       WHERE c.id = $1
         AND c.client_id = $2
-        AND c.is_active = TRUE         -- 👈 solo activas
+        AND c.status = 'active'         -- 👈 solo activas
     `
     : `
       SELECT c.*, cl.name AS client_name
       FROM categories c
       JOIN clients cl ON cl.id = c.client_id
       WHERE c.id = $1
-        AND c.is_active = TRUE         -- 👈 solo activas
+        AND c.status = 'active'         -- 👈 solo activas
     `;
 
   const { rows } = await pool.query(query, clientId ? [id, clientId] : [id]);
@@ -56,7 +56,7 @@ export async function create({ name, description, code, client_id }) {
       FROM categories
       WHERE client_id = $1
         AND name ILIKE $2
-        AND is_active = TRUE
+        AND status = 'active'
       `,
       [client_id, name]
     );
@@ -115,29 +115,65 @@ export async function create({ name, description, code, client_id }) {
 
 
 // ✅ Actualizar datos
-export async function update(id, { name, description, code, is_active }) {
+export async function update(id, { name, description }) {
   const { rows } = await pool.query(
     `UPDATE categories
      SET name = $1,
          description = $2,
-         code = $3,
-         is_active = $4,
          updated_at = NOW()
-     WHERE id = $5
+     WHERE id = $3
      RETURNING *`,
-    [name, description, code, is_active, id]
+    [name, description, id]
   );
   return rows[0];
 }
 
-// ✅ Inhabilitar (soft delete)
+export async function updateCategoryAndProductsStatus(id, status) {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // 1️⃣ Actualizar productos relacionados
+    await client.query(
+      `UPDATE products
+       SET status = $2::status_enum,
+           deleted_at = CASE WHEN $2 = 'deleted' THEN NOW() ELSE NULL END,
+           updated_at = NOW()
+       WHERE category_id = $1`,
+      [id, status]
+    );
+
+    // 2️⃣ Actualizar la categoría
+    const { rows } = await client.query(
+      `UPDATE categories
+       SET status = $2::status_enum,
+           deleted_at = CASE WHEN $2 = 'deleted' THEN NOW() ELSE NULL END,
+           updated_at = NOW()
+       WHERE id = $1
+       RETURNING *`,
+      [id, status]
+    );
+
+    await client.query("COMMIT");
+    return rows[0];
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+// Wrappers específicos
+export async function activate(id) {
+  return await updateCategoryAndProductsStatus(id, "active");
+}
+
 export async function desactivate(id) {
-  const { rows } = await pool.query(
-    `UPDATE categories
-     SET is_active = FALSE, updated_at = NOW()
-     WHERE id = $1
-     RETURNING *`,
-    [id]
-  );
-  return rows[0];
+  return await updateCategoryAndProductsStatus(id, "inactive");
+}
+
+export async function deleted(id) {
+  return await updateCategoryAndProductsStatus(id, "deleted");
 }

@@ -1,52 +1,71 @@
 import { useState, useEffect } from "react";
 import { ProductsApi } from "../api";
 import { useAuth } from "@/context/AuthProvider";
+import { useNotify } from "@/utils/notifyUtils";
 
 export function useProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user: currentUser } = useAuth(); // 👈 usuario logueado
+  const { user: currentUser } = useAuth();
+  const notify = useNotify();
 
-  // 🔹 Obtener productos (filtrados por cliente)
+  // 🔹 Obtener productos
   const fetchProducts = async () => {
-    if (!currentUser?.client_id) return; // evita llamadas sin cliente
+    if (!currentUser?.client_id) return;
     setLoading(true);
     try {
-      const data = await ProductsApi.list({
-        client_id: currentUser.client_id, // 👈 filtro automático
-      });
+      const data = await ProductsApi.list();
       setProducts(data);
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔹 Agregar producto
+  // 🔹 Crear
   const addProduct = async (payload) => {
-    if (!currentUser?.client_id) return;
-
     const newProd = await ProductsApi.create({
       ...payload,
-      client_id: currentUser.client_id, // 👈 se adjunta automáticamente
+      client_id: currentUser?.client_id ?? null,
     });
-
+    fetchProducts();
     setProducts((prev) => [...prev, newProd]);
-    await fetchProducts(); // refrescar lista
   };
 
-  // 🔹 Actualizar producto
+  // 🔹 Actualizar
   const updateProduct = async (id, payload) => {
     const updated = await ProductsApi.update(id, payload);
     setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
-    await fetchProducts();
+    notify.success("Producto actualizado", "Cambios guardados.");
   };
 
-  // 🔹 Eliminar producto
-  const deleteProduct = async (id) => {
-    await ProductsApi.remove(id);
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+  // 🔹 Desactivar
+  const desactivateProduct = async (id) => {
+    const data = await ProductsApi.desactivate(id);
+    setProducts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, status: "inactive" } : p))
+    );
+    return data.message;
   };
-  // 🔹 Cargar productos al montar o cuando cambie el cliente
+
+  // 🔹 Activar
+  const activateProduct = async (id) => {
+    const data = await ProductsApi.activate(id);
+    setProducts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, status: "active" } : p))
+    );
+    return data.message;
+  };
+
+  // 🔹 Eliminar
+  const deleteProduct = async (id) => {
+    const data = await ProductsApi.delete(id);
+    setProducts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, status: "deleted" } : p))
+    );
+    return data.message;
+  };
+
+  // Inicial
   useEffect(() => {
     fetchProducts();
   }, [currentUser?.client_id]);
@@ -56,6 +75,8 @@ export function useProducts() {
     loading,
     addProduct,
     updateProduct,
+    activateProduct,
+    desactivateProduct,
     deleteProduct,
   };
 }

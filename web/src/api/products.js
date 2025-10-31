@@ -13,8 +13,22 @@ export const ProductsApi = {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
-  remove: (id) =>
+
+  // 🟢 Activar
+  activate: (id) =>
+    apiFetch(`/products/${id}/activate`, {
+      method: "PUT",
+    }),
+
+  // 🟠 Desactivar
+  desactivate: (id) =>
     apiFetch(`/products/${id}/desactivate`, {
+      method: "PUT",
+    }),
+
+  // 🔴 Eliminar (soft delete)
+  delete: (id) =>
+    apiFetch(`/products/${id}/delete`, {
       method: "PUT",
     }),
 };

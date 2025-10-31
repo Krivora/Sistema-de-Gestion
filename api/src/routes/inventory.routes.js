@@ -7,6 +7,4 @@ router.use(authRequired);
 
 // Superadmin y admin pueden crear movimientos
 router.get("/", requireRole("superadmin", "admin"), InventoryController.getAll);
-router.post("/", requireRole("superadmin", "admin"), InventoryController.create);
-
 export default router;

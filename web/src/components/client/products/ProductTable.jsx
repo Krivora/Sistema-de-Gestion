@@ -1,15 +1,23 @@
 import { useMemo, useState } from "react";
-import { Edit, Delete } from "@mui/icons-material";
-import { IconButton, Skeleton, Tooltip } from "@mui/material";
+import { Edit, Delete, PowerSettingsNew, RestartAlt } from "@mui/icons-material";
+import { IconButton, Skeleton, Tooltip, Chip } from "@mui/material";
 import { useTheme } from "@/context/ThemeProvider";
 import TableFilters from "@/components/common/TableFilters";
 import Pagination from "@/components/common/TablePagination";
 
-export default function ProductTable({products = [],loading,onEdit,onDelete}) {
+export default function ProductTable({
+  products = [],
+  loading,
+  onEdit,
+  onDelete,
+  onActivate,
+  onDesactivate,
+}) {
   const { darkMode } = useTheme();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
   // 🔎 Filtro
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -41,7 +49,7 @@ export default function ProductTable({products = [],loading,onEdit,onDelete}) {
             }`}
           >
             <tr>
-              {["Nombre", "SKU", "Categoría", "Descripción", "Acciones"].map((h) => (
+              {["Nombre", "SKU", "Categoría", "Descripción", "Estado", "Acciones"].map((h) => (
                 <th key={h} className="px-6 py-3">{h}</th>
               ))}
             </tr>
@@ -49,7 +57,7 @@ export default function ProductTable({products = [],loading,onEdit,onDelete}) {
           <tbody>
             {Array.from({ length: 5 }).map((_, i) => (
               <tr key={i}>
-                {Array.from({ length: 5 }).map((__, j) => (
+                {Array.from({ length: 6 }).map((__, j) => (
                   <td key={j} className="px-6 py-4">
                     <Skeleton variant="text" width={100} />
                   </td>
@@ -111,9 +119,11 @@ export default function ProductTable({products = [],loading,onEdit,onDelete}) {
               <th className="px-6 py-3">SKU</th>
               <th className="px-6 py-3">Categoría</th>
               <th className="px-6 py-3">Descripción</th>
+              <th className="px-6 py-3">Estado</th>
               <th className="px-6 py-3 text-right">Acciones</th>
             </tr>
           </thead>
+
           <tbody
             className={`divide-y ${
               darkMode ? "divide-gray-700 bg-[#1a1a1a]" : "divide-gray-200 bg-white"
@@ -130,21 +140,87 @@ export default function ProductTable({products = [],loading,onEdit,onDelete}) {
                 <td className="px-6 py-4">{p.sku || "—"}</td>
                 <td className="px-6 py-4">{p.category_name || "Sin categoría"}</td>
                 <td className="px-6 py-4">
-                  {p.description ? p.description :
+                  {p.description ? p.description : (
                     <span className="italic text-gray-400">Sin descripción</span>
-                  }
+                  )}
                 </td>
+
+                {/* Estado con Chip */}
+                <td className="px-6 py-4">
+                  <Chip
+                    label={
+                      p.status === "active"
+                        ? "Activo"
+                        : p.status === "inactive"
+                        ? "Inactivo"
+                        : "Eliminado"
+                    }
+                    size="small"
+                    sx={{
+                      fontWeight: 500,
+                      bgcolor:
+                        p.status === "active"
+                          ? "#22c55e33"
+                          : p.status === "inactive"
+                          ? "#facc1533"
+                          : "#9ca3af33",
+                      color:
+                        p.status === "active"
+                          ? "#22c55e"
+                          : p.status === "inactive"
+                          ? "#f59e0b"
+                          : darkMode
+                          ? "#9ca3af"
+                          : "#4b5563",
+                    }}
+                  />
+                </td>
+
+                {/* Acciones dinámicas */}
                 <td className="px-6 py-4 text-right space-x-1">
-                  <Tooltip title="Editar">
-                    <IconButton size="small" onClick={() => onEdit(p)} className={actionBtn}>
-                      <Edit fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Eliminar">
-                    <IconButton size="small" onClick={() => onDelete(p.id)} className={actionBtn}>
-                      <Delete fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+                  {p.status !== "deleted" && (
+                    <Tooltip title="Editar">
+                      <IconButton size="small" onClick={() => onEdit(p)} className={actionBtn}>
+                        <Edit fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+
+                  {p.status === "active" && (
+                    <Tooltip title="Desactivar">
+                      <IconButton
+                        size="small"
+                        onClick={() => onDesactivate(p.id)}
+                        className={actionBtn}
+                      >
+                        <PowerSettingsNew fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+
+                  {p.status === "inactive" && (
+                    <>
+                      <Tooltip title="Activar">
+                        <IconButton
+                          size="small"
+                          onClick={() => onActivate(p.id)}
+                          className={actionBtn}
+                        >
+                          <RestartAlt fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip title="Eliminar">
+                        <IconButton
+                          size="small"
+                          onClick={() => onDelete(p)}
+                          className={actionBtn}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}
@@ -152,54 +228,6 @@ export default function ProductTable({products = [],loading,onEdit,onDelete}) {
         </table>
       </div>
 
-      {/* 📱 Mobile card view */}
-      <div className="md:hidden p-2 space-y-3 overflow-hidden">
-        {paginated.map((p) => (
-          <div
-            key={p.id}
-            className={`rounded-lg p-3 shadow-sm border break-words overflow-hidden ${
-              darkMode
-                ? "bg-[#1a1a1a] border-gray-700"
-                : "bg-white border-gray-200"
-            }`}
-          >
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-semibold text-sm break-words">{p.name}</h3>
-            </div>
-
-            <p className="text-xs text-gray-400 break-all">
-              SKU: <span className="font-mono">{p.sku || "—"}</span>
-            </p>
-            <p className="text-xs text-gray-400 mt-0.5 break-words">
-              {p.category_name || "Sin categoría"}
-            </p>
-
-            {p.description && (
-              <p
-                className={`text-xs mb-3 break-words ${
-                  darkMode ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
-                {p.description}
-              </p>
-            )}
-
-            <div className="flex justify-end gap-2 mt-2 flex-wrap">
-              <Tooltip title="Editar">
-                <IconButton size="small" onClick={() => onEdit(p)} className={actionBtn}>
-                  <Edit fontSize="small" />
-                </IconButton>
-              </Tooltip>
-
-              <Tooltip title="Eliminar">
-                <IconButton size="small" onClick={() => onDelete(p.id)} className={actionBtn}>
-                  <Delete fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </div>
-          </div>
-        ))}
-      </div>
       <Pagination page={page} totalPages={totalPages} onChange={setPage} />
     </div>
   );

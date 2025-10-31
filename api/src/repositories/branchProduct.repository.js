@@ -115,11 +115,11 @@ export async function findById(id, clientId = null) {
     ${clientId ? "AND bp.client_id = $2" : ""}
   `;
 
-  const { rows } = await pool.query(
-    clientId ? [id, clientId] : [id]
-  );
+  const params = clientId ? [id, clientId] : [id];
+  const { rows } = await pool.query(query, params);
   return rows[0];
 }
+
 
 // ➕ Crear relación
 export async function create({

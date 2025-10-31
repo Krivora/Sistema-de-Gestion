@@ -9,8 +9,9 @@ export async function findAll(clientId = null) {
       FROM products p
       LEFT JOIN categories c ON c.id = p.category_id
       WHERE p.client_id = $1
-        AND p.is_active = TRUE         -- 👈 Solo productos activos
-      ORDER BY p.id ASC
+        AND p.status = 'active' 
+        OR P.status = 'inactive'
+     ORDER BY p.status ASC, p.name ASC
     `
     : `
       SELECT 
@@ -20,8 +21,9 @@ export async function findAll(clientId = null) {
       FROM products p
       LEFT JOIN categories c ON c.id = p.category_id
       LEFT JOIN clients cl ON cl.id = p.client_id
-      WHERE p.is_active = TRUE         -- 👈 Solo productos activos
-      ORDER BY p.id ASC
+      WHERE p.status = 'active'
+      OR P.status = 'inactive' 
+     ORDER BY p.status ASC, p.name ASC
     `;
 
   const { rows } = await pool.query(query, clientId ? [clientId] : []);
@@ -36,13 +38,13 @@ export async function findById(id, clientId = null) {
         FROM products
         WHERE id = $1
           AND client_id = $2
-          AND is_active = TRUE         -- 👈 Solo si está activo
+          AND status = 'active'         -- 👈 Solo si está activo
       `
     : `
         SELECT *
         FROM products
         WHERE id = $1
-          AND is_active = TRUE         -- 👈 Solo si está activo
+          AND status = 'active'         -- 👈 Solo si está activo
       `;
 
   const { rows } = await pool.query(query, clientId ? [id, clientId] : [id]);
@@ -117,14 +119,28 @@ export async function update(id, clientId, data) {
   return rows[0];
 }
 
-// ✅ Inhabilitar (soft delete)
-export async function desactivate(id) {
+export async function updateProductStatus(id, status) {
   const { rows } = await pool.query(
     `UPDATE products
-     SET is_active = FALSE, updated_at = NOW()
+     SET status = $2::status_enum,
+         deleted_at = CASE WHEN $2 = 'deleted' THEN NOW() ELSE NULL END,
+         updated_at = NOW()
      WHERE id = $1
      RETURNING *`,
-    [id]
+    [id, status]
   );
   return rows[0];
+}
+
+// Wrappers para mantener consistencia
+export async function activate(id) {
+  return await updateProductStatus(id, "active");
+}
+
+export async function desactivate(id) {
+  return await updateProductStatus(id, "inactive");
+}
+
+export async function deleted(id) {
+  return await updateProductStatus(id, "deleted");
 }

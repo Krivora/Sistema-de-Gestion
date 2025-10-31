@@ -11,36 +11,20 @@ import { useAlert } from "@/utils/alertUtils";
 import { useNotify } from "@/utils/notifyUtils";
 
 export default function InventoryTransactions() {
-  const { transactions, loading, createTransaction, deleteTransaction, fetchTransactions } =
+  const { transactions, loading, fetchTransactions } =
     useInventoryTransactions();
   const { branches } = useBranches();
   const { products } = useProducts();
-
   const [open, setOpen] = useState(false);
   const toast = useToast();
   const alert = useAlert();
   const notify = useNotify();
-
   const [filters, setFilters] = useState({ branch_id: "", product_id: "" });
-
-  const handleSave = async (data) => {
-    try {
-      await createTransaction(data);
-      notify.success("Movimiento creado", "El inventario fue actualizado correctamente");
-      setOpen(false);
-    } catch {
-      toast.error("Error al registrar el movimiento");
-    }
-  };
-
   return (
     <div className="p-4 sm:p-6 space-y-4 max-w-full overflow-x-hidden">
       {/* 🧭 Header responsive */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-          Movimientos de Inventario
-        </h2>
-
+        <h2 className="text-xl font-semibold">Movimientos de Inventario</h2>
         {/* 🧩 Filtros y botón */}
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <TextField
@@ -86,18 +70,6 @@ export default function InventoryTransactions() {
               </MenuItem>
             ))}
           </TextField>
-
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setOpen(true)}
-            sx={{
-              width: { xs: "100%", sm: "auto" },
-              whiteSpace: "nowrap",
-            }}
-          >
-            Nuevo Movimiento
-          </Button>
         </div>
       </div>
 
@@ -105,15 +77,6 @@ export default function InventoryTransactions() {
       <InventoryTransactionTable
         transactions={transactions}
         loading={loading}
-      />
-
-      {/* 📦 Formulario */}
-      <InventoryTransactionForm
-        open={open}
-        onClose={() => setOpen(false)}
-        onSave={handleSave}
-        branches={branches}
-        products={products}
       />
     </div>
   );

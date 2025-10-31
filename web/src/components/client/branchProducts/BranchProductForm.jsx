@@ -22,12 +22,12 @@ export default function BranchProductForm({ open, onClose, onSave, row, defaultB
   const { products } = useProducts();
 
   const activeBranches = useMemo(
-    () => (branches || []).filter((b) => b.is_active),
+    () => (branches || []).filter((b) => b.status='active'),
     [branches]
   );
 
   const activeProducts = useMemo(
-    () => (products || []).filter((p) => p.is_active),
+    () => (products || []).filter((p) => p.status= 'active'),
     [products]
   );
 

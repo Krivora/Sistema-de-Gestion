@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
-import { Edit, Delete } from "@mui/icons-material";
-import { Skeleton, IconButton, Tooltip } from "@mui/material";
+import { Edit, Delete, PowerSettingsNew, RestartAlt } from "@mui/icons-material";
+import { Skeleton, IconButton, Tooltip, Chip } from "@mui/material";
 import { useTheme } from "@/context/ThemeProvider";
 import TableFilters from "@/components/common/TableFilters";
 import Pagination from "@/components/common/TablePagination";
@@ -14,6 +14,8 @@ export default function CategoryTable({
   loading,
   onEdit,
   onDelete,
+  onActivate,
+  onDesactivate
 }) {
   const { darkMode } = useTheme();
   const [search, setSearch] = useState("");
@@ -119,6 +121,7 @@ export default function CategoryTable({
               <th className="px-6 py-3">Nombre</th>
               <th className="px-6 py-3">Código</th>
               <th className="px-6 py-3">Descripción</th>
+              <th className="px-6 py-3">Estado</th>
               <th className="px-6 py-3 text-right">Acciones</th>
             </tr>
           </thead>
@@ -142,69 +145,76 @@ export default function CategoryTable({
                     <span className="italic text-gray-400">Sin descripción</span>
                   )}
                 </td>
-                <td className="px-6 py-4 text-right space-x-1">
-                  <Tooltip title="Editar">
-                    <IconButton size="small" onClick={() => onEdit(c)} className={actionBtn}>
-                      <Edit fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
 
-                  <Tooltip title="Eliminar">
-                    <IconButton size="small" onClick={() => onDelete(c.id)} className={actionBtn}>
-                      <Delete fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+                {/* Estado con Chip */}
+                <td className="px-6 py-4">
+                  <Chip
+                    label={
+                      c.status === "active"
+                        ? "Activo"
+                        : c.status === "inactive"
+                        ? "Inactivo"
+                        : "Eliminado"
+                    }
+                    size="small"
+                    sx={{
+                      fontWeight: 500,
+                      bgcolor:
+                        c.status === "active"
+                          ? "#22c55e33"
+                          : c.status === "inactive"
+                          ? "#facc1533"
+                          : "#9ca3af33",
+                      color:
+                        c.status === "active"
+                          ? "#22c55e"
+                          : c.status === "inactive"
+                          ? "#f59e0b"
+                          : darkMode
+                          ? "#9ca3af"
+                          : "#4b5563",
+                    }}
+                  />
+                </td>
+
+                {/* Acciones dinámicas */}
+                <td className="px-6 py-4 text-right space-x-1">
+                  {c.status !== "deleted" && (
+                    <Tooltip title="Editar">
+                      <IconButton size="small" onClick={() => onEdit(c)} className={actionBtn}>
+                        <Edit fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+
+                  {c.status === "active" && (
+                    <Tooltip title="Desactivar">
+                      <IconButton size="small" onClick={() => onDesactivate(c.id)} className={actionBtn}>
+                        <PowerSettingsNew fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+
+                  {c.status === "inactive" && (
+                    <>
+                      <Tooltip title="Activar">
+                        <IconButton size="small" onClick={() => onActivate(c.id)} className={actionBtn}>
+                          <RestartAlt fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip title="Eliminar">
+                        <IconButton size="small" onClick={() => onDelete(c)} className={actionBtn}>
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-
-      {/* 📱 Mobile card view */}
-      <div className="md:hidden p-2 space-y-3 overflow-hidden">
-        {paginated.map((c) => (
-          <div
-            key={c.id}
-            className={`rounded-lg p-3 shadow-sm border break-words overflow-hidden ${
-              darkMode
-                ? "bg-[#1a1a1a] border-gray-700"
-                : "bg-white border-gray-200"
-            }`}
-          >
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-semibold text-sm break-words">{truncate(c.name, 60)}</h3>
-            </div>
-            {c.code && (
-              <p className="text-xs text-gray-400 break-all mb-1">
-                Código: <span className="font-mono">{truncate(c.code, 20)}</span>
-              </p>
-            )}
-            {c.description && (
-              <p
-                className={`text-xs mb-3 break-words ${
-                  darkMode ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
-                {truncate(c.description, 70)}
-              </p>
-            )}
-
-            <div className="flex justify-end gap-2 mt-2 flex-wrap">
-              <Tooltip title="Editar">
-                <IconButton size="small" onClick={() => onEdit(c)} className={actionBtn}>
-                  <Edit fontSize="small" />
-                </IconButton>
-              </Tooltip>
-
-              <Tooltip title="Eliminar">
-                <IconButton size="small" onClick={() => onDelete(c.id)} className={actionBtn}>
-                  <Delete fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </div>
-          </div>
-        ))}
       </div>
 
       <Pagination page={page} totalPages={totalPages} onChange={setPage} />

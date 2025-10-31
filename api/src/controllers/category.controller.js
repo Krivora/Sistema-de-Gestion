@@ -57,11 +57,49 @@ export async function updateCategory(req, res, next) {
 }
 
 
+// Activar
+export async function activateCategory(req, res, next) {
+  try {
+    const category = await CategoryService.activateCategory(req.params.id);
+    if (!category) return res.status(404).json({ error: "Categoría no encontrada" });
+
+    res.json({
+      success: true,
+      message: `La categoría "${category.name}" y sus productos fueron activados.`,
+      category,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Desactivar
 export async function desactivateCategory(req, res, next) {
   try {
     const category = await CategoryService.desactivateCategory(req.params.id);
     if (!category) return res.status(404).json({ error: "Categoría no encontrada" });
-    res.json(category);
+
+    res.json({
+      success: true,
+      message: `La categoría "${category.name}" y sus productos fueron desactivados.`,
+      category,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Eliminar
+export async function deleteCategory(req, res, next) {
+  try {
+    const category = await CategoryService.deleteCategory(req.params.id);
+    if (!category) return res.status(404).json({ error: "Categoría no encontrada" });
+
+    res.json({
+      success: true,
+      message: `La categoría "${category.name}" y sus productos fueron eliminados.`,
+      category,
+    });
   } catch (err) {
     next(err);
   }

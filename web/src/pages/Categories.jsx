@@ -9,7 +9,15 @@ import { useAlert } from "@/utils/alertUtils";
 import { useNotify } from "@/utils/notifyUtils";
 
 export default function Categories() {
-  const { categories, loading, addCategory, updateCategory, deleteCategory } = useCategories();
+  const { 
+  categories, 
+  loading, 
+  addCategory, 
+  updateCategory, 
+  desactivateCategory, 
+  activateCategory, 
+  deleteCategory 
+} = useCategories();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const toast = useToast();
@@ -33,21 +41,56 @@ export default function Categories() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (category) => {
     const confirmed = await alert.confirm({
-      title: "¿Eliminar categoría?",
-      text: "Esta acción no se puede deshacer.",
+      title: `¿Eliminar la categoría ${category.name}?`,
+      text: `Esta acción eliminará también los productos asociados a ${category.name}.
+      \n
+      Esta accion no se puede deshacer.`,
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const message = await deleteCategory(category.id);
+      notify.warning("Categoría eliminada", message);
+    } catch (err) {
+      notify.error("Error al eliminar", err.message || "No se pudo eliminar la categoría");
+    }
+  };
+
+
+
+  const handleActivate = async (id) => {
+    const confirmed = await alert.confirm({
+      title: "¿Activar categoría?",
+      text: "Esto reactivará también sus productos relacionados.",
     });
     if (!confirmed) return;
 
     try {
-      await deleteCategory(id);
-      notify.warning("Categoría eliminada", "El registro fue eliminado del sistema");
-    } catch {
-      notify.error("Error al eliminar", "No se pudo eliminar la categoría");
-      toast.error("Error al eliminar la categoría");
+      const message = await activateCategory(id);
+      notify.success("Categoría activada", message);
+    } catch (err) {
+      notify.error("Error al activar", err.message || "No se pudo activar la categoría");
     }
   };
+
+  const handleDesactivate = async (id) => {
+    const confirmed = await alert.confirm({
+      title: "¿Desactivar categoría?",
+      text: "Esto desactivará también sus productos relacionados.",
+    });
+    if (!confirmed) return;
+
+    try {
+      const message = await desactivateCategory(id);
+      notify.info("Categoría desactivada", message);
+    } catch (err) {
+      notify.error("Error al desactivar", err.message || "No se pudo desactivar la categoría");
+    }
+  };
+
 
   return (
     <div className="p-6">
@@ -73,8 +116,9 @@ export default function Categories() {
           setOpen(true);
         }}
         onDelete={handleDelete}
+        onActivate={handleActivate}
+        onDesactivate={handleDesactivate}
       />
-
       <CategoryForm
         open={open}
         onClose={() => setOpen(false)}

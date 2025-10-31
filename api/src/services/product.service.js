@@ -27,6 +27,15 @@ export async function updateProduct(id, data, clientId, roleName) {
   return await ProductRepo.update(id, targetClient, data);
 }
 
+
+export async function activateProduct(id) {
+  return await ProductRepo.activate(id);
+}
+
 export async function desactivateProduct(id) {
   return await ProductRepo.desactivate(id);
+}
+
+export async function deleteProduct(id) {
+  return await ProductRepo.deleted(id);
 }

@@ -26,6 +26,14 @@ export async function editCategory(id, data) {
   return await CategoryRepo.update(id, data);
 }
 
+export async function activateCategory(id) {
+  return await CategoryRepo.activate(id);
+}
+
 export async function desactivateCategory(id) {
   return await CategoryRepo.desactivate(id);
+}
+
+export async function deleteCategory(id) {
+  return await CategoryRepo.deleted(id);
 }
