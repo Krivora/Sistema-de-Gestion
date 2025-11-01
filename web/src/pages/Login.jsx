@@ -40,90 +40,241 @@ export default function Login() {
         justifyContent: "center",
         bgcolor: darkMode ? "#121212" : "#f0f2f5",
         p: 2,
+        position: "relative",
+        backgroundImage: `url('/FondoLogin.webp')`,
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
       }}
     >
-      <Paper
-        elevation={6}
+
+      <Box
         sx={{
-          p: 5,
+          position: "absolute",
+          inset: 0,
+          background: "linear-gradient(90deg, #3F29BA 0%, rgba(63,41,186,0) 100%)",
+          opacity: 0.6,
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+
+      {/* Contenedor central */}
+      <Box
+        sx={{
           width: "100%",
-          maxWidth: 420,
-          borderRadius: 4,
-          textAlign: "center",
-          bgcolor: darkMode ? "#1e1e1e" : "#ffffff",
+          maxWidth: 1600, 
+          height: "100%",
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" }, 
+          alignItems: "stretch",
+          position: "relative",
+          zIndex: 1, 
         }}
       >
-        {/* Título principal */}
-        <Typography
-          variant="h4"
-          fontWeight="bold"
-          color={darkMode ? "primary.light" : "primary.main"}
-        >
-          Bienvenido
-        </Typography>
-
-        <Typography
-          variant="h6"
-          sx={{ fontWeight: 500, mt: 1, mb: 3 }}
-          color={darkMode ? "grey.300" : "text.secondary"}
-        >
-          Inventario MultiSucursal
-        </Typography>
-
-        <form onSubmit={onSubmit}>
-          <TextField
-            label="Correo electrónico"
-            fullWidth
-            margin="normal"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-          />
-          <TextField
-            label="Contraseña"
-            type="password"
-            fullWidth
-            margin="normal"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-          />
-
-          {error && (
-            <Typography color="error" fontSize={14} mt={1}>
-              {error}
-            </Typography>
-          )}
-
-          <Button
-            fullWidth
-            variant="contained"
-            type="submit"
-            disabled={loading}
-            sx={{
-              mt: 4,
-              py: 1.4,
-              fontWeight: "bold",
-              textTransform: "none",
-              fontSize: "1rem",
-              borderRadius: 2,
-            }}
-          >
-            {loading ? <CircularProgress size={24} color="inherit" /> : "Iniciar sesión"}
-          </Button>
-        </form>
-
-        {/* Pie de página */}
-        <Typography
-          variant="body2"
+        
+        <Box
           sx={{
-            mt: 4,
-            color: darkMode ? "grey.500" : "text.secondary",
+            width: { xs: "100%", md: "50%" },
+            display: "flex",
+            alignItems: "center",
+            justifyContent: { xs: "center", md: "flex-start" },
+            p: { xs: 4, md: 0},     
+            pl: { md: 3 },           
+            pr: { md: 2 },          
+            color: "#fff",
           }}
         >
-          © {new Date().getFullYear()} Krivora Mx — Todos los derechos reservados
-        </Typography>
-      </Paper>
+          <Box sx={{ maxWidth: 400, textAlign: { xs: "center", md: "left" } }}>
+            <Typography
+              variant="h2"
+              sx={{
+                fontWeight: "bold",
+                mb: 2,
+                fontSize: { xs: "rem", md: "3.5rem" },
+                color: "#FFFFFF",
+                textShadow: "0 6px 18px rgba(0,0,0,0.35)",
+              }}
+            >
+              ¡Bienvenido <br />
+              De Nuevo a Inventra!
+            </Typography>
+
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 500,
+                color: "rgba(255,255,255,0.9)",
+                mb: 2,
+                lineHeight: 1.3,
+              }}
+            >
+              Optimiza cada sucursal <br /> y  Conecta todo tu <br /> negocio.
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* login */}
+        <Box
+          sx={{
+            width: { xs: "100%", md: "50%" },
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            p: { xs: 3, md: 20 },
+            pr: { md: 1 }, 
+          }}
+        >
+          <Paper
+            elevation={6}
+            sx={{
+              p: 6,
+              width: "100%",
+              maxWidth: 435,
+              borderRadius: 4,
+              textAlign: "center",
+              bgcolor: "rgba(255, 255, 255, 0.55)",
+              border:"1px solid rgba(218, 216, 216, 1)",
+              backdropFilter: "blur(3px)",
+              WebkitBackdropFilter: "blur(10px)",
+              boxShadow: "0 8px 30px rgba(0, 0, 0, 0.54)",
+              position: "relative",
+            }}
+          >
+            <Typography
+              pb={2}
+              fontSize={{ xs: "rem", md: "2.5rem" }}
+              fontWeight="bold"
+              color={"#4207c0d8"}
+            >
+              Login
+            </Typography>
+
+
+            <form onSubmit={onSubmit}>
+              <TextField
+                label="Correo electrónico"
+                fullWidth
+                margin="normal"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                sx={{
+                  "& .MuiInputLabel-root": {
+                    color: "#2a2929ff", 
+                  },
+                  "& .MuiInputLabel-root.Mui-focused": {
+                    color: "#292929ff", 
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": {
+                      borderColor: "#5a5959ff",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#3a3a3aff", 
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#555",
+                    },
+                    "& input": {
+                      color: "#1c1b1bff", 
+                    },
+                    "& input:-webkit-autofill": {
+                      WebkitBoxShadow: "0 0 0 1000px rgba(240, 240, 240, 0) inset", 
+                      WebkitTextFillColor: "#1c1b1bff", 
+                      transition: "background-color 5000s ease-in-out 0s", // evita el flash azul del autorelleno 
+                    },
+                  },
+                }}
+              />
+              <TextField
+                label="Contraseña"
+                type="password"
+                fullWidth
+                margin="normal"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                 sx={{
+                  "& .MuiInputLabel-root": {
+                    color: "#2a2929ff", 
+                  },
+                  "& .MuiInputLabel-root.Mui-focused": {
+                    color: "#292929ff", 
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": {
+                      borderColor: "#5a5959ff",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#3a3a3aff", 
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#555",
+                    },
+                    "& input": {
+                      color: "#1c1b1bff", 
+                    },
+                    "& input:-webkit-autofill": {
+                      WebkitBoxShadow: "0 0 0 1000px rgba(240, 240, 240, 0) inset", 
+                      WebkitTextFillColor: "#1c1b1bff", 
+                      transition: "background-color 5000s ease-in-out 0s", // evita el flash azul del autorelleno 
+                    },
+                  },
+                }}
+              />
+
+              {error && (
+                <Typography color="error" fontSize={14} mt={1}>
+                  {error}
+                </Typography>
+              )}
+
+              <Button
+                fullWidth
+                type="submit"
+                disabled={loading}
+                variant="outlined"
+                sx={{
+                  mt: 4,
+                  py: 1.4,
+                  fontWeight: "bold",
+                  textTransform: "none",
+                  fontSize: "1rem",
+                  borderRadius: 2,
+                  backgroundColor: "transparent",
+                  color: "#4207c0ff",
+                  border: "2px solid #4207c0ff",
+                  transition: "all 200ms ease",
+                  "&:hover": {
+                    backgroundColor: "#4207c09e",
+                    borderColor: "#4207c087",
+                    color: "#e9e9e9ff",
+                  },
+                  "&.Mui-disabled": {
+                    borderColor: "rgba(36, 18, 138, 0.3)",
+                    color: "rgba(63,41,186,0.3)",
+                    backgroundColor: "transparent",
+                  },
+                }}
+              >
+                {loading ? <CircularProgress size={24} color="inherit" /> : "Iniciar sesión"}
+              </Button>
+            </form>
+
+            {/* Pie de página */}
+            <Typography
+              variant="body2"
+              sx={{
+                mt: 4,
+                color: darkMode ? "grey.800" : "text.secondary",
+              }}
+            >
+              © {new Date().getFullYear()} Krivora Mx — Todos los derechos reservados
+            </Typography>
+          </Paper>
+        </Box>
+      </Box>
     </Box>
   );
 }
