@@ -1,16 +1,17 @@
 import express from "express";
 import * as AdjustmentController from "../controllers/adjustment.controller.js";
-import { authRequired } from "../middleware/auth.middleware.js";
+import { authRequired, requireRole } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-// Todas las rutas protegidas
+// Todas requieren autenticación
 router.use(authRequired);
 
-// Crear un ajuste manual
-router.post("/", AdjustmentController.create);
-
-// Listar ajustes (entrada/salida)
-router.get("/", AdjustmentController.list);
+/**
+ * 🧩 Ajustes de inventario
+ */
+router.post("/",requireRole("superadmin", "admin"), AdjustmentController.createAndPost); // Crear ajuste
+router.get("/", requireRole("superadmin", "admin"),AdjustmentController.list);           // Listar ajustes
+router.get("/:id",requireRole("superadmin", "admin"), AdjustmentController.getById);     // Obtener un ajuste con items
 
 export default router;

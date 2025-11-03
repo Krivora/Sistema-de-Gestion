@@ -113,7 +113,6 @@ export default function InventoryTransactionTable({ transactions = [], loading }
               <th className="px-6 py-3">Tipo</th>
               <th className="px-6 py-3">Cantidad</th>
               <th className="px-6 py-3">Nota</th>
-              <th className="px-6 py-3 text-right">Acciones</th>
             </tr>
           </thead>
 
@@ -164,11 +163,7 @@ export default function InventoryTransactionTable({ transactions = [], loading }
                   <td className="px-6 py-4">
                     {Number(t.qty).toLocaleString("es-MX", { maximumFractionDigits: 2 })}
                   </td>
-
                   <td className="px-6 py-4">{t.note || "—"}</td>
-                  <td className="px-6 py-4 text-right">
-      
-                  </td>
                 </tr>
               );
             })}

@@ -35,7 +35,7 @@ export default function Navbar({ setOpen }) {
   return (
     <header
       className={`sticky top-0 z-30 backdrop-blur-md transition-colors duration-300 ${
-        darkMode ? "bg-black text-white" : "bg-white/80 text-slate-900"
+        darkMode ? "bg-[#18181a] text-white" : "bg-white/80 text-slate-900"
       }`}
     >
       <div className="h-16 max-w-7xl mx-auto px-4 flex items-center justify-between relative">

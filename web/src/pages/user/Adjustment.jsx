@@ -1,48 +1,59 @@
 import { useState } from "react";
 import { Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { useTransfers } from "@/hooks/useTransfers";
-import TransferTable from "@/components/client/transfers/TransferTable";
-import TransferForm from "@/components/client/transfers/TransferForm";
+import { useAdjustments } from "@/hooks/useAdjustments";
+import { AdjustmentsApi } from "@/api/adjustments";
+import AdjustmentTable from "@/components/client/adjustments/AdjustmentTable";
+import AdjustmentForm from "@/components/client/adjustments/AdjustmentForm";
+import AdjustmentDetails from "@/components/client/adjustments/AdjustmentDetails";
 import { useToast } from "@/utils/toastUtils";
 import { useNotify } from "@/utils/notifyUtils";
 
-export default function AdjustmentPage() {
-  const { transfers, loading, createTransfer, fetchTransfers } = useTransfers();
-
+export default function Adjustments() {
+  const { adjustments, loading, createAdjustment } = useAdjustments();
   const [open, setOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedAdjustment, setSelectedAdjustment] = useState(null);
   const toast = useToast();
   const notify = useNotify();
 
   const handleSave = async (data) => {
     try {
-      await createTransfer(data);
-      notify.success("Transferencia registrada", "El movimiento fue creado correctamente");
+      await createAdjustment(data);
+      notify.success("Ajuste creado", "El ajuste se registró correctamente");
       setOpen(false);
-    } catch (err) {
-      toast.error("Error al guardar la transferencia");
+    } catch {
+      toast.error("Error al guardar el ajuste");
+    }
+  };
+
+  const handleView = async (adjustment) => {
+    try {
+      const full = await AdjustmentsApi.get(adjustment.id);
+      setSelectedAdjustment(full.data || full);
+      setDetailOpen(true);
+    } catch {
+      toast.error("Error al obtener detalles del ajuste");
     }
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Ajustes de Inventario</h2>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setOpen(true)}
-        >
-          Nueva Transferencia
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpen(true)}>
+          Nuevo Ajuste
         </Button>
       </div>
 
-      <TransferTable transfers={transfers} loading={loading} />
+      <AdjustmentTable adjustments={adjustments} loading={loading} onView={handleView} />
 
-      <TransferForm
-        open={open}
-        onClose={() => setOpen(false)}
-        onSave={handleSave}
+      <AdjustmentForm open={open} onClose={() => setOpen(false)} onSave={handleSave} />
+
+      <AdjustmentDetails
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        adjustment={selectedAdjustment}
       />
     </div>
   );

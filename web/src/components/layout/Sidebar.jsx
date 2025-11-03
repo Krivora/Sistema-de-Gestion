@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dashboard as DashboardIcon,
   ShoppingCart as ShoppingCartIcon,
@@ -13,24 +13,28 @@ import {
   Warehouse as WarehouseIcon,
   Menu as MenuIcon,
   SupervisorAccount as Supervisor,
-  SwapHoriz, Handyman
+  SwapHoriz, Handyman, Settings, Shield, Book, Logout
 } from "@mui/icons-material";
 import { useTheme } from "@/context/ThemeProvider";
 import { useAuth } from "@/context/AuthProvider";
 
-/* -----------------------------
-   🔗 Enlaces agrupados por sección con iconografía mejorada
------------------------------- */
+export default function Sidebar({ open, setOpen,  onCollapseChange }) {
+  
 
-export default function Sidebar({ open, setOpen, onCollapseChange }) {
   const { pathname } = useLocation();
   const { darkMode } = useTheme();
-  const [collapsed, setCollapsed] = useState(false);
   const { user } = useAuth();
-  const role = user?.role_name;  
-  useEffect(() => {
-    if (onCollapseChange) onCollapseChange(collapsed);
-  }, [collapsed]);
+  const role = user?.role_name;
+  const [collapsed, setCollapsed] = useState(true);
+
+  const handleLogout = () => {
+    // 🔐 Aquí puedes limpiar token o redirigir al login
+    console.log("Logout...");
+  };
+  const handleCollapse = (value) => {
+    setCollapsed(value);
+    if (onCollapseChange) onCollapseChange(value);
+  };
 
   function getMenuByRole(role) {
     const baseMenu = [
@@ -55,7 +59,7 @@ export default function Sidebar({ open, setOpen, onCollapseChange }) {
         items: [
           { to: "/branches", label: "Sucursales", icon: <BranchIcon fontSize="small" /> },
           { to: "/branches-products", label: "Productos Sucursal", icon: <WarehouseIcon fontSize="small" /> },
-           { to: "/inventory-transactions", label: "Movimientos", icon: <InventoryIcon fontSize="small" /> },
+          { to: "/inventory-transactions", label: "Movimientos", icon: <InventoryIcon fontSize="small" /> },
         ],
       },
       {
@@ -74,17 +78,6 @@ export default function Sidebar({ open, setOpen, onCollapseChange }) {
       },
     ];
 
-    const userMenu = [
-      {
-        title: "Operaciones",
-        items: [
-          { to: "/sales", label: "Ventas", icon: <ReceiptIcon fontSize="small" /> },
-          { to: "/purchases", label: "Compras", icon: <ShoppingCartIcon fontSize="small" /> },
-          { to: "/inventory-transactions", label: "Movimientos", icon: <InventoryIcon fontSize="small" /> },
-        ],
-      },
-    ];
-
     const superadminExtra = [
       {
         title: "Administración SaaS",
@@ -94,29 +87,38 @@ export default function Sidebar({ open, setOpen, onCollapseChange }) {
       },
     ];
 
-    if (role === "superadmin") return [...baseMenu, ...superadminExtra,];
+    if (role === "superadmin") return [...superadminExtra];
     if (role === "admin") return [...baseMenu, ...adminMenu];
-    return [...baseMenu, ...userMenu];
+    return baseMenu;
   }
+
+  const settingsMenu = [
+    { to: "/config", label: "Configuración", icon: <Settings fontSize="small" /> },
+  ];
 
   return (
     <aside
+      onMouseEnter={() => handleCollapse(false)}
+      onMouseLeave={() => handleCollapse(true)}
       className={`fixed top-0 left-0 h-full transition-all duration-300 z-40
         ${open ? "translate-x-0" : "-translate-x-64"} md:translate-x-0
         ${collapsed ? "w-16" : "w-64"}
-        ${darkMode ? "bg-black text-white" : "bg-white/80 text-slate-900"}
-        shadow-md`}
+        ${darkMode ? "bg-[#18181a] text-white" : "bg-white text-slate-900"}
+        shadow-lg border-r ${darkMode ? "border-slate-800" : "border-slate-200"}
+      `}
     >
-      {/* -----------------------------
-         🧭 Encabezado del sidebar
-      ------------------------------ */}
+      {/* Header */}
       <div
-        className={`h-16 flex items-center justify-between px-4 border-b transition-colors duration-300
-          ${darkMode ? "border-slate-800 text-white" : "border-slate-200 text-slate-800"}`}
+        className={`h-16 flex items-center justify-between px-4 border-b
+          ${darkMode ? "border-slate-800" : "border-slate-200"}`}
       >
-        {!collapsed && <h2 className="font-semibold text-lg text-center">{user?.business_name || "Krivora Admin"}</h2>}
-
-        {/* Botón colapsar/expandir */}
+        {!collapsed ? (
+          <h2 className="font-semibold text-lg truncate">
+            {user?.business_name || "Krivora Admin"}
+          </h2>
+        ) : (
+          <h2 className="text-xl font-bold">K</h2>
+        )}
         <button
           onClick={() => setCollapsed(!collapsed)}
           className={`p-1 rounded-md transition ${
@@ -127,48 +129,83 @@ export default function Sidebar({ open, setOpen, onCollapseChange }) {
         </button>
       </div>
 
-      {/* -----------------------------
-         📋 Navegación del menú
-      ------------------------------ */}
-      <nav className="mt-4 px-2 space-y-3">
-        {getMenuByRole(role).map((section) => (
-          <div key={section.title}>
-            {/* 🔹 Subtítulo de sección */}
-            {!collapsed && (
-              <h3
-                className={`px-3 py-1 text-xs uppercase font-semibold tracking-wider ${
-                  darkMode ? "text-gray-400" : "text-gray-500"
-                }`}
-              >
-                {section.title}
-              </h3>
-            )}
-
-            {/* 🔸 Enlaces */}
-            {section.items.map((l) => {
-              const active = pathname === l.to;
-              return (
-                <Link
-                  key={l.to}
-                  to={l.to}
-                  onClick={() => setOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
-                    active
-                      ? darkMode
-                        ? "bg-[#1e293b] text-indigo-300"
-                        : "bg-indigo-100 text-indigo-700"
-                      : darkMode
-                        ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                        : "text-slate-700 hover:bg-slate-100 hover:text-black"
+      {/* Menu principal */}
+      <nav className="flex flex-col justify-between h-[calc(100%-4rem)]">
+        <div className="mt-4 px-2 space-y-2 overflow-y-auto">
+          {getMenuByRole(role).map((section) => (
+            <div key={section.title}>
+              {!collapsed && (
+                <h3
+                  className={`px-3 py-1 text-xs uppercase font-semibold tracking-wider ${
+                    darkMode ? "text-gray-500" : "text-gray-500"
                   }`}
                 >
-                  <span className="flex items-center justify-center w-6">{l.icon}</span>
-                  {!collapsed && <span className="truncate">{l.label}</span>}
-                </Link>
-              );
-            })}
-          </div>
-        ))}
+                  {section.title}
+                </h3>
+              )}
+              {section.items.map((l) => {
+                const active = pathname === l.to;
+                return (
+                  <Link
+                    key={l.to}
+                    to={l.to}
+                    title={collapsed ? l.label : ""}
+                    onClick={() => setOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+                      active
+                        ? darkMode
+                          ? "bg-indigo-900 text-indigo-300"
+                          : "bg-indigo-100 text-indigo-700"
+                        : darkMode
+                          ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                          : "text-slate-700 hover:bg-slate-100 hover:text-black"
+                    }`}
+                  >
+                    <span className="flex items-center justify-center w-6">{l.icon}</span>
+                    {!collapsed && <span className="truncate">{l.label}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+
+        {/* Footer con Configuración y Logout */}
+        <div className="border-t px-2 py-3 space-y-1">
+          {settingsMenu.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              title={collapsed ? item.label : ""}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition ${
+                pathname === item.to
+                  ? darkMode
+                    ? "bg-indigo-900 text-indigo-300"
+                    : "bg-indigo-100 text-indigo-700"
+                  : darkMode
+                    ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    : "text-slate-700 hover:bg-slate-100 hover:text-black"
+              }`}
+            >
+              <span className="flex items-center justify-center w-6">{item.icon}</span>
+              {!collapsed && <span className="truncate">{item.label}</span>}
+            </Link>
+          ))}
+          <button
+            onClick={handleLogout}
+            title={collapsed ? "Cerrar sesión" : ""}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition ${
+              darkMode
+                ? "text-slate-300 hover:bg-red-900 hover:text-white"
+                : "text-slate-700 hover:bg-red-100 hover:text-red-700"
+            }`}
+          >
+            <span className="flex items-center justify-center w-6">
+              <Logout fontSize="small" />
+            </span>
+            {!collapsed && <span>Cerrar sesión</span>}
+          </button>
+        </div>
       </nav>
     </aside>
   );

@@ -2,6 +2,7 @@ import { Router } from "express";
 import activityRoutes from "./activity.routes.js";
 import adjustmentRoutes from "./adjustment.routes.js";
 import branchRoutes from "./branch.routes.js";
+import catalogRoutes from "./catalog.routes.js";
 import categoryRoutes from "./category.routes.js";
 import clientRoutes from "./client.routes.js";
 import customerRoutes from "./customers.routes.js";
@@ -22,6 +23,7 @@ router.use("/auth", authRoutes);
 router.use("/activities", activityRoutes);
 router.use("/adjustments", adjustmentRoutes);
 router.use("/branches", branchRoutes);
+router.use("/catalogs", catalogRoutes)
 router.use("/categories", categoryRoutes);
 router.use("/clients", clientRoutes);
 router.use("/customers", customerRoutes);

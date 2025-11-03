@@ -1,6 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
-import ProtectedRoute from "@/components/Protected/ProtectedRoute";
+import ProtectedRoute from "@/components/protected/ProtectedRoute";
 
 import Dashboard from "@/pages/Dashboard";
 import Login from "@/pages/Login";
@@ -16,6 +16,9 @@ import Adjustments from "@/pages/user/Adjustment";
 import Users from "@/pages/Users";
 import Reports from "@/pages/Reports";
 import InventoryTransactions from "@/pages/InventoryTransactions";
+import Config from "@/pages/user/settings";
+import Catalogs from "@/pages/user/settings/catalogs"; 
+import AdjustmentNotesCatalog from "@/pages/user/settings/catalogs/adjustment-notes";
 import Unauthorized from "@/pages/error/Unauthorized";
 
 const router = createBrowserRouter([
@@ -61,7 +64,35 @@ const router = createBrowserRouter([
         ),
       },
 
-      // 🔐 Solo admin o superadmin
+      // ⚙️ Configuración general
+      {
+        path: "config",
+        element: (
+          <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+            <Config />
+          </ProtectedRoute>
+        ),
+      },
+
+      // ⚙️ Catálogos dentro de Configuración
+      {
+        path: "settings/catalogs",
+        element: (
+          <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+            <Catalogs />
+          </ProtectedRoute>
+        ),
+      },
+       {
+        path: "settings/catalogs/adjustment-notes",
+        element: (
+          <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+            <AdjustmentNotesCatalog />
+          </ProtectedRoute>
+        ),
+      },
+
+      // 📊 Reportes
       {
         path: "reports",
         element: (
