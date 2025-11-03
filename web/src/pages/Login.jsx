@@ -39,7 +39,7 @@ export default function Login() {
         alignItems: "center",
         justifyContent: "center",
         bgcolor: darkMode ? "#121212" : "#f0f2f5",
-        p: 2,
+        p: { xs: 2, sm: 6, md: 10, lg: 10 },
         position: "relative",
         backgroundImage: `url('/FondoLogin.webp')`,
         backgroundRepeat: "no-repeat",
@@ -63,7 +63,7 @@ export default function Login() {
       <Box
         sx={{
           width: "100%",
-          maxWidth: 1600, 
+          maxWidth: { xs: '100%', lg: 3000, xl: 2300 }, 
           height: "100%",
           display: "flex",
           flexDirection: { xs: "column", md: "row" }, 
@@ -75,12 +75,12 @@ export default function Login() {
         
         <Box
           sx={{
-            width: { xs: "100%", md: "50%" },
+            width: { xs: "100%", md: "40%" },   
             display: "flex",
             alignItems: "center",
             justifyContent: { xs: "center", md: "flex-start" },
             p: { xs: 4, md: 0},     
-            pl: { md: 3 },           
+            pl: { md: 0 },           
             pr: { md: 2 },          
             color: "#fff",
           }}
@@ -90,8 +90,7 @@ export default function Login() {
               variant="h2"
               sx={{
                 fontWeight: "bold",
-                mb: 2,
-                fontSize: { xs: "rem", md: "3.5rem" },
+                fontSize: { xs: "2.5rem", sm: "3rem", md: "3.5rem", lg: "4rem" },
                 color: "#FFFFFF",
                 textShadow: "0 6px 18px rgba(0,0,0,0.35)",
               }}
@@ -103,7 +102,7 @@ export default function Login() {
             <Typography
               variant="h4"
               sx={{
-                fontWeight: 500,
+                fontWeight: "500",
                 color: "rgba(255,255,255,0.9)",
                 mb: 2,
                 lineHeight: 1.3,
@@ -117,21 +116,25 @@ export default function Login() {
         {/* login */}
         <Box
           sx={{
-            width: { xs: "100%", md: "50%" },
+            width: { xs: "100%", md: "60%" },
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            p: { xs: 3, md: 20 },
-            pr: { md: 1 }, 
+            p: { xs: 4, md: 30 }, 
+            pr: { md: 0 }, 
           }}
         >
           <Paper
             elevation={6}
             sx={{
-              p: 6,
+              p: 8,              
               width: "100%",
-              maxWidth: 435,
+              maxWidth: 500,     
               borderRadius: 4,
+              minHeight: { xs: "400px", sm: "500px", md: "600px" },
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
               textAlign: "center",
               bgcolor: "rgba(255, 255, 255, 0.55)",
               border:"1px solid rgba(218, 216, 216, 1)",
@@ -142,8 +145,8 @@ export default function Login() {
             }}
           >
             <Typography
-              pb={2}
-              fontSize={{ xs: "rem", md: "2.5rem" }}
+              pb={3}
+              fontSize={{ xs: "2rem", md: "3.5rem" }}
               fontWeight="bold"
               color={"#4207c0d8"}
             >
@@ -160,14 +163,18 @@ export default function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
                 sx={{
+                  mb:3,
                   "& .MuiInputLabel-root": {
                     color: "#2a2929ff", 
+                    fontSize: "1.2rem",
                   },
                   "& .MuiInputLabel-root.Mui-focused": {
                     color: "#292929ff", 
                   },
                   "& .MuiOutlinedInput-root": {
                     "& fieldset": {
+                      
+                      fontSize: "1.4rem",
                       borderColor: "#5a5959ff",
                     },
                     "&:hover fieldset": {
@@ -178,6 +185,7 @@ export default function Login() {
                     },
                     "& input": {
                       color: "#1c1b1bff", 
+                      fontSize: "1.4rem",
                     },
                     "& input:-webkit-autofill": {
                       WebkitBoxShadow: "0 0 0 1000px rgba(240, 240, 240, 0) inset", 
@@ -196,8 +204,10 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                  sx={{
+                   mb:3.5,
                   "& .MuiInputLabel-root": {
                     color: "#2a2929ff", 
+                    fontSize: "1.2rem",
                   },
                   "& .MuiInputLabel-root.Mui-focused": {
                     color: "#292929ff", 
@@ -214,6 +224,7 @@ export default function Login() {
                     },
                     "& input": {
                       color: "#1c1b1bff", 
+                      fontSize: "1.4rem",
                     },
                     "& input:-webkit-autofill": {
                       WebkitBoxShadow: "0 0 0 1000px rgba(240, 240, 240, 0) inset", 
@@ -240,7 +251,7 @@ export default function Login() {
                   py: 1.4,
                   fontWeight: "bold",
                   textTransform: "none",
-                  fontSize: "1rem",
+                  fontSize: "1.3rem",
                   borderRadius: 2,
                   backgroundColor: "transparent",
                   color: "#4207c0ff",
@@ -268,6 +279,7 @@ export default function Login() {
               sx={{
                 mt: 4,
                 color: darkMode ? "grey.800" : "text.secondary",
+                fontSize: "0.9rem",
               }}
             >
               © {new Date().getFullYear()} Krivora Mx — Todos los derechos reservados
