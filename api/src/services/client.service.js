@@ -1,7 +1,8 @@
+import pool from "../config/db.js";
+import bcrypt from "bcrypt";
 import * as ClientRepo from "../repositories/client.repository.js";
 import * as UserRepo from "../repositories/user.repository.js";
-import bcrypt from "bcrypt";
-
+import { seedDefaultCatalogs } from "../utils/seedDefaultCatalogs.js";
 // 📦 Obtener todos
 export async function getAllClients() {
   return await ClientRepo.findAll();
@@ -13,28 +14,44 @@ export async function getClientById(id) {
 }
 // 🧩 Crear cliente con código autogenerado y usuario admin principal
 export async function createClient(data) {
-  // 🆔 Generar código antes de crear
-  const code = await generateClientCode();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
 
-  // Crear cliente
-  const client = await ClientRepo.create({
-    ...data,
-    code,
-  });
+    // 🆔 Generar código antes de crear
+    const code = await generateClientCode();
 
-  // Crear usuario administrador principal
-  const hashed = await bcrypt.hash(data.admin_password, 10);
+    // 1️⃣ Crear cliente
+    const createdClient = await ClientRepo.create(
+      { ...data, code },
+      client
+    );
 
-  await UserRepo.create({
-    name: data.admin_name,
-    email: data.admin_email,
-    password: hashed,
-    role_id: 2, // id del rol "admin"
-    client_id: client.id,
-    branch_id: null,
-  });
+    // 2️⃣ Crear usuario administrador principal
+    const hashed = await bcrypt.hash(data.admin_password, 10);
+    await UserRepo.create(
+      {
+        name: data.admin_name,
+        email: data.admin_email,
+        password: hashed,
+        role_id: 2, // id del rol "admin"
+        client_id: createdClient.id,
+        branch_id: null,
+      },
+      client
+    );
 
-  return client;
+    // 3️⃣ Crear catálogos base automáticamente
+    await seedDefaultCatalogs(client, createdClient.id); // 👈 Aquí se llama
+
+    await client.query("COMMIT");
+    return createdClient;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 // ✏️ Actualizar cliente
@@ -61,7 +78,6 @@ export async function deactivateClient(id) {
   return client;
 }
 
-// 🔢 Generador de códigos autoincrementales
 async function generateClientCode() {
   const prefix = "CLI";
   const last = await ClientRepo.findLastCode();
