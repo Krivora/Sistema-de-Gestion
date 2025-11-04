@@ -7,6 +7,7 @@ import ProductForm from "../components/ProductForm";
 import { useToast } from "@core/utils/alerts/toastUtils";
 import { useAlert } from "@core/utils/alerts/alertUtils";
 import { useNotify } from "@core/utils/alerts/notifyUtils";
+import PageHeader from "@core/components/common/PageHeader";
 
 export default function Products() {
   const {
@@ -18,7 +19,6 @@ export default function Products() {
     desactivateProduct,
     deleteProduct,
   } = useProducts();
-
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
@@ -88,8 +88,11 @@ export default function Products() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Productos</h2>
+      <PageHeader
+        title="Productos"
+        description="Administra el catálogo de productos, define precios, categorías, existencias y la información necesaria para las operaciones de inventario y ventas."
+      />
+      <div className="flex justify-start items-center mb-4">
         <Button
           variant="contained"
           startIcon={<AddIcon />}

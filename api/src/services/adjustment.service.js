@@ -53,7 +53,7 @@ export async function createAndPostAdjustment(payload, user) {
           qty,
           type: item.type,
           unit_cost: 0,
-          note: `Ajuste #${adjustment.id}`,
+          note: `Ajuste ${adjustment.doc_no}`,
           ref_type: "adjustments",
           ref_id: adjustment.id,
         },

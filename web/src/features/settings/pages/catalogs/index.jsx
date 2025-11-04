@@ -1,21 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import {
-  Breadcrumbs,
-  Typography,
-  Link as MuiLink,
-  Grid,
-  Card,
-  CardContent,
-  IconButton,
-  Box,
-} from "@mui/material";
-import {
-  ListAlt,
-  Category,
-  CompareArrows,
-} from "@mui/icons-material";
+import {Typography, Grid, Card, CardContent, IconButton, Box} from "@mui/material";
+import { ListAlt, CompareArrows,} from "@mui/icons-material";
 import { useTheme } from "@core/context/ThemeProvider";
-
+import PageHeader from "@core/components/common/PageHeader";
 export default function Catalogs() {
   const navigate = useNavigate();
   const { darkMode } = useTheme();
@@ -37,40 +24,14 @@ export default function Catalogs() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* 🔹 Breadcrumbs */}
-      <Breadcrumbs aria-label="breadcrumb" className="text-sm">
-        <MuiLink
-          underline="hover"
-          color={darkMode ? "gray.300" : "inherit"}
-          onClick={() => navigate("/dashboard")}
-          sx={{ cursor: "pointer" }}
-        >
-          Inicio
-        </MuiLink>
-        <MuiLink
-          underline="hover"
-          color={darkMode ? "gray.300" : "inherit"}
-          onClick={() => navigate("/config")}
-          sx={{ cursor: "pointer" }}
-        >
-          Configuración
-        </MuiLink>
-        <Typography color="text.primary">Catálogos</Typography>
-      </Breadcrumbs>
-
-      {/* 🔹 Encabezado */}
-      <div className="flex flex-col gap-1">
-        <Typography variant="h5" fontWeight={600}>
-          Catálogos del Sistema
-        </Typography>
-        <Typography
-          variant="body2"
-          color={darkMode ? "gray.400" : "text.secondary"}
-        >
-          Administra los catálogos utilizados por los módulos del sistema.
-        </Typography>
-      </div>
-
+       <PageHeader
+        title="Catálogos del Sistema"
+        description="Administra los catálogos utilizados por los módulos del sistema."
+        breadcrumbs={[
+          { label: "Configuración", to: "/config" },
+          { label: "Catálogos" },
+        ]}
+      />
       {/* 🔹 Grid de Catálogos */}
       <Grid
         container

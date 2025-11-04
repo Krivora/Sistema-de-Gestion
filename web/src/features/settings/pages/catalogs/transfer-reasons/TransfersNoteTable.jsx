@@ -1,33 +1,36 @@
 import { useState, useMemo } from "react";
-import {
-  IconButton,
-  Tooltip,
-  Skeleton,
-} from "@mui/material";
+import { IconButton, Tooltip, Skeleton } from "@mui/material";
 import { Delete, Restore } from "@mui/icons-material";
 import TableFilters from "@core/components/common/TableFilters";
 import Pagination from "@core/components/common/TablePagination";
-import { useTheme } from "@core/context/ThemeProvider";
 
-export default function AdjustmentNotesTable({ items, loading, deleteItem, restoreItem }) {
-  const { darkMode } = useTheme();
+export default function TransfersNoteTable({
+  items,
+  loading,
+  darkMode,
+  deleteItem,
+  restoreItem,
+}) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
+  // 🔍 Filtrado
   const filtered = useMemo(() => {
     return items.filter((i) =>
       i.label.toLowerCase().includes(search.toLowerCase())
     );
   }, [items, search]);
 
+  // 📄 Paginación
   const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
   const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
+  // 🎨 Estilo botones de acción
   const actionBtn = darkMode
     ? "rounded-full p-1 text-gray-400 hover:bg-[#333333] hover:text-white"
     : "rounded-full p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800";
 
+  // ⏳ Skeleton loader
   if (loading) {
     return (
       <div
@@ -55,6 +58,9 @@ export default function AdjustmentNotesTable({ items, loading, deleteItem, resto
                 <td className="px-6 py-4">
                   <Skeleton variant="text" width={180} />
                 </td>
+                <td className="px-6 py-4">
+                  <Skeleton variant="text" width={100} />
+                </td>
                 <td className="px-6 py-4 text-right">
                   <Skeleton variant="circular" width={24} height={24} />
                 </td>
@@ -66,6 +72,7 @@ export default function AdjustmentNotesTable({ items, loading, deleteItem, resto
     );
   }
 
+  // 📋 Tabla principal
   return (
     <div
       className={`overflow-x-auto rounded-xl border shadow-sm ${
@@ -116,7 +123,7 @@ export default function AdjustmentNotesTable({ items, loading, deleteItem, resto
               >
                 <td className="px-6 py-4 font-medium">{i.label}</td>
                 <td className="px-6 py-4">
-                    {i.metadata?.type === "ADJUSTMENT_IN" ? (
+                    {i.metadata?.type === "TRANSFER_IN" ? (
                         <span className="text-green-600 font-semibold">Entrada</span>
                     ) : (
                         <span className="text-red-600 font-semibold">Salida</span>
@@ -129,7 +136,7 @@ export default function AdjustmentNotesTable({ items, loading, deleteItem, resto
                     <Tooltip title="Restaurar">
                       <IconButton
                         size="small"
-                        onClick={() => restoreItem(i.id)}
+                        onClick={() => restoreItem(i)}
                         className={actionBtn}
                       >
                         <Restore fontSize="small" />
@@ -139,7 +146,7 @@ export default function AdjustmentNotesTable({ items, loading, deleteItem, resto
                     <Tooltip title="Eliminar">
                       <IconButton
                         size="small"
-                        onClick={() => deleteItem(i.id)}
+                        onClick={() => deleteItem(i)}
                         className={actionBtn}
                       >
                         <Delete fontSize="small" />
@@ -149,10 +156,11 @@ export default function AdjustmentNotesTable({ items, loading, deleteItem, resto
                 </td>
               </tr>
             ))}
+
             {paginated.length === 0 && (
               <tr>
                 <td
-                  colSpan="2"
+                  colSpan="3"
                   className={`text-center py-6 text-sm ${
                     darkMode ? "text-gray-500" : "text-gray-600"
                   }`}

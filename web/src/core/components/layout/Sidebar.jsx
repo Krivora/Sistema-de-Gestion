@@ -87,7 +87,7 @@ export default function Sidebar({ open, setOpen,  onCollapseChange }) {
       },
     ];
 
-    if (role === "superadmin") return [...superadminExtra];
+    if (role === "superadmin") return [...baseMenu, ...superadminExtra];
     if (role === "admin") return [...baseMenu, ...adminMenu];
     return baseMenu;
   }

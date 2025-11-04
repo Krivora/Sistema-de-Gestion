@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button } from "@mui/material";
+import { Button, } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { useAdjustments } from "../hooks/useAdjustments";
 import { AdjustmentsApi } from "../api/adjustments";
@@ -8,7 +8,7 @@ import AdjustmentForm from "../components/AdjustmentForm";
 import AdjustmentDetails from "../components/AdjustmentDetails";
 import { useToast } from "@core/utils/alerts/toastUtils";
 import { useNotify } from "@core/utils/alerts/notifyUtils";
-
+import PageHeader from "@core/components/common/PageHeader";
 export default function Adjustments() {
   const { adjustments, loading, createAdjustment } = useAdjustments();
   const [open, setOpen] = useState(false);
@@ -16,8 +16,8 @@ export default function Adjustments() {
   const [selectedAdjustment, setSelectedAdjustment] = useState(null);
   const toast = useToast();
   const notify = useNotify();
-
   const handleSave = async (data) => {
+    console.log(data)
     try {
       await createAdjustment(data);
       notify.success("Ajuste creado", "El ajuste se registró correctamente");
@@ -39,8 +39,11 @@ export default function Adjustments() {
 
   return (
     <div className="p-6 space-y-4">
+      <PageHeader
+        title=" Ajustes de Inventario"
+        description="Controla las correcciones de inventario por diferencias físicas, devoluciones, pérdidas o ajustes administrativos registrados en el sistema."
+      />
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Ajustes de Inventario</h2>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpen(true)}>
           Nuevo Ajuste
         </Button>

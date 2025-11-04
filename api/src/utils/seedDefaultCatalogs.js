@@ -30,13 +30,13 @@ export async function seedDefaultCatalogs(client, clientId) {
 
   // 🔁 Motivos de transferencia
   await client.query(
-    `INSERT INTO catalog_items (catalog_id, label)
-     VALUES
-      ($1, 'Reabastecimiento de sucursal'),
-      ($1, 'Devolución a almacén central'),
-      ($1, 'Movimiento entre almacenes'),
-      ($1, 'Transferencia por ajuste de ubicación'),
-      ($1, 'Transferencia temporal')`,
+    `INSERT INTO catalog_items (catalog_id, label, metadata)
+    VALUES
+      ($1, 'Reabastecimiento de sucursal', '{"type": "TRANSFER_OUT"}'),
+      ($1, 'Devolución a almacén central', '{"type": "TRANSFER_IN"}'),
+      ($1, 'Movimiento entre almacenes', '{"type": "TRANSFER_OUT"}'),
+      ($1, 'Transferencia por ajuste de ubicación', '{"type": "TRANSFER_OUT"}'),
+      ($1, 'Transferencia temporal', '{"type": "TRANSFER_OUT"}')`,
     [transferCatalog.id]
   );
 }

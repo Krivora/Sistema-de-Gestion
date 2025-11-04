@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button } from "@mui/material";
+import { Button} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { useBranches } from "../hooks/useBranches";
 import BranchTable from "../components/BranchTable";
@@ -7,11 +7,11 @@ import BranchForm from "../components/BranchForm";
 import { useToast } from "@core/utils/alerts/toastUtils";
 import { useAlert } from "@core/utils/alerts/alertUtils";
 import { useNotify } from "@core/utils/alerts/notifyUtils";
+import PageHeader from "@core/components/common/PageHeader";
 
 export default function Branches() {
   const { branches, loading, addBranch, updateBranch, deleteBranch } =
     useBranches();
-
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
@@ -61,8 +61,11 @@ export default function Branches() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Sucursales</h2>
+      <PageHeader
+        title="Sucursales"
+        description="Administra las diferentes sucursales en el sistema"
+      />
+      <div className="flex justify-start items-center mb-4 mt-3">
         <Button
           variant="contained"
           startIcon={<AddIcon />}

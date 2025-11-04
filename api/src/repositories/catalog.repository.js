@@ -19,9 +19,12 @@ export async function findAll(clientId) {
  */
 export async function findItems(clientId, code) {
   const { rows } = await pool.query(
-    `SELECT i.*
+    `SELECT 
+        i.*, 
+        u.name AS created_by_name
      FROM catalog_items i
      JOIN catalogs c ON c.id = i.catalog_id
+     LEFT JOIN users u ON u.id = i.created_by  -- 👈 Une el usuario creador
      WHERE c.client_id = $1
        AND c.code = $2
      ORDER BY i.label ASC`,

@@ -8,6 +8,7 @@ import BranchProductForm from "../components/BranchProductForm";
 import { useToast } from "@core/utils/alerts/toastUtils";
 import { useAlert } from "@core/utils/alerts/alertUtils";
 import { useNotify } from "@core/utils/alerts/notifyUtils";
+import PageHeader from "@core/components/common/PageHeader";
 
 export default function BranchProducts() {
   const { branches } = useBranches();
@@ -86,12 +87,11 @@ export default function BranchProducts() {
 
   return (
     <div className="p-4 sm:p-6 space-y-4 max-w-full overflow-x-hidden">
-      {/* 🧭 Header responsive */}
+      <PageHeader
+        title="Productos por Sucursal"
+        description="Administra los productos por cada sucursal en el sistema"
+      />
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-          Productos por Sucursal
-        </h2>
-
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <TextField
             select

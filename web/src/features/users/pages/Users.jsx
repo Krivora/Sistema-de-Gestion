@@ -4,6 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { useUsers } from "../hooks/useUsers";
 import UserTable from "../components/UserTable";
 import UserForm from "../components/UserForm";
+import PageHeader from "@core/components/common/PageHeader";
 import { useToast } from "@core/utils/alerts/toastUtils";
 import { useAlert } from "@core/utils/alerts/alertUtils";
 import { useNotify } from "@core/utils/alerts/notifyUtils";
@@ -56,7 +57,7 @@ export default function Users() {
       await desactiveUser(user.id);
       notify.info("Usuario desactivado", "El usuario ya no puede acceder al sistema");
     } catch {
-      toast.error("Error al desactivar el usuario");
+      notify.error("Error", "Error al desactivar el usuario");
     }
   };
 
@@ -77,8 +78,11 @@ export default function Users() {
 
   return (
     <div className="p-6">
+      <PageHeader
+        title="Usuarios"
+        description="Administra los usuarios del sistema, asigna roles, activa o desactiva cuentas y gestiona su acceso a las diferentes sucursales."
+      />
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Usuarios</h2>
         <Button
           variant="contained"
           startIcon={<AddIcon />}

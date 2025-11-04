@@ -18,6 +18,7 @@ import {
   Key,
 } from "@mui/icons-material";
 import { useTheme } from "@core/context/ThemeProvider";
+import PageHeader from "@core/components/common/PageHeader";
 
 export default function UserSettings() {
   const navigate = useNavigate();
@@ -69,32 +70,13 @@ export default function UserSettings() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* 🔹 Breadcrumbs */}
-      <Breadcrumbs aria-label="breadcrumb" className="text-sm">
-        <MuiLink
-          underline="hover"
-          color={darkMode ? "gray.300" : "inherit"}
-          onClick={() => navigate("/")}
-          sx={{ cursor: "pointer" }}
-        >
-          Inicio
-        </MuiLink>
-        <Typography color="text.primary">Configuración</Typography>
-      </Breadcrumbs>
-
-      {/* 🔹 Encabezado */}
-      <div className="flex flex-col gap-1">
-        <Typography variant="h5" fontWeight={600}>
-          Configuración del Sistema
-        </Typography>
-        <Typography
-          variant="body2"
-          color={darkMode ? "gray.400" : "text.secondary"}
-        >
-          Administra roles, permisos y catálogos generales del sistema.
-        </Typography>
-      </div>
-
+      <PageHeader
+        title=" Configuración del Sistema"
+        description="Administra roles, permisos y catálogos generales del sistema."
+        breadcrumbs={[
+          { label: "Configuración"},
+        ]}
+      />
       {/* 🔹 Grid de Cards */}
       <Grid
         container

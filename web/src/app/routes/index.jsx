@@ -26,8 +26,8 @@ import Users from "@features/users/pages/Users";
 import Clients from "@features/admin/clients/pages/Clients";
 import Config from "@features/settings/pages/index";
 import Catalogs from "@features/settings/pages/catalogs/index";
-import AdjustmentNotesCatalog from "@features/settings/pages/catalogs/adjustment-notes/index";
-import TransfersNotesCatalog from "@features/settings/pages/catalogs/transfer-reasons/index";
+import AdjustmentNotesCatalog from "@features/settings/pages/catalogs/adjustment-notes/AdjustmentNotesCatalog";
+import TransfersNotesCatalog from "@features/settings/pages/catalogs/transfer-reasons/TransfersNoteCatalog";
 
 // 🧭 Configuración de rutas
 const router = createBrowserRouter([

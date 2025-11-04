@@ -4,9 +4,9 @@ import AddIcon from "@mui/icons-material/Add";
 import { useCategories } from "../hooks/useCategories";
 import CategoryTable from "../components/CategoryTable";
 import CategoryForm from "../components/CategoryForm";
-import { useToast } from "@core/utils/alerts/toastUtils";
 import { useAlert } from "@core/utils/alerts/alertUtils";
 import { useNotify } from "@core/utils/alerts/notifyUtils";
+import PageHeader from "@core/components/common/PageHeader";
 
 export default function Categories() {
   const { 
@@ -20,7 +20,6 @@ export default function Categories() {
 } = useCategories();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const toast = useToast();
   const alert = useAlert();
   const notify = useNotify();
 
@@ -94,8 +93,11 @@ export default function Categories() {
 
   return (
     <div className="p-6">
+       <PageHeader
+        title="Categorias"
+        description="Administra las categorias para los productos."
+      />
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Categorías</h2>
         <Button
           variant="contained"
           startIcon={<AddIcon />}

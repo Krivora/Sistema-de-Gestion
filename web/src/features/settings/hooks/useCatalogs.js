@@ -48,25 +48,29 @@ export function useCatalog(code) {
     }
   };
 
-  // 🚫 Soft delete
+  // 🚫 Soft delete (mover a eliminados)
   const deleteItem = async (id) => {
     try {
-      await CatalogsApi.deleteItem(id);
-      setItems((prev) => prev.filter((i) => i.id !== id));
-      toast.info("Elemento eliminado");
+      const deleted = await CatalogsApi.deleteItem(id);
+      setItems((prev) =>
+        prev.map((i) =>
+          i.id === id ? { ...i, deleted_at: new Date().toISOString() } : i
+        )
+      );
+      return deleted;
     } catch (err) {
-      toast.error("Error al eliminar elemento");
     }
   };
 
-  // ♻️ Restaurar
+  // ♻️ Restaurar (mover a activos)
   const restoreItem = async (id) => {
     try {
-      await CatalogsApi.restoreItem(id);
-      toast.success("Elemento restaurado");
-      fetchItems();
+      const restored = await CatalogsApi.restoreItem(id);
+      setItems((prev) =>
+        prev.map((i) => (i.id === id ? { ...i, deleted_at: null } : i))
+      );
+      return restored;
     } catch (err) {
-      toast.error("Error al restaurar elemento");
     }
   };
 
