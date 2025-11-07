@@ -17,18 +17,14 @@ import {
   CardContent,
   useTheme,
 } from "@mui/material";
+import { ArrowRightAlt } from "@mui/icons-material";
 import { alpha } from "@mui/material/styles";
 import { fmtDate } from "@core/utils/formatters/formatters";
-export default function SaleDetails({ open, onClose, sale }) {
+export default function TransferDetails({ open, onClose, transfer }) {
   const theme = useTheme();
-  if (!sale) return null;
-  const total =
-    sale.items?.reduce((sum, i) => sum + i.qty * i.unit_price, 0) || 0;
+  if (!transfer) return null;
 
-  const bgSoft = alpha(
-    theme.palette.primary.main,
-    theme.palette.mode === "dark" ? 0.1 : 0.06
-  );
+  const bgSoft = alpha(theme.palette.primary.main, theme.palette.mode === "dark" ? 0.1 : 0.06);
   const borderSoft = alpha(theme.palette.primary.main, 0.15);
 
   return (
@@ -37,10 +33,9 @@ export default function SaleDetails({ open, onClose, sale }) {
         sx={{
           pb: 0,
           fontWeight: 600,
-          color: theme.palette.primary.main,
         }}
       >
-      Detalles de la venta
+        Detalles de la transferencia
       </DialogTitle>
 
       <DialogContent dividers sx={{ py: 3, px: 4 }}>
@@ -59,59 +54,69 @@ export default function SaleDetails({ open, onClose, sale }) {
         >
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="subtitle1" fontWeight="bold">
-              Folio:{" "}
-              <span style={{ fontWeight: 400 }}>{sale.doc_no || "—"}</span>
+              Folio: <span style={{ fontWeight: 400 }}>{transfer.doc_no || "—"}</span>
             </Typography>
             <Chip
-              label={sale.status === "open" ? "Abierta" : "Cerrada"}
-              color={sale.status === "open" ? "info" : "default"}
+              label={transfer.posted ? "Completada" : "Pendiente"}
+              color={transfer.posted ? "success" : "warning"}
               size="small"
               variant="outlined"
             />
           </Box>
 
-          <Typography variant="body2" color="text.secondary">
-            <strong>Sucursal:</strong> {sale.branch_name ?? "—"}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            <strong>Cliente:</strong>{" "}
-            {sale.customer_name || "Público General"}
-            {sale.customer_phone && (
-              <span style={{ color: theme.palette.text.secondary }}>
-                {" "}
-                — {sale.customer_phone}
-              </span>
-            )}
-          </Typography>
+          <Box display="flex" alignItems="center" gap={1.5} flexWrap="wrap">
+            <Typography variant="body2" fontWeight="bold" color="text.secondary">
+              De:
+            </Typography>
+            <Typography variant="body2">{transfer.from_branch_name}</Typography>
+            <ArrowRightAlt
+              sx={{
+                color: theme.palette.primary.main,
+                fontSize: 20,
+              }}
+            />
+            <Typography variant="body2" fontWeight="bold" color="text.secondary">
+              A:
+            </Typography>
+            <Typography variant="body2">{transfer.to_branch_name}</Typography>
+          </Box>
+
+          {transfer.note && (
+            <Typography
+              variant="body2"
+              sx={{
+                fontStyle: "italic",
+                color: theme.palette.text.secondary,
+                mt: 0.5,
+              }}
+            >
+              Nota:{transfer.note}
+            </Typography>
+          )}
 
           <Typography variant="body2" color="text.secondary">
-            <strong>Método de pago:</strong> {sale.payment_method || "Efectivo"}
+            Fecha:{" "}
+            <strong>
+              {fmtDate(transfer.created_at)}
+            </strong>
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Transferencia Autorizada Por:{" "}
+            <strong>{transfer.user_name}</strong>
           </Typography>
 
-          <Typography variant="body2" color="text.secondary">
-            <strong>Fecha:</strong>{" "}
-            {fmtDate(sale.created_at)}
-          </Typography>
-
-          <Typography variant="body2" color="text.secondary">
-            <strong>Venta Autorizada Por:</strong>{" "}
-            {sale.user_name}
-          </Typography>
         </Box>
 
         <Divider sx={{ my: 2 }} />
 
-        {/* 🛒 Tabla de productos */}
+        {/* 🧩 Tabla de productos */}
         <Card
           variant="outlined"
           sx={{
             borderRadius: 2,
             borderColor: theme.palette.divider,
             backgroundColor: theme.palette.background.paper,
-            boxShadow:
-              theme.palette.mode === "dark"
-                ? "none"
-                : "0 1px 3px rgba(0,0,0,0.08)",
+            boxShadow: theme.palette.mode === "dark" ? "none" : "0 1px 3px rgba(0,0,0,0.08)",
           }}
         >
           <CardContent sx={{ p: 0 }}>
@@ -125,59 +130,28 @@ export default function SaleDetails({ open, onClose, sale }) {
                 color: theme.palette.text.primary,
               }}
             >
-              Productos vendidos
+              Productos transferidos
             </Typography>
 
-            {sale.items?.length > 0 ? (
+            {transfer.items?.length > 0 ? (
               <Table size="small">
                 <TableHead>
-                  <TableRow
-                    sx={{
-                      backgroundColor: alpha(
-                        theme.palette.primary.main,
-                        0.08
-                      ),
-                    }}
-                  >
+                  <TableRow sx={{ backgroundColor: alpha(theme.palette.primary.main, 0.08) }}>
                     <TableCell sx={{ fontWeight: 600 }}>Producto</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 600 }}>
                       Cantidad
                     </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 600 }}>
-                      Precio Unitario
-                    </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 600 }}>
-                      Subtotal
-                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {sale.items.map((item) => (
+                  {transfer.items.map((item) => (
                     <TableRow key={item.id} hover>
                       <TableCell>{item.product_name}</TableCell>
                       <TableCell align="right">
                         {Number(item.qty).toFixed(2)}
                       </TableCell>
-                      <TableCell align="right">
-                        ${Number(item.unit_price).toFixed(2)}
-                      </TableCell>
-                      <TableCell align="right">
-                        ${(item.qty * item.unit_price).toFixed(2)}
-                      </TableCell>
                     </TableRow>
                   ))}
-                  <TableRow>
-                    <TableCell
-                      colSpan={3}
-                      align="right"
-                      sx={{ fontWeight: 600 }}
-                    >
-                      Total:
-                    </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 600 }}>
-                      ${total.toFixed(2)}
-                    </TableCell>
-                  </TableRow>
                 </TableBody>
               </Table>
             ) : (
@@ -187,7 +161,7 @@ export default function SaleDetails({ open, onClose, sale }) {
                   color="text.secondary"
                   align="center"
                 >
-                  No hay productos registrados en esta venta.
+                  No hay productos registrados en esta transferencia.
                 </Typography>
               </Box>
             )}

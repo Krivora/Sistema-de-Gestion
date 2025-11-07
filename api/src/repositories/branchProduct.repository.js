@@ -92,10 +92,14 @@ export async function findByBranch(branchId, clientId = null) {
     ORDER BY p.name
   `;
 
-  const { rows } = await pool.query(
-    clientId ? [branchId, clientId] : [branchId]
-  );
-  return rows;
+  try {
+    const params = clientId ? [branchId, clientId] : [branchId];
+    const { rows } = await pool.query(query, params); // ✅ aquí faltaba el query
+    return rows;
+  } catch (err) {
+    console.error("❌ Error en findByBranch:", err.message);
+    throw err;
+  }
 }
 
 // 🔍 Buscar producto por ID (con client_id opcional)

@@ -1,21 +1,19 @@
 import { useEffect, useState } from "react";
 import { TransfersApi } from "../api/transfers";
-import { useAuth } from "@core/context/AuthProvider"; // 👈 obtenemos el cliente actual
+import { useAuth } from "@core/context/AuthProvider";
 
 export function useTransfers() {
   const [transfers, setTransfers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { user: currentUser } = useAuth(); // 👈 usuario logueado
+  const { user: currentUser } = useAuth();
 
-  // 🔹 Obtener todas las transferencias del cliente actual
+  // 🔹 Obtener todas las transferencias
   const fetchTransfers = async () => {
-    if (!currentUser?.client_id) return; // evita llamadas sin cliente activo
+    if (!currentUser?.client_id) return;
     setLoading(true);
     try {
-      const data = await TransfersApi.list({
-        client_id: currentUser.client_id, // 👈 filtro automático
-      });
+      const data = await TransfersApi.list();
       setTransfers(data);
     } catch (err) {
       setError(err.message || "Error al cargar transferencias");
@@ -26,24 +24,23 @@ export function useTransfers() {
 
   // ➕ Crear transferencia
   const createTransfer = async (payload) => {
-    if (!currentUser?.client_id) return;
-
-    const created = await TransfersApi.create({
-      ...payload,
-      client_id: currentUser.client_id, // 👈 se adjunta automáticamente
-    });
-
-    setTransfers((prev) => [created, ...prev]);
-    await fetchTransfers(); // Refresca lista después de crear
-    return created;
+    try {
+      const created = await TransfersApi.create(payload);
+      setTransfers((prev) => [created, ...prev]);
+      await fetchTransfers();
+      return created;
+    } catch (err) {
+      console.error("❌ Error al crear transferencia:", err.message);
+      throw err; // 👈 vuelve a lanzar el error con el mensaje del backend
+    }
   };
 
-  // 🔹 Obtener transferencia por ID
+
+  // 🔍 Obtener una transferencia específica
   const getTransfer = async (id) => {
     return await TransfersApi.get(id);
   };
 
-  // 🔹 Cargar transferencias al montar o cuando cambie cliente
   useEffect(() => {
     fetchTransfers();
   }, [currentUser?.client_id]);

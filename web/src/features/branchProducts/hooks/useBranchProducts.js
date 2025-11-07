@@ -20,7 +20,7 @@ export function useBranchProducts(defaultBranchId = "") {
     try {
       setLoading(true);
       const data = bId
-        ? await BranchProductsApi.listByBranch(bId)
+        ? await BranchProductsApi.listByBranch(bId) // ✅ token ya se manda automático
         : await BranchProductsApi.listAll();
       setItems(data);
     } catch (err) {

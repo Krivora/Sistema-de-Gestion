@@ -1,21 +1,22 @@
 import { useState } from "react";
-import { Button} from "@mui/material";
+import { Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { usePurchases } from "../hooks/usePurchases";
-import { PurchasesApi } from "../api/purchases";
 import PurchaseTable from "../components/PurchaseTable";
 import PurchaseForm from "../components/PurchaseForm";
 import PurchaseDetails from "../components/PurchaseDetails";
 import { useToast } from "@core/utils/alerts/toastUtils";
 import { useNotify } from "@core/utils/alerts/notifyUtils";
 import PageHeader from "@core/components/common/PageHeader";
+
 export default function Purchases() {
-  const { purchases, loading, createPurchase} = usePurchases();
+  const { purchases, loading, createPurchase, getPurchaseById } = usePurchases();
   const [open, setOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const toast = useToast();
   const notify = useNotify();
+
   const handleSave = async (data) => {
     try {
       await createPurchase(data);
@@ -28,7 +29,7 @@ export default function Purchases() {
 
   const handleView = async (purchase) => {
     try {
-      const full = await PurchasesApi.get(purchase.id);
+      const full = await getPurchaseById(purchase.id);
       setSelectedPurchase(full);
       setDetailOpen(true);
     } catch {
@@ -52,7 +53,11 @@ export default function Purchases() {
 
       <PurchaseForm open={open} onClose={() => setOpen(false)} onSave={handleSave} />
 
-      <PurchaseDetails open={detailOpen} onClose={() => setDetailOpen(false)} purchase={selectedPurchase} />
+      <PurchaseDetails
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        purchase={selectedPurchase}
+      />
     </div>
   );
 }

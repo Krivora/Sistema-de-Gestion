@@ -2,7 +2,8 @@
 export const fmtMoney = (v = 0) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(Number(v) || 0);
 
-
-
 export const fmtDate = (d) =>
-  new Date(d).toLocaleDateString("es-MX", { year: "numeric", month: "short", day: "2-digit" });
+    new Date(new Date(d).getTime() - 7 * 60 * 60 * 1000).toLocaleString("es-MX", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });

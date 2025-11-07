@@ -47,7 +47,7 @@
             qty,
             type: "PURCHASE",
             unit_cost: cost,
-            note: `Compra #${purchase.doc_no || purchase.id}`,
+            note: `Compra ${purchase.doc_no || purchase.id}`,
             ref_type: "purchases",
             ref_id: purchase.id,
           },
@@ -64,7 +64,7 @@
         user_id,
         client_id,
         "CREATE_PURCHASE",
-        `Compra #${posted.doc_no || posted.id} creada (${items.length} productos)`,
+        `Compra ${posted.doc_no || posted.id} creada (${items.length} productos)`,
         "purchases",
         posted.id
       );

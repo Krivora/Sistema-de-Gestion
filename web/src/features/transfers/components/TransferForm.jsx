@@ -18,28 +18,28 @@ import { useBranchProducts } from "@features/branchProducts/hooks/useBranchProdu
 
 export default function TransferForm({ open, onClose, onSave }) {
   const { branches } = useBranches();
-  const { items: branchProducts, setBranchId } = useBranchProducts();
+  
+  const { items: originProducts, setBranchId: setOriginBranchId } = useBranchProducts();
+  const { items: destProducts, setBranchId: setDestBranchId } = useBranchProducts();
+
   const [form, setForm] = useState({
     from_branch_id: "",
     to_branch_id: "",
     note: "",
     items: [],
   });
-
   const [newItem, setNewItem] = useState({ product_id: "", qty: "" });
   const [query, setQuery] = useState("");
   const [stockWarning, setStockWarning] = useState(null);
-
-  // 🔹 Filtrar productos según búsqueda
+  const [serverError, setServerError] = useState(null); // 🟢 nuevo estado para errores del backend
+  // 🔹 Filtrar productos según búsqueda (usa los de la sucursal de origen)
   const filteredProducts = useMemo(() => {
-    if (!branchProducts) return [];
-    if (!query) return branchProducts.slice(0, 15);
-    return branchProducts
-      .filter((p) =>
-        p.product_name.toLowerCase().includes(query.toLowerCase())
-      )
+    if (!originProducts) return [];
+    if (!query) return originProducts.slice(0, 15);
+    return originProducts
+      .filter((p) => p.product_name.toLowerCase().includes(query.toLowerCase()))
       .slice(0, 15);
-  }, [query, branchProducts]);
+  }, [query, originProducts]);
 
   // ♻️ Reset al cerrar modal
   useEffect(() => {
@@ -48,27 +48,39 @@ export default function TransferForm({ open, onClose, onSave }) {
       setNewItem({ product_id: "", qty: "" });
       setQuery("");
       setStockWarning(null);
+      setServerError(null); // 🟢 limpiar error backend
     }
   }, [open]);
 
   // 🏢 Cuando cambia la sucursal de origen
   const handleOriginChange = (branchId) => {
     setForm((prev) => ({ ...prev, from_branch_id: branchId }));
-    setBranchId(branchId);
+    setOriginBranchId(branchId);
+    setServerError(null);
   };
 
+  const handleDestChange = (branchId) => {
+    setForm((prev) => ({ ...prev, to_branch_id: branchId }));
+    setDestBranchId(branchId);
+    setServerError(null);
+  };
   // ➕ Agregar producto con validación de stock
   const handleAddItem = () => {
     if (!newItem.product_id || !newItem.qty) return;
 
-    const product = branchProducts.find(
+    const product = originProducts.find(
       (p) => p.product_id === Number(newItem.product_id)
     );
     const qty = Number(newItem.qty);
     const stock = Number(product?.stock ?? 0);
 
-    if (!product) {
-      setStockWarning("Producto no encontrado en la sucursal de origen.");
+    const existsInDest = destProducts?.some(
+      (p) => p.product_id === Number(newItem.product_id)
+    );
+    if (!existsInDest) {
+      setStockWarning(
+        `El producto "${product.product_name}" no está asignado a la sucursal destino.`
+      );
       return;
     }
 
@@ -87,7 +99,9 @@ export default function TransferForm({ open, onClose, onSave }) {
     setNewItem({ product_id: "", qty: "" });
     setQuery("");
     setStockWarning(null);
+    setServerError(null);
   };
+
 
   // ❌ Eliminar producto
   const handleRemoveItem = (index) => {
@@ -98,21 +112,43 @@ export default function TransferForm({ open, onClose, onSave }) {
   };
 
   // 💾 Enviar al backend
-  const handleSubmit = () => {
-    if (!form.from_branch_id || !form.to_branch_id || form.items.length === 0) return;
+  const handleSubmit = async () => {
+    setStockWarning(null);
+    setServerError(null);
 
     if (form.from_branch_id === form.to_branch_id) {
       setStockWarning("No puedes transferir entre la misma sucursal.");
       return;
     }
-
-    onSave(form);
+    try {
+      await onSave(form);
+      onClose();
+    } catch (err) {
+      // 🟡 Captura mensaje del backend
+      setServerError(err.message || "Ocurrió un error al guardar la transferencia.");
+    }
   };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Nueva Transferencia</DialogTitle>
-      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+
+      <DialogContent
+        sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+      >
+        {/* 🟡 Mostrar errores */}
+        {serverError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {serverError}
+          </Alert>
+        )}
+
+        {stockWarning && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            {stockWarning}
+          </Alert>
+        )}
+
         {/* 🏢 Sucursales */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <TextField
@@ -134,7 +170,7 @@ export default function TransferForm({ open, onClose, onSave }) {
             select
             label="Sucursal destino"
             value={form.to_branch_id}
-            onChange={(e) => setForm({ ...form, to_branch_id: e.target.value })}
+            onChange={(e) => handleDestChange(e.target.value)}
             fullWidth
             required
           >
@@ -156,14 +192,7 @@ export default function TransferForm({ open, onClose, onSave }) {
           rows={2}
         />
 
-        {/* ⚠️ Mensaje de advertencia */}
-        {stockWarning && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            {stockWarning}
-          </Alert>
-        )}
-
-        {/* 📦 Agregar productos */}
+        {/* 📦 Sección productos */}
         <div className="mt-4 border-t pt-3">
           <h4 className="font-medium mb-2">Productos a transferir</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -173,10 +202,13 @@ export default function TransferForm({ open, onClose, onSave }) {
                 `${option.product_name} — Stock: ${option.stock}`
               }
               value={
-                branchProducts.find((p) => p.product_id === newItem.product_id) || null
+                 originProducts.find((p) => p.product_id === newItem.product_id) || null
               }
               onChange={(_, value) =>
-                setNewItem({ ...newItem, product_id: value ? value.product_id : "" })
+                setNewItem({
+                  ...newItem,
+                  product_id: value ? value.product_id : "",
+                })
               }
               onInputChange={(_, value) => setQuery(value)}
               renderInput={(params) => (
@@ -211,7 +243,7 @@ export default function TransferForm({ open, onClose, onSave }) {
               variant="contained"
               onClick={handleAddItem}
               sx={{ minWidth: "fit-content" }}
-              disabled={!form.from_branch_id}
+              disabled={!form.from_branch_id || !form.to_branch_id}
             >
               <Add fontSize="small" />
             </Button>
@@ -235,7 +267,10 @@ export default function TransferForm({ open, onClose, onSave }) {
                       <td>{i.qty}</td>
                       <td className="text-right">
                         <Tooltip title="Eliminar">
-                          <IconButton size="small" onClick={() => handleRemoveItem(idx)}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleRemoveItem(idx)}
+                          >
                             <Delete fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -254,7 +289,9 @@ export default function TransferForm({ open, onClose, onSave }) {
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={!form.from_branch_id || !form.to_branch_id || form.items.length === 0}
+          disabled={
+            !form.from_branch_id || !form.to_branch_id || form.items.length === 0
+          }
         >
           Guardar Transferencia
         </Button>

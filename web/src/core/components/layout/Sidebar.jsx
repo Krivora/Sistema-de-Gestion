@@ -18,22 +18,16 @@ import {
 import { useTheme } from "@core/context/ThemeProvider";
 import { useAuth } from "@core/context/AuthProvider";
 
-export default function Sidebar({ open, setOpen,  onCollapseChange }) {
-  
+export default function Sidebar({ open, setOpen, collapsed, setCollapsed }) {
 
   const { pathname } = useLocation();
   const { darkMode } = useTheme();
   const { user } = useAuth();
   const role = user?.role_name;
-  const [collapsed, setCollapsed] = useState(true);
 
   const handleLogout = () => {
     // 🔐 Aquí puedes limpiar token o redirigir al login
     console.log("Logout...");
-  };
-  const handleCollapse = (value) => {
-    setCollapsed(value);
-    if (onCollapseChange) onCollapseChange(value);
   };
 
   function getMenuByRole(role) {
@@ -98,8 +92,8 @@ export default function Sidebar({ open, setOpen,  onCollapseChange }) {
 
   return (
     <aside
-      onMouseEnter={() => handleCollapse(false)}
-      onMouseLeave={() => handleCollapse(true)}
+      onMouseEnter={() => setCollapsed(false)}
+      onMouseLeave={() => setCollapsed(true)}
       className={`fixed top-0 left-0 h-full transition-all duration-300 z-40
         ${open ? "translate-x-0" : "-translate-x-64"} md:translate-x-0
         ${collapsed ? "w-16" : "w-64"}

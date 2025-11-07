@@ -13,11 +13,10 @@ import {
 import { useEffect, useState, useMemo } from "react";
 import { Add, Delete } from "@mui/icons-material";
 import { useBranches } from "@features/branches/hooks/useBranches";
-import { useProducts } from "@features/products/hooks/useProducts";
+import { BranchProductsApi } from "@features/branchProducts/api/branchProducts"; // 👈 importante
 
 export default function PurchaseForm({ open, onClose, onSave }) {
   const { branches } = useBranches();
-  const { products } = useProducts();
 
   const [form, setForm] = useState({
     branch_id: "",
@@ -31,19 +30,20 @@ export default function PurchaseForm({ open, onClose, onSave }) {
     unit_cost: "",
   });
 
-  // 🔹 texto de búsqueda del Autocomplete
-  const [query, setQuery] = useState("");
+  const [branchProducts, setBranchProducts] = useState([]); // 👈 productos por sucursal
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [query, setQuery] = useState(""); // texto del Autocomplete
 
-  // 🔹 Filtrar productos por nombre
+  // 🔹 Filtrar productos por texto
   const filteredProducts = useMemo(() => {
-    if (!products) return [];
-    if (!query) return products.slice(0, 10); // muestra los primeros 15 por defecto
-    return products
+    if (!branchProducts.length) return [];
+    if (!query) return branchProducts.slice(0, 10);
+    return branchProducts
       .filter((p) =>
-        p.name.toLowerCase().includes(query.toLowerCase())
+        p.product_name?.toLowerCase().includes(query.toLowerCase())
       )
-      .slice(0, 15); // máximo 15 resultados
-  }, [query, products]);
+      .slice(0, 15);
+  }, [query, branchProducts]);
 
   // 🔹 Limpiar al cerrar modal
   useEffect(() => {
@@ -51,23 +51,49 @@ export default function PurchaseForm({ open, onClose, onSave }) {
       setForm({ branch_id: "", doc_no: "", items: [] });
       setNewItem({ product_id: "", qty: "", unit_cost: "" });
       setQuery("");
+      setBranchProducts([]);
     }
   }, [open]);
+
+  // 🧩 Cargar productos de la sucursal seleccionada
+  useEffect(() => {
+    const fetchBranchProducts = async () => {
+      if (!form.branch_id) {
+        setBranchProducts([]);
+        return;
+      }
+
+      try {
+        setLoadingProducts(true);
+        const data = await BranchProductsApi.listByBranch(form.branch_id);
+        const active = (data || []).filter((p) => p.is_active);
+        setBranchProducts(active);
+      } catch (err) {
+        console.error("❌ Error cargando productos por sucursal:", err);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+
+    fetchBranchProducts();
+  }, [form.branch_id]);
 
   // ➕ Agregar producto
   const handleAddItem = () => {
     if (!newItem.product_id || !newItem.qty || !newItem.unit_cost) return;
-    const product = products.find((p) => p.id === Number(newItem.product_id));
+    const product = branchProducts.find(
+      (p) => p.product_id === Number(newItem.product_id)
+    );
     const item = {
       ...newItem,
-      product_name: product?.name || "",
+      product_name: product?.product_name || "",
       product_id: Number(newItem.product_id),
       qty: Number(newItem.qty),
       unit_cost: Number(newItem.unit_cost),
     };
     setForm((prev) => ({ ...prev, items: [...prev.items, item] }));
     setNewItem({ product_id: "", qty: "", unit_cost: "" });
-    setQuery(""); // limpia búsqueda
+    setQuery("");
   };
 
   // ❌ Eliminar producto
@@ -78,12 +104,14 @@ export default function PurchaseForm({ open, onClose, onSave }) {
     }));
   };
 
-  // 💰 Total de la compra
+  // 💰 Total
   const total = form.items.reduce((acc, i) => acc + i.qty * i.unit_cost, 0);
 
   // 💾 Guardar compra
   const handleSubmit = () => {
-    if (!form.branch_id || form.items.length === 0) return;
+    if (!form.branch_id) return alert("Selecciona una sucursal");
+    if (form.items.length === 0) return alert("Agrega al menos un producto");
+
     const payload = {
       ...form,
       doc_no: form.doc_no.trim() === "" ? undefined : form.doc_no,
@@ -95,7 +123,9 @@ export default function PurchaseForm({ open, onClose, onSave }) {
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Nueva Compra</DialogTitle>
 
-      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+      <DialogContent
+        sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+      >
         {/* 🔹 Datos principales */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <TextField
@@ -103,7 +133,9 @@ export default function PurchaseForm({ open, onClose, onSave }) {
             label="Sucursal"
             name="branch_id"
             value={form.branch_id}
-            onChange={(e) => setForm({ ...form, branch_id: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, branch_id: Number(e.target.value) })
+            }
             fullWidth
             required
           >
@@ -131,16 +163,39 @@ export default function PurchaseForm({ open, onClose, onSave }) {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
             <Autocomplete
               options={filteredProducts}
-              getOptionLabel={(option) => option.name}
-              value={products.find((p) => p.id === newItem.product_id) || null}
+              getOptionLabel={(option) => option.product_name || ""}
+              value={
+                branchProducts.find(
+                  (p) => p.product_id === newItem.product_id
+                ) || null
+              }
               onChange={(_, value) =>
-                setNewItem({ ...newItem, product_id: value ? value.id : "" })
+                setNewItem({
+                  ...newItem,
+                  product_id: value ? value.product_id : "",
+                })
               }
               onInputChange={(_, value) => setQuery(value)}
               renderInput={(params) => (
-                <TextField {...params} label="Producto" size="small" fullWidth />
+                <TextField
+                  {...params}
+                  label={
+                    loadingProducts
+                      ? "Cargando productos..."
+                      : "Producto (asignado a sucursal)"
+                  }
+                  size="small"
+                  fullWidth
+                  disabled={!form.branch_id || loadingProducts}
+                />
               )}
-              noOptionsText={query ? "Sin resultados" : "Escribe para buscar..."}
+              noOptionsText={
+                loadingProducts
+                  ? "Cargando..."
+                  : form.branch_id
+                  ? "Sin productos asignados"
+                  : "Selecciona una sucursal"
+              }
               sx={{ width: "100%" }}
             />
 
@@ -158,11 +213,18 @@ export default function PurchaseForm({ open, onClose, onSave }) {
               type="number"
               label="Costo Unitario"
               value={newItem.unit_cost}
-              onChange={(e) => setNewItem({ ...newItem, unit_cost: e.target.value })}
+              onChange={(e) =>
+                setNewItem({ ...newItem, unit_cost: e.target.value })
+              }
               fullWidth
             />
 
-            <Button variant="contained" onClick={handleAddItem} sx={{ minWidth: "fit-content" }}>
+            <Button
+              variant="contained"
+              onClick={handleAddItem}
+              sx={{ minWidth: "fit-content" }}
+              disabled={!newItem.product_id}
+            >
               <Add fontSize="small" />
             </Button>
           </div>
@@ -189,7 +251,10 @@ export default function PurchaseForm({ open, onClose, onSave }) {
                       <td>${(i.qty * i.unit_cost).toFixed(2)}</td>
                       <td className="text-right">
                         <Tooltip title="Eliminar">
-                          <IconButton size="small" onClick={() => handleRemoveItem(idx)}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleRemoveItem(idx)}
+                          >
                             <Delete fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -206,9 +271,14 @@ export default function PurchaseForm({ open, onClose, onSave }) {
           )}
         </div>
       </DialogContent>
+
       <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>
-        <Button variant="contained" onClick={handleSubmit} disabled={!form.branch_id || form.items.length === 0}>
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={!form.branch_id || form.items.length === 0}
+        >
           Procesar Compra
         </Button>
       </DialogActions>

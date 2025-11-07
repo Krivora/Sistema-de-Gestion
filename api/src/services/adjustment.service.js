@@ -13,7 +13,7 @@ export async function createAndPostAdjustment(payload, user) {
     await client.query("BEGIN");
 
     const { client_id, id: user_id } = user;
-    const { branch_id, note, items } = payload;
+    const { branch_id, note, items, type } = payload;
 
     if (!items?.length) throw new Error("El ajuste requiere productos");
 
@@ -23,6 +23,7 @@ export async function createAndPostAdjustment(payload, user) {
       note,
       client_id,
       user_id,
+      type,
     });
 
     // 2️⃣ Procesar cada producto
@@ -30,16 +31,11 @@ export async function createAndPostAdjustment(payload, user) {
       const qty = Number(item.qty);
       if (!item.product_id || qty <= 0)
         throw new Error("Producto o cantidad inválida");
-
-      if (![INVENTORY_TYPES.ADJUSTMENT_IN, INVENTORY_TYPES.ADJUSTMENT_OUT].includes(item.type))
-        throw new Error("Tipo de ajuste inválido");
-
       // Guardar item
       await AdjustmentRepo.addItem(client, {
         adjustment_id: adjustment.id,
         product_id: item.product_id,
         qty,
-        type: item.type,
         note: item.note,
         client_id,
       });
@@ -51,7 +47,7 @@ export async function createAndPostAdjustment(payload, user) {
           branch_id,
           product_id: item.product_id,
           qty,
-          type: item.type,
+          type:type,
           unit_cost: 0,
           note: `Ajuste ${adjustment.doc_no}`,
           ref_type: "adjustments",

@@ -26,6 +26,7 @@ export function useAdjustments() {
 
   // 🔹 Crear nuevo ajuste
   const createAdjustment = async (adjustment) => {
+    console.log("Creando ajuste:", adjustment);
     if (!currentUser?.client_id) return;
 
     const created = await AdjustmentsApi.create({

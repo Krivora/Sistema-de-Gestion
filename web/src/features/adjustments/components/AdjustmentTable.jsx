@@ -1,141 +1,71 @@
-import { useState, useMemo } from "react";
-import { Visibility } from "@mui/icons-material";
-import { Skeleton, Tooltip, IconButton } from "@mui/material";
+import DataTable from "@core/components/common/DataTable";
+import { Visibility, ArrowDownward, ArrowUpward } from "@mui/icons-material";
+import { Tooltip, IconButton } from "@mui/material";
 import { useTheme } from "@core/context/ThemeProvider";
-import TableFilters from "@core/components/common/TableFilters";
-import Pagination from "@core/components/common/TablePagination";
+import { fmtDate } from "@core/utils/formatters/formatters";
 
 export default function AdjustmentTable({ adjustments = [], loading, onView }) {
   const { darkMode } = useTheme();
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const filtered = useMemo(() => {
-    return adjustments.filter((a) => {
-      const text = `${a.id} ${a.branch_name ?? ""} ${a.note ?? ""}`.toLowerCase();
-      return text.includes(search.toLowerCase());
-    });
-  }, [adjustments, search]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
-  const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  const typeLabelMap = {
+    ADJUSTMENT_IN: "Entrada +",
+    ADJUSTMENT_OUT: "Salida -",
+  };
+  const renderTypeChip = (type) => {
+    const isEntrada = ["ADJUSTMENT_IN"].includes(type);
+    const Icon = isEntrada ? ArrowDownward : ArrowUpward;
+    const label = typeLabelMap[type] || type;
 
-  const actionBtn = darkMode
-    ? "rounded-full p-1 text-gray-400 hover:bg-[#333333] hover:text-white"
-    : "rounded-full p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800";
-
-  if (loading) {
     return (
-      <div
-        className={`overflow-x-auto rounded-xl border shadow-sm ${
-          darkMode ? "border-gray-700 bg-[#1a1a1a]" : "border-gray-200 bg-white"
+      <span
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg ${
+          isEntrada
+            ? darkMode
+              ? "bg-[rgba(34,197,94,0.15)] text-emerald-400"
+              : "bg-emerald-100 text-emerald-700"
+            : darkMode
+            ? "bg-[rgba(239,68,68,0.15)] text-red-400"
+            : "bg-red-100 text-red-700"
         }`}
       >
-        <table className="w-full text-sm text-left">
-          <thead
-            className={`text-xs font-semibold uppercase ${
-              darkMode ? "bg-[#2a2a2a] text-gray-300" : "bg-gray-50 text-gray-500"
-            }`}
-          >
-            <tr>
-              <th className="px-6 py-3">ID</th>
-              <th className="px-6 py-3">Sucursal</th>
-              <th className="px-6 py-3">Nota</th>
-              <th className="px-6 py-3">Fecha</th>
-              <th className="px-6 py-3 text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <tr key={i}>
-                {Array.from({ length: 5 }).map((__, j) => (
-                  <td key={j} className="px-6 py-4">
-                    <Skeleton variant="text" width={120} />
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+        <Icon fontSize="small" />
+        {label}
+      </span>
     );
-  }
-
-  if (!adjustments || adjustments.length === 0) {
-    return (
-      <div
-        className={`p-4 text-sm text-center rounded-lg ${
-          darkMode ? "text-gray-400 bg-[#1a1a1a]" : "text-gray-600 bg-gray-50"
-        }`}
-      >
-        No hay ajustes registrados.
-      </div>
-    );
-  }
-
+  };
   return (
-    <div
-      className={`rounded-xl border shadow-sm transition-all ${
-        darkMode ? "border-gray-700 bg-[#1a1a1a]" : "border-gray-200 bg-white"
-      }`}
-    >
-      <TableFilters
-        search={search}
-        onSearchChange={(val) => {
-          setSearch(val);
-          setPage(1);
-        }}
-        rowsPerPage={rowsPerPage}
-        onRowsChange={(val) => {
-          setRowsPerPage(val);
-          setPage(1);
-        }}
-        darkMode={darkMode}
-        placeholder="Buscar ajuste por nota o sucursal..."
-      />
-
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead
-            className={`text-xs font-semibold uppercase ${
-              darkMode ? "bg-[#2a2a2a] text-gray-300" : "bg-gray-50 text-gray-500"
+    <DataTable
+      data={adjustments}
+      loading={loading}
+      darkMode={darkMode}
+      dense
+      placeholder="Buscar ajuste por nota o sucursal..."
+      defaultSort={{ key: "created_at", direction: "desc" }}
+      columns={[
+        { key: "doc_no", label: "Identificador" },
+        { key: "branch_name", label: "Sucursal" },
+         {
+          key: "type",
+          label: "Tipo",
+          render: (val) => renderTypeChip(val),
+        },
+        { key: "note", label: "Nota", render: (v) => v || "—" },
+        { key: "created_at", label: "Fecha", render: (val) => fmtDate(val),},
+        { key: "user_name", label: "Responsable", render: (v) => v || "—" },
+      ]}
+      renderActions={(a) => (
+        <Tooltip title="Ver detalles">
+          <IconButton
+            size="small"
+            onClick={() => onView(a)}
+            className={`transition ${
+              darkMode ? "hover:bg-[#333]" : "hover:bg-gray-100 text-gray-600"
             }`}
           >
-            <tr>
-              <th className="px-6 py-3">Identificador</th>
-              <th className="px-6 py-3">Sucursal</th>
-              <th className="px-6 py-3">Nota</th>
-              <th className="px-6 py-3">Fecha</th>
-              <th className="px-6 py-3">Responsable</th>
-              <th className="px-6 py-3 text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody
-            className={`divide-y ${
-              darkMode ? "divide-gray-700 bg-[#1a1a1a]" : "divide-gray-200 bg-white"
-            }`}
-          >
-            {paginated.map((a) => (
-              <tr key={a.id} className={`hover:${darkMode ? "bg-[#2a2a2a]" : "bg-gray-50"}`}>
-                <td className="px-6 py-4 font-medium">{a.doc_no}</td>
-                <td className="px-6 py-4">{a.branch_name ?? "—"}</td>
-                <td className="px-6 py-4">{a.note || "—"}</td>
-                <td className="px-6 py-4">{new Date(a.created_at).toLocaleString()}</td>
-                <td className="px-6 py-4">{a.user_name}</td>
-                <td className="px-6 py-4 text-right">
-                  <Tooltip title="Ver detalles">
-                    <IconButton size="small" onClick={() => onView(a)} className={actionBtn}>
-                      <Visibility fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-    </div>
+            <Visibility fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+    />
   );
 }

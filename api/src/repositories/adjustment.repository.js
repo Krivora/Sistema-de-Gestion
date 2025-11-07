@@ -11,10 +11,10 @@ export async function createHeader(client, data) {
   // 🔹 Formato del folio: AJ-00001 o AJ-{client_id}-{00001}
   const docNo = `AJ-${data.client_id}-${String(next).padStart(4, "0")}`;
   const { rows } = await client.query(
-    `INSERT INTO adjustments (client_id, branch_id, user_id, note, doc_no)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO adjustments (client_id, branch_id, user_id, note, doc_no, type)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING *`,
-    [data.client_id, data.branch_id, data.user_id, data.note || null, docNo]
+    [data.client_id, data.branch_id, data.user_id, data.note || null, docNo, data.type]
   );
 
   return rows[0];
@@ -26,14 +26,13 @@ export async function createHeader(client, data) {
  */
 export async function addItem(client, data) {
   const { rows } = await client.query(
-    `INSERT INTO adjustment_items (adjustment_id, product_id, qty, type, note, client_id)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO adjustment_items (adjustment_id, product_id, qty, note, client_id)
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING *`,
     [
       data.adjustment_id,
       data.product_id,
       data.qty,
-      data.type,
       data.note || null,
       data.client_id,
     ]

@@ -31,7 +31,6 @@ export default function AdjustmentForm({ open, onClose, onSave }) {
   const [newItem, setNewItem] = useState({
     product_id: "",
     qty: "",
-    type: "ADJUSTMENT_IN",
     note: "",
   });
 
@@ -64,20 +63,12 @@ export default function AdjustmentForm({ open, onClose, onSave }) {
       setNewItem({
         product_id: "",
         qty: "",
-        type: "ADJUSTMENT_IN",
         note: "",
       });
       setQuery("");
     }
   }, [open]);
 
-
-  useEffect(() => {
-    setNewItem((prev) => ({
-      ...prev,
-      type: form.type,
-    }));
-  }, [form.type]);
 
 
   const handleAddItem = () => {
@@ -90,7 +81,7 @@ export default function AdjustmentForm({ open, onClose, onSave }) {
       qty: Number(newItem.qty),
     };
     setForm((prev) => ({ ...prev, items: [...prev.items, item] }));
-    setNewItem({ product_id: "", qty: "", type: form.type, note: "" });
+    setNewItem({ product_id: "", qty: "", note: "" });
     setQuery("");
   };
 
