@@ -15,24 +15,30 @@ import { useState, useEffect, useMemo } from "react";
 import { Add, Delete } from "@mui/icons-material";
 import { useBranches } from "@features/branches/hooks/useBranches";
 import { useBranchProducts } from "@features/branchProducts/hooks/useBranchProducts";
+import { useCatalog } from "@features/settings/hooks/useCatalogs"; // 👈 nuevo import
 
 export default function TransferForm({ open, onClose, onSave }) {
   const { branches } = useBranches();
-  
   const { items: originProducts, setBranchId: setOriginBranchId } = useBranchProducts();
   const { items: destProducts, setBranchId: setDestBranchId } = useBranchProducts();
+
+  // 👇 Catálogo de motivos
+  const { items: transferReasons } = useCatalog("transfer_reasons");
 
   const [form, setForm] = useState({
     from_branch_id: "",
     to_branch_id: "",
     note: "",
+    reason: "", // 👈 motivo seleccionado
     items: [],
   });
+
   const [newItem, setNewItem] = useState({ product_id: "", qty: "" });
   const [query, setQuery] = useState("");
   const [stockWarning, setStockWarning] = useState(null);
-  const [serverError, setServerError] = useState(null); // 🟢 nuevo estado para errores del backend
-  // 🔹 Filtrar productos según búsqueda (usa los de la sucursal de origen)
+  const [serverError, setServerError] = useState(null);
+
+  // 🔹 Filtrar productos
   const filteredProducts = useMemo(() => {
     if (!originProducts) return [];
     if (!query) return originProducts.slice(0, 15);
@@ -41,18 +47,28 @@ export default function TransferForm({ open, onClose, onSave }) {
       .slice(0, 15);
   }, [query, originProducts]);
 
+  // 🔹 Filtrar motivos activos (puedes agregar más lógica si tienes metadata.type)
+  const filteredReasons = useMemo(() => {
+    return transferReasons.filter((r) => !r.deleted_at);
+  }, [transferReasons]);
+
   // ♻️ Reset al cerrar modal
   useEffect(() => {
     if (!open) {
-      setForm({ from_branch_id: "", to_branch_id: "", note: "", items: [] });
+      setForm({
+        from_branch_id: "",
+        to_branch_id: "",
+        note: "",
+        reason: "",
+        items: [],
+      });
       setNewItem({ product_id: "", qty: "" });
       setQuery("");
       setStockWarning(null);
-      setServerError(null); // 🟢 limpiar error backend
+      setServerError(null);
     }
   }, [open]);
 
-  // 🏢 Cuando cambia la sucursal de origen
   const handleOriginChange = (branchId) => {
     setForm((prev) => ({ ...prev, from_branch_id: branchId }));
     setOriginBranchId(branchId);
@@ -64,19 +80,18 @@ export default function TransferForm({ open, onClose, onSave }) {
     setDestBranchId(branchId);
     setServerError(null);
   };
-  // ➕ Agregar producto con validación de stock
+
   const handleAddItem = () => {
     if (!newItem.product_id || !newItem.qty) return;
-
     const product = originProducts.find(
       (p) => p.product_id === Number(newItem.product_id)
     );
     const qty = Number(newItem.qty);
     const stock = Number(product?.stock ?? 0);
-
     const existsInDest = destProducts?.some(
       (p) => p.product_id === Number(newItem.product_id)
     );
+
     if (!existsInDest) {
       setStockWarning(
         `El producto "${product.product_name}" no está asignado a la sucursal destino.`
@@ -102,8 +117,6 @@ export default function TransferForm({ open, onClose, onSave }) {
     setServerError(null);
   };
 
-
-  // ❌ Eliminar producto
   const handleRemoveItem = (index) => {
     setForm((prev) => ({
       ...prev,
@@ -111,7 +124,6 @@ export default function TransferForm({ open, onClose, onSave }) {
     }));
   };
 
-  // 💾 Enviar al backend
   const handleSubmit = async () => {
     setStockWarning(null);
     setServerError(null);
@@ -124,7 +136,6 @@ export default function TransferForm({ open, onClose, onSave }) {
       await onSave(form);
       onClose();
     } catch (err) {
-      // 🟡 Captura mensaje del backend
       setServerError(err.message || "Ocurrió un error al guardar la transferencia.");
     }
   };
@@ -132,25 +143,12 @@ export default function TransferForm({ open, onClose, onSave }) {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Nueva Transferencia</DialogTitle>
-
-      <DialogContent
-        sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
-      >
-        {/* 🟡 Mostrar errores */}
-        {serverError && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {serverError}
-          </Alert>
-        )}
-
-        {stockWarning && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            {stockWarning}
-          </Alert>
-        )}
+      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+        {serverError && <Alert severity="error">{serverError}</Alert>}
+        {stockWarning && <Alert severity="warning">{stockWarning}</Alert>}
 
         {/* 🏢 Sucursales */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
           <TextField
             select
             label="Sucursal de origen"
@@ -180,11 +178,23 @@ export default function TransferForm({ open, onClose, onSave }) {
               </MenuItem>
             ))}
           </TextField>
+          <TextField
+            select
+            label="Motivo de transferencia"
+            value={form.reason}
+            onChange={(e) => setForm({ ...form, reason: e.target.value })}
+            fullWidth
+          >
+            {filteredReasons.map((r) => (
+              <MenuItem key={r.id} value={r.label}>
+                {r.label}
+              </MenuItem>
+            ))}
+          </TextField>
         </div>
-
-        {/* 🗒️ Nota */}
+        {/* 🗒️ Nota adicional */}
         <TextField
-          label="Nota (opcional)"
+          label="Comentario (opcional)"
           value={form.note}
           onChange={(e) => setForm({ ...form, note: e.target.value })}
           fullWidth
@@ -192,7 +202,7 @@ export default function TransferForm({ open, onClose, onSave }) {
           rows={2}
         />
 
-        {/* 📦 Sección productos */}
+        {/* 📦 Productos */}
         <div className="mt-4 border-t pt-3">
           <h4 className="font-medium mb-2">Productos a transferir</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -202,7 +212,8 @@ export default function TransferForm({ open, onClose, onSave }) {
                 `${option.product_name} — Stock: ${option.stock}`
               }
               value={
-                 originProducts.find((p) => p.product_id === newItem.product_id) || null
+                originProducts.find((p) => p.product_id === newItem.product_id) ||
+                null
               }
               onChange={(_, value) =>
                 setNewItem({
@@ -249,7 +260,6 @@ export default function TransferForm({ open, onClose, onSave }) {
             </Button>
           </div>
 
-          {/* 🧾 Tabla de items */}
           {form.items.length > 0 && (
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">

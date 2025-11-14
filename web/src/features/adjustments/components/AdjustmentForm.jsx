@@ -69,8 +69,6 @@ export default function AdjustmentForm({ open, onClose, onSave }) {
     }
   }, [open]);
 
-
-
   const handleAddItem = () => {
     if (!newItem.product_id || !newItem.qty) return;
     const product = products.find((p) => p.id === Number(newItem.product_id));
@@ -146,7 +144,7 @@ export default function AdjustmentForm({ open, onClose, onSave }) {
             name="note"
             value={form.note}
             onChange={(e) =>
-              setForm({ ...form, note: e.target.value })
+              setForm({ ...form, reason: e.target.value })
             }
             fullWidth
           >
@@ -157,6 +155,14 @@ export default function AdjustmentForm({ open, onClose, onSave }) {
             ))}
           </TextField>
         </div>
+        <TextField
+          label="Comentario (opcional)"
+          value={form.note}
+          onChange={(e) => setForm({ ...form, note: e.target.value })}
+          fullWidth
+          multiline
+          rows={2}
+        />
 
         {/* 🔹 Productos */}
         <div className="mt-4 border-t pt-3">

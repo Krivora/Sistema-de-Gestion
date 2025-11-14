@@ -1,179 +1,166 @@
-import { useState, useMemo } from "react";
-import { IconButton, Tooltip, Skeleton } from "@mui/material";
+import { IconButton, Tooltip } from "@mui/material";
 import { Delete, Restore } from "@mui/icons-material";
-import TableFilters from "@core/components/common/TableFilters";
-import Pagination from "@core/components/common/TablePagination";
+import { useTheme } from "@core/context/ThemeProvider";
+import DataTable from "@core/components/common/DataTable";
+import { fmtDate } from "@core/utils/formatters/formatters";
 
 export default function TransfersNoteTable({
-  items,
+  items = [],
   loading,
-  darkMode,
   deleteItem,
   restoreItem,
 }) {
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  // 🔍 Filtrado
-  const filtered = useMemo(() => {
-    return items.filter((i) =>
-      i.label.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [items, search]);
+  const { darkMode } = useTheme();
 
-  // 📄 Paginación
-  const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
-  const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-
-  // 🎨 Estilo botones de acción
   const actionBtn = darkMode
     ? "rounded-full p-1 text-gray-400 hover:bg-[#333333] hover:text-white"
     : "rounded-full p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800";
 
-  // ⏳ Skeleton loader
-  if (loading) {
+  const renderTypeChip = (type) => {
+    const isEntrada = type === "TRANSFER_IN";
     return (
-      <div
-        className={`overflow-x-auto rounded-xl border shadow-sm ${
-          darkMode ? "border-gray-700 bg-[#1a1a1a]" : "border-gray-200 bg-white"
-        }`}
+      <span
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg ${isEntrada
+            ? darkMode
+              ? "bg-[rgba(34,197,94,0.15)] text-emerald-400"
+              : "bg-emerald-100 text-emerald-700"
+            : darkMode
+              ? "bg-[rgba(239,68,68,0.15)] text-red-400"
+              : "bg-red-100 text-red-700"
+          }`}
       >
-        <table className="w-full text-sm text-left">
-          <thead
-            className={`text-xs font-semibold uppercase ${
-              darkMode ? "bg-[#2a2a2a] text-gray-300" : "bg-gray-50 text-gray-500"
-            }`}
-          >
-            <tr>
-              <th className="px-6 py-3">Motivo</th>
-              <th className="px-6 py-3">Tipo de movimiento</th>
-              <th className="px-6 py-3">Creado Por:</th>
-              <th className="px-6 py-3">Fecha de Creacion:</th>
-              <th className="px-6 py-3 text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <tr key={i} className="border-t">
-                <td className="px-6 py-4">
-                  <Skeleton variant="text" width={180} />
-                </td>
-                <td className="px-6 py-4">
-                  <Skeleton variant="text" width={100} />
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <Skeleton variant="circular" width={24} height={24} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+        {isEntrada ? "Entrada" : "Salida"}
+      </span>
     );
-  }
+  };
 
-  // 📋 Tabla principal
   return (
     <div
-      className={`overflow-x-auto rounded-xl border shadow-sm ${
-        darkMode ? "border-gray-700 bg-[#1a1a1a]" : "border-gray-200 bg-white"
-      }`}
+      className={`rounded-xl border shadow-sm ${darkMode ? "border-gray-700 bg-[#1a1a1a]" : "border-gray-200 bg-white"
+        }`}
     >
-      <TableFilters
-        search={search}
-        onSearchChange={(val) => {
-          setSearch(val);
-          setPage(1);
-        }}
-        rowsPerPage={rowsPerPage}
-        onRowsChange={(val) => {
-          setRowsPerPage(val);
-          setPage(1);
-        }}
-        darkMode={darkMode}
-        placeholder="Buscar motivo..."
-      />
-
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-sm text-left border-collapse">
-          <thead
-            className={`text-xs font-semibold uppercase ${
-              darkMode ? "bg-[#2a2a2a] text-gray-300" : "bg-gray-50 text-gray-500"
-            }`}
-          >
-            <tr>
-              <th className="px-6 py-3">Motivo</th>
-              <th className="px-6 py-3">Tipo de movimiento</th>
-              <th className="px-6 py-3">Creado Por:</th>
-              <th className="px-6 py-3">Fecha de Creacion:</th>
-              <th className="px-6 py-3 text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody
-            className={`divide-y ${
-              darkMode ? "divide-gray-700 bg-[#1a1a1a]" : "divide-gray-200 bg-white"
-            }`}
-          >
-            {paginated.map((i) => (
-              <tr
-                key={i.id}
-                className={`transition hover:${
-                  darkMode ? "bg-[#2a2a2a]" : "bg-gray-50"
-                }`}
-              >
-                <td className="px-6 py-4 font-medium">{i.label}</td>
-                <td className="px-6 py-4">
-                    {i.metadata?.type === "TRANSFER_IN" ? (
-                        <span className="text-green-600 font-semibold">Entrada</span>
-                    ) : (
-                        <span className="text-red-600 font-semibold">Salida</span>
-                    )}
-                </td>
-                <td className="px-6 py-4 font-medium">{i.created_by_name}</td>
-                <td className="px-6 py-4 font-medium">{i.created_at}</td>
-                <td className="px-6 py-4 text-right">
-                  {i.deleted_at ? (
-                    <Tooltip title="Restaurar">
-                      <IconButton
-                        size="small"
-                        onClick={() => restoreItem(i)}
-                        className={actionBtn}
-                      >
-                        <Restore fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  ) : (
-                    <Tooltip title="Eliminar">
-                      <IconButton
-                        size="small"
-                        onClick={() => deleteItem(i)}
-                        className={actionBtn}
-                      >
-                        <Delete fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </td>
-              </tr>
-            ))}
-
-            {paginated.length === 0 && (
-              <tr>
-                <td
-                  colSpan="3"
-                  className={`text-center py-6 text-sm ${
-                    darkMode ? "text-gray-500" : "text-gray-600"
-                  }`}
+      {/* 🖥️ Vista Desktop (DataTable) */}
+      <div className="hidden md:block">
+        <DataTable
+          data={items}
+          loading={loading}
+          darkMode={darkMode}
+          dense
+          placeholder="Buscar motivo..."
+          defaultSort={{ key: "created_at", direction: "desc" }}
+          columns={[
+            { key: "label", label: "Motivo" },
+            {
+              key: "metadata.type",
+              label: "Tipo de movimiento",
+              render: (_, row) => renderTypeChip(row.metadata?.type),
+            },
+            { key: "created_by_name", label: "Creado por" },
+            { key: "created_at", label: "Fecha", render: (val) => fmtDate(val) },
+          ]}
+          renderActions={(p) =>
+            p.deleted_at ? (
+              <Tooltip title="Restaurar">
+                <IconButton
+                  size="small"
+                  onClick={() => restoreItem(p.id)}
+                  className={actionBtn}
                 >
-                  No hay motivos registrados.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                  <Restore fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            ) : (
+              <Tooltip title="Eliminar">
+                <IconButton
+                  size="small"
+                  onClick={() => deleteItem(p.id)}
+                  className={actionBtn}
+                >
+                  <Delete fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )
+          }
+        />
       </div>
+      {/* 📱 Vista móvil tipo card */}
+      <div className="md:hidden p-2 space-y-3 overflow-hidden">
+        {loading ? (
+          <p
+            className={`text-center py-4 text-sm ${darkMode ? "text-gray-500" : "text-gray-600"
+              }`}
+          >
+            Cargando...
+          </p>
+        ) : items.length > 0 ? (
+          items.map((p) => (
+            <div
+              key={p.id}
+              className={`rounded-lg p-3 shadow-sm border ${darkMode
+                  ? "bg-[#1a1a1a] border-gray-700"
+                  : "bg-white border-gray-200"
+                }`}
+            >
+              <div className="flex justify-between items-center mb-1">
+                <h3 className="font-semibold text-sm">{p.label}</h3>
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-semibold ${p.metadata?.type === "TRANSFER_IN"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                    }`}
+                >
+                  {p.metadata?.type === "TRANSFER_IN" ? "Entrada" : "Salida"}
+                </span>
+              </div>
 
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+              <p
+                className={`text-xs mb-1 ${darkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
+              >
+                Creado por:{" "}
+                <span className="font-medium">{p.created_by_name}</span>
+              </p>
+              <p
+                className={`text-xs mb-0.5 ${darkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
+              >
+                Fecha: {fmtDate(p.created_at)}
+              </p>
+
+              <div className="flex justify-end gap-2 mt-2 flex-wrap">
+                {p.deleted_at ? (
+                  <Tooltip title="Restaurar">
+                    <IconButton
+                      size="small"
+                      onClick={() => restoreItem(p)}
+                      className={actionBtn}
+                    >
+                      <Restore fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                ) : (
+                  <Tooltip title="Eliminar">
+                    <IconButton
+                      size="small"
+                      onClick={() => deleteItem(p)}
+                      className={actionBtn}
+                    >
+                      <Delete fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </div>
+            </div>
+          ))
+        ) : (
+          <p
+            className={`text-center py-4 text-sm ${darkMode ? "text-gray-500" : "text-gray-600"
+              }`}
+          >
+            No hay motivos registrados.
+          </p>
+        )}
+      </div>
     </div>
   );
 }

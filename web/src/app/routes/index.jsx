@@ -25,9 +25,15 @@ import Users from "@features/users/pages/Users";
 // ⚙️ Administración y configuración
 import Clients from "@features/admin/clients/pages/Clients";
 import Config from "@features/settings/pages/index";
-import Catalogs from "@features/settings/pages/catalogs/index";
+import AuditSettings from "@features/settings/pages/audit/audits";
+import CatalogsSettings from "@features/settings/pages/catalogs/index";
 import AdjustmentNotesCatalog from "@features/settings/pages/catalogs/adjustment-notes/AdjustmentNotesCatalog";
 import TransfersNotesCatalog from "@features/settings/pages/catalogs/transfer-reasons/TransfersNoteCatalog";
+import PermissionsSettings from "@features/settings/pages/permissions/permissions";
+import RolesSettings from "@features/settings/pages/roles/roles";
+import SystemSettings from "@features/settings/pages/system/system";
+
+
 
 // 🧭 Configuración de rutas
 const router = createBrowserRouter([
@@ -56,14 +62,7 @@ const router = createBrowserRouter([
       { path: "transfers", element: <Transfers /> },
 
       // 🔐 Solo superadmin
-      {
-        path: "clients",
-        element: (
-          <ProtectedRoute allowedRoles={["superadmin"]}>
-            <Clients />
-          </ProtectedRoute>
-        ),
-      },
+      {path: "clients",element: (<ProtectedRoute allowedRoles={["superadmin"]}><Clients /></ProtectedRoute>)},
 
       // 🔐 Admin o Superadmin
       {
@@ -90,7 +89,7 @@ const router = createBrowserRouter([
         path: "settings/catalogs",
         element: (
           <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
-            <Catalogs />
+            <CatalogsSettings />
           </ProtectedRoute>
         ),
       },
@@ -107,6 +106,38 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
             <TransfersNotesCatalog />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "settings/audit",
+        element: (
+          <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+            <AuditSettings />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "settings/permissions",
+        element: (
+          <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+            <PermissionsSettings />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "settings/roles",
+        element: (
+          <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+            <RolesSettings />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "settings/system",
+        element: (
+          <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+            <SystemSettings />
           </ProtectedRoute>
         ),
       },

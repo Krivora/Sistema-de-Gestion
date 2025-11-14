@@ -38,7 +38,7 @@ export default function Navbar({ setOpen }) {
         darkMode ? "bg-[#18181a] text-white" : "bg-white/80 text-slate-900"
       }`}
     >
-      <div className="h-16 max-w-7xl mx-auto px-4 flex items-center justify-between relative">
+      <div className="h-16 px-6 flex items-center justify-between relative">
         {/* Botón Sidebar (solo móvil) */}
         <button
           onClick={() => setOpen((prev) => !prev)}
@@ -50,16 +50,13 @@ export default function Navbar({ setOpen }) {
         >
           <MenuIcon />
         </button>
-
         {/* Título */}
         <h1 className="text-lg font-semibold select-none tracking-wide">
           Inventario Multi-Sucursal
         </h1>
-
         {/* Controles derechos */}
         <div className="flex items-center gap-3">
           <ThemeToggle />
-
           {/* Usuario */}
           <div className="relative" ref={menuRef}>
             <button

@@ -1,5 +1,4 @@
 import { Link, useLocation } from "react-router-dom";
-import { useState } from "react";
 import {
   Dashboard as DashboardIcon,
   ShoppingCart as ShoppingCartIcon,
@@ -19,14 +18,12 @@ import { useTheme } from "@core/context/ThemeProvider";
 import { useAuth } from "@core/context/AuthProvider";
 
 export default function Sidebar({ open, setOpen, collapsed, setCollapsed }) {
-
   const { pathname } = useLocation();
   const { darkMode } = useTheme();
   const { user } = useAuth();
   const role = user?.role_name;
 
   const handleLogout = () => {
-    // 🔐 Aquí puedes limpiar token o redirigir al login
     console.log("Logout...");
   };
 
@@ -75,9 +72,7 @@ export default function Sidebar({ open, setOpen, collapsed, setCollapsed }) {
     const superadminExtra = [
       {
         title: "Administración SaaS",
-        items: [
-          { to: "/clients", label: "Clientes", icon: <Supervisor fontSize="small" /> },
-        ],
+        items: [{ to: "/clients", label: "Clientes", icon: <Supervisor fontSize="small" /> }],
       },
     ];
 
@@ -92,9 +87,7 @@ export default function Sidebar({ open, setOpen, collapsed, setCollapsed }) {
 
   return (
     <aside
-      onMouseEnter={() => setCollapsed(false)}
-      onMouseLeave={() => setCollapsed(true)}
-      className={`fixed top-0 left-0 h-full transition-all duration-300 z-40
+      className={`fixed top-0 left-0 h-full transition-transform duration-300 z-40
         ${open ? "translate-x-0" : "-translate-x-64"} md:translate-x-0
         ${collapsed ? "w-16" : "w-64"}
         ${darkMode ? "bg-[#18181a] text-white" : "bg-white text-slate-900"}
@@ -103,8 +96,9 @@ export default function Sidebar({ open, setOpen, collapsed, setCollapsed }) {
     >
       {/* Header */}
       <div
-        className={`h-16 flex items-center justify-between px-4 border-b
-          ${darkMode ? "border-slate-800" : "border-slate-200"}`}
+        className={`h-16 flex items-center justify-between px-4 border-b ${
+          darkMode ? "border-slate-800" : "border-slate-200"
+        }`}
       >
         {!collapsed ? (
           <h2 className="font-semibold text-lg truncate">
@@ -144,15 +138,15 @@ export default function Sidebar({ open, setOpen, collapsed, setCollapsed }) {
                     key={l.to}
                     to={l.to}
                     title={collapsed ? l.label : ""}
-                    onClick={() => setOpen(false)}
+                    onClick={() => setOpen(false)} // 👈 esto cierra el menú en móvil
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
                       active
                         ? darkMode
                           ? "bg-indigo-900 text-indigo-300"
                           : "bg-indigo-100 text-indigo-700"
                         : darkMode
-                          ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                          : "text-slate-700 hover:bg-slate-100 hover:text-black"
+                        ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                        : "text-slate-700 hover:bg-slate-100 hover:text-black"
                     }`}
                   >
                     <span className="flex items-center justify-center w-6">{l.icon}</span>
@@ -164,7 +158,7 @@ export default function Sidebar({ open, setOpen, collapsed, setCollapsed }) {
           ))}
         </div>
 
-        {/* Footer con Configuración y Logout */}
+        {/* Footer */}
         <div className="border-t px-2 py-3 space-y-1">
           {settingsMenu.map((item) => (
             <Link
@@ -177,8 +171,8 @@ export default function Sidebar({ open, setOpen, collapsed, setCollapsed }) {
                     ? "bg-indigo-900 text-indigo-300"
                     : "bg-indigo-100 text-indigo-700"
                   : darkMode
-                    ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                    : "text-slate-700 hover:bg-slate-100 hover:text-black"
+                  ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                  : "text-slate-700 hover:bg-slate-100 hover:text-black"
               }`}
             >
               <span className="flex items-center justify-center w-6">{item.icon}</span>

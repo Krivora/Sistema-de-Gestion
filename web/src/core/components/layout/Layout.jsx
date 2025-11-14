@@ -6,7 +6,7 @@ import { useTheme } from "@core/context/ThemeProvider";
 
 export default function Layout() {
   const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(true); // 🔹 Estado centralizado aquí
+  const [collapsed, setCollapsed] = useState(true);
   const { darkMode } = useTheme();
 
   const marginLeft = collapsed ? "md:ml-16" : "md:ml-64";
@@ -17,7 +17,7 @@ export default function Layout() {
         darkMode ? "bg-[#121212] text-white" : "bg-gray-100 text-gray-900"
       }`}
     >
-      {/* 🔹 Pasamos collapsed y setCollapsed como props */}
+      {/* Sidebar */}
       <Sidebar
         open={open}
         setOpen={setOpen}
@@ -25,6 +25,15 @@ export default function Layout() {
         setCollapsed={setCollapsed}
       />
 
+      {/* 🔹 Overlay móvil */}
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      {/* Contenido */}
       <div
         className={`flex-1 flex flex-col transition-all duration-300 ${marginLeft}`}
       >

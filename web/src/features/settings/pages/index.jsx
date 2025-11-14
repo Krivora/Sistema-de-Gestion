@@ -26,6 +26,13 @@ export default function UserSettings() {
 
   const cards = [
     {
+      title: "Sistema",
+      description:
+        "Configura Nombre del sistema, logotipos y otros ajustes generales.",
+      icon: <SettingsApplications fontSize="large" />,
+      onClick: () => navigate("/settings/system"),
+    },
+    {
       title: "Roles",
       description: "Gestiona los roles de usuario y sus niveles de acceso.",
       icon: <Groups fontSize="large" />,
@@ -44,20 +51,6 @@ export default function UserSettings() {
         "Administra los catálogos del sistema como motivos, tipos o clasificaciones.",
       icon: <Folder fontSize="large" />,
       onClick: () => navigate("/settings/catalogs"),
-    },
-    {
-      title: "Integraciones",
-      description:
-        "Configura integraciones con APIs externas como WhatsApp o facturación.",
-      icon: <SettingsApplications fontSize="large" />,
-      onClick: () => navigate("/settings/integrations"),
-    },
-    {
-      title: "Seguridad",
-      description:
-        "Administra autenticación, políticas de contraseña y sesiones activas.",
-      icon: <Security fontSize="large" />,
-      onClick: () => navigate("/settings/security"),
     },
     {
       title: "Auditoría",
