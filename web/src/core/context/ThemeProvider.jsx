@@ -1,6 +1,7 @@
 // src/providers/ThemeProvider.jsx
 import { createContext, useContext, useEffect, useState } from "react";
 import { createTheme, ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
+import { AuthApi } from "../api/auth";
 import { UsersApi } from "@features/users/api/users";
 
 const ThemeContext = createContext();
@@ -9,35 +10,40 @@ export function ThemeProvider({ children }) {
   const [darkMode, setDarkMode] = useState(false);
   const [loaded, setLoaded] = useState(false); // evitar parpadeo
 
-  // 🔹 Al montar, sincronizar desde backend o localStorage
+  // 🔹 Inicializar tema
   useEffect(() => {
     const initTheme = async () => {
       try {
         const userJson = localStorage.getItem("user");
 
         if (userJson) {
-          const user = JSON.parse(userJson);
+          const parsed = JSON.parse(userJson);
+          const realUser = parsed.user ?? parsed;
 
-          // Si ya hay darkMode en localStorage
-          if (typeof user.dark_mode === "boolean") {
-            setDarkMode(user.dark_mode);
-            applyTheme(user.dark_mode);
+          if (typeof realUser.dark_mode === "boolean") {
+            setDarkMode(realUser.dark_mode);
+            applyTheme(realUser.dark_mode);
           }
-          // Pedir versión más fresca desde backend
+
+          // Pedir versión más fresca del backend
           try {
-            const freshUser = await UsersApi.get(user.id);
+            const freshUser = await AuthApi.getProfile();
+
             if (freshUser?.dark_mode !== undefined) {
               setDarkMode(freshUser.dark_mode);
               applyTheme(freshUser.dark_mode);
 
-              // actualizar localStorage
-              localStorage.setItem("user", JSON.stringify(freshUser));
+              // Guardar estructura correcta en localStorage
+              localStorage.setItem(
+                "user",
+                JSON.stringify({ user: freshUser })
+              );
             }
           } catch (err) {
-            console.warn("No se pudo sincronizar tema con backend:", err.message);
+            console.warn("No se pudo sincronizar tema:", err.message);
           }
         } else {
-          // Sin usuario → usar preferencia local o sistema
+          // Sin usuario logueado
           const stored = localStorage.getItem("darkMode");
           const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
           const initial = stored ? stored === "true" : prefersDark;
@@ -52,39 +58,51 @@ export function ThemeProvider({ children }) {
     initTheme();
   }, []);
 
-  // 🔹 Aplicar la clase dark/light al <html>
+  // 🔹 Aplicar tema a <html>
   const applyTheme = (isDark) => {
     if (isDark) document.documentElement.classList.add("dark");
     else document.documentElement.classList.remove("dark");
+
     localStorage.setItem("darkMode", isDark);
   };
 
-  // 🔹 Cambiar tema manualmente
+  // 🔹 Alternar el modo oscuro
   const toggleDarkMode = async () => {
     const newValue = !darkMode;
     setDarkMode(newValue);
     applyTheme(newValue);
 
     const userJson = localStorage.getItem("user");
-    if (userJson) {
-      try {
-        const user = JSON.parse(userJson);
-        await UsersApi.updateDarkMode(user.id, newValue);
-        localStorage.setItem("user", JSON.stringify({ ...user, dark_mode: newValue }));
-      } catch (err) {
-        console.error("Error actualizando dark mode en backend:", err.message);
-      }
+    if (!userJson) return;
+
+    try {
+      const parsed = JSON.parse(userJson);
+      const realUser = parsed.user ?? parsed; // soporta ambas estructuras
+
+      // 🔥 Actualizar backend
+      await UsersApi.updateDarkMode(realUser.id, newValue);
+
+      // 🔥 Guardar estructura consistente
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...parsed,
+          user: { ...realUser, dark_mode: newValue }
+        })
+      );
+    } catch (err) {
+      console.error("Error actualizando dark mode en backend:", err.message);
     }
   };
 
-  // 🔹 Configurar tema de MUI
+  // 🔹 MUI Theme
   const muiTheme = createTheme({
     palette: {
       mode: darkMode ? "dark" : "light",
-      primary: { main: "#725af8ff" }, // violeta principal
-      secondary: { main: "#03a9f4" }, // azul claro opcional
-      error: { main: "#f44336" }, // rojo estándar MUI
-      success: { main: "#4caf50" }, // verde éxito
+      primary: { main: "#725af8ff" },
+      secondary: { main: "#03a9f4" },
+      error: { main: "#f44336" },
+      success: { main: "#4caf50" },
       background: {
         default: darkMode ? "#121212" : "#f5f5f5",
         paper: darkMode ? "#1e1e1e" : "#ffffff",
@@ -94,9 +112,7 @@ export function ThemeProvider({ children }) {
         secondary: darkMode ? "#b0b0b0" : "#555555",
       },
     },
-
     shape: { borderRadius: 8 },
-
     typography: {
       fontFamily: "'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif",
       fontSize: 14,
@@ -105,7 +121,6 @@ export function ThemeProvider({ children }) {
       h3: { fontWeight: 600, fontSize: "1.5rem" },
       button: { textTransform: "none", fontWeight: 500 },
     },
-
     components: {
       MuiButton: {
         styleOverrides: {
@@ -118,9 +133,7 @@ export function ThemeProvider({ children }) {
           },
           containedPrimary: {
             color: "#fff",
-            "&:hover": {
-              backgroundColor: "#4a36b3",
-            },
+            "&:hover": { backgroundColor: "#4a36b3" },
           },
         },
       },
@@ -136,20 +149,19 @@ export function ThemeProvider({ children }) {
       },
       MuiDialog: {
         styleOverrides: {
-          paper: {
-            borderRadius: 12,
-          },
+          paper: { borderRadius: 12 },
         },
       },
     },
   });
 
-  // ⏳ Mostrar solo cuando el tema esté listo (sin flash)
   if (!loaded) return null;
 
   return (
     <ThemeContext.Provider value={{ darkMode, toggleDarkMode }}>
-      <MuiThemeProvider theme={muiTheme}>{children}</MuiThemeProvider>
+      <MuiThemeProvider theme={muiTheme}>
+        {children}
+      </MuiThemeProvider>
     </ThemeContext.Provider>
   );
 }

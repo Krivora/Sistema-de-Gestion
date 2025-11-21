@@ -33,17 +33,10 @@ export default function UserSettings() {
       onClick: () => navigate("/settings/system"),
     },
     {
-      title: "Roles",
+      title: "Roles y Permisos",
       description: "Gestiona los roles de usuario y sus niveles de acceso.",
       icon: <Groups fontSize="large" />,
       onClick: () => navigate("/settings/roles"),
-    },
-    {
-      title: "Permisos",
-      description:
-        "Define qué acciones puede realizar cada rol dentro del sistema.",
-      icon: <Key fontSize="large" />,
-      onClick: () => navigate("/settings/permissions"),
     },
     {
       title: "Catálogos",

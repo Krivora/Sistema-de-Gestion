@@ -1,6 +1,6 @@
 import { SalesApi } from "../api/sales";
 import { useToast } from "@core/utils/alerts/toastUtils";
-import logo from "../../../../public/lechuSnacks.png";
+import logo from "@assets/lechuSnacks.png";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 

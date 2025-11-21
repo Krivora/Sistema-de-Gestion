@@ -14,10 +14,10 @@ export function useReports() {
   const [error, setError] = useState(null);
 
   // 🔹 Cargar inventario
-  async function fetchStock(branchId = null) {
+  async function fetchStock(branchId = null, categoryId = null) {
     setLoading(true);
     try {
-      const res = await ReportsApi.stock(branchId);
+      const res = await ReportsApi.stock(branchId, categoryId);
       setData((prev) => ({ ...prev, stock: res }));
     } catch (err) {
       setError(err.message);
@@ -25,6 +25,7 @@ export function useReports() {
       setLoading(false);
     }
   }
+
 
   // 🔹 Cargar ventas
   async function fetchSales({ startDate, endDate }) {

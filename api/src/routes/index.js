@@ -1,4 +1,7 @@
 import { Router } from "express";
+import { authRequired } from "../middleware/auth.middleware.js";
+import { attachPermissions } from "../middleware/permissions.middleware.js";
+
 import activityRoutes from "./activity.routes.js";
 import adjustmentRoutes from "./adjustment.routes.js";
 import branchRoutes from "./branch.routes.js";
@@ -16,25 +19,31 @@ import reportRoutes from "./report.routes.js";
 import transferRoutes from "./transfer.routes.js";
 import authRoutes from "./auth.routes.js";
 import userRoutes from "./user.routes.js";
+import roleRoutes from "./role.routes.js";
+import permissionRoutes from "./permission.routes.js";
 
 const router = Router();
 
 router.use("/auth", authRoutes);
-router.use("/activities", activityRoutes);
-router.use("/adjustments", adjustmentRoutes);
-router.use("/branches", branchRoutes);
-router.use("/catalogs", catalogRoutes)
-router.use("/categories", categoryRoutes);
-router.use("/clients", clientRoutes);
-router.use("/customers", customerRoutes);
-router.use("/products", productRoutes);
-router.use("/branch-products", branchProductRoutes);
-router.use("/inventory-transactions", inventoryRoutes);
-router.use("/purchases", purchaseRoutes);
-router.use("/sales", saleRoutes);
-router.use("/suppliers", supplierRoutes);
-router.use("/transfers", transferRoutes);
-router.use("/reports", reportRoutes)
-router.use("/users", userRoutes);
+
+// 🔐 TODAS LAS RUTAS PROTEGIDAS:
+router.use("/activities", authRequired, attachPermissions, activityRoutes);
+router.use("/adjustments", authRequired, attachPermissions, adjustmentRoutes);
+router.use("/branches", authRequired, attachPermissions, branchRoutes);
+router.use("/catalogs", authRequired, attachPermissions, catalogRoutes);
+router.use("/categories", authRequired, attachPermissions, categoryRoutes);
+router.use("/clients", authRequired, attachPermissions, clientRoutes);
+router.use("/customers", authRequired, attachPermissions, customerRoutes);
+router.use("/products", authRequired, attachPermissions, productRoutes);
+router.use("/branch-products", authRequired, attachPermissions, branchProductRoutes);
+router.use("/inventory-transactions", authRequired, attachPermissions, inventoryRoutes);
+router.use("/purchases", authRequired, attachPermissions, purchaseRoutes);
+router.use("/sales", authRequired, attachPermissions, saleRoutes);
+router.use("/suppliers", authRequired, attachPermissions, supplierRoutes);
+router.use("/transfers", authRequired, attachPermissions, transferRoutes);
+router.use("/reports", authRequired, attachPermissions, reportRoutes);
+router.use("/users", authRequired, attachPermissions, userRoutes);
+router.use("/roles", authRequired, attachPermissions, roleRoutes);
+router.use("/permissions", authRequired, attachPermissions, permissionRoutes);
 
 export default router;

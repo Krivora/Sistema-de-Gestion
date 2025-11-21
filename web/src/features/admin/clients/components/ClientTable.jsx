@@ -4,6 +4,7 @@ import { Skeleton, Chip, Tooltip, IconButton } from "@mui/material";
 import { useTheme } from "@core/context/ThemeProvider";
 import TableFilters from "@core/components/common/TableFilters";
 import Pagination from "@core/components/common/TablePagination";
+import { fileUrl } from "@core/utils/images/buildFileUrl";
 
 export default function ClientTable({ clients = [], loading, onEdit, onDelete, onToggleStatus }) {
   const { darkMode } = useTheme();
@@ -103,10 +104,11 @@ export default function ClientTable({ clients = [], loading, onEdit, onDelete, o
               <td className="px-6 py-4">
                 {c.logo_url ? (
                   <img
-                    src={c.logo_url}
+                    src={fileUrl(c.logo_url)}
                     alt={c.business_name}
                     className="w-10 h-10 object-cover rounded-full"
                   />
+
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
                     N/A

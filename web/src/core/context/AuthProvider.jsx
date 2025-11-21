@@ -1,86 +1,110 @@
-import { createContext, useContext, useState, useEffect } from "react";
+// core/context/AuthProvider.jsx
+import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { AuthApi } from "@core/api/auth";
+import { ability } from "@core/casl/ability";
+import { buildRulesFromPermissions } from "@core/casl/defineAbilities";
 
-// 1️⃣ Creamos el contexto global
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
-// 2️⃣ Proveedor principal
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);   // Datos del usuario logueado
-  const [loading, setLoading] = useState(true); // Para mostrar loaders mientras valida sesión
-  const [error, setError] = useState(null); // Por si falla algo al autenticar
+  const [user, setUser] = useState(null);
+  const [permissions, setPermissions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // 🧠 Verificar sesión al montar la app
+  // ============================
+  // Restaurar sesión
+  // ============================
   useEffect(() => {
-    const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
-    if (storedUser) setUser(JSON.parse(storedUser));
+    const storedPerms = localStorage.getItem("permissions");
+    const token = localStorage.getItem("token");
 
-    if (!token) return setLoading(false);
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
 
+    if (storedPerms) {
+      const perms = JSON.parse(storedPerms);
+      setPermissions(perms);
+
+      const rules = buildRulesFromPermissions(perms);
+      ability.update(rules);
+    }
+
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    // Consultar perfil real en backend
     AuthApi.getProfile()
-      .then(setUser)
-      .catch(() => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        setUser(null);
+      .then((profile) => {
+        // Tu backend devuelve:
+        //  { id, name, email, permissions }
+        setUser(profile.user);
+        setPermissions(profile.permissions);
+
+        const rules = buildRulesFromPermissions(profile.permissions);
+        ability.update(rules);
       })
-      .finally(() => setLoading(false));
+      .catch(() => {
+        localStorage.clear();
+        setUser(null);
+        setPermissions([]);
+        ability.update([]);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
-
-  // 🔐 Login
+  // ============================
+  // LOGIN
+  // ============================
   const login = async (email, password) => {
-    setError(null);
-    try {
-      const u = await AuthApi.login(email, password);
-      setUser(u);
-      return u;
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    }
+    const { user, permissions, token } = await AuthApi.login(email, password);
+
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("permissions", JSON.stringify(permissions));
+
+    setUser(user);
+    setPermissions(permissions);
+
+    const rules = buildRulesFromPermissions(permissions);
+    ability.update(rules);
+
+    return user;
   };
 
-  // 🧾 Registro
-  const register = async (payload) => {
-    setError(null);
-    try {
-      const u = await AuthApi.register(payload);
-      setUser(u);
-      return u;
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    }
-  };
-
-  // 🚪 Logout
+  // ============================
+  // LOGOUT
+  // ============================
   const logout = () => {
     AuthApi.logout();
+    localStorage.clear();
+
     setUser(null);
+    setPermissions([]);
+    ability.update([]);
   };
 
-  // 🧩 Datos que estarán disponibles globalmente
-  const value = {
-    user,             // { id, name, email, role, client_id, branch_id }
-    loading,          // booleano: si está validando token
-    error,            // último error de login o register
-    login,
-    register,
-    logout,
-    isAdmin: user?.role === "admin" || user?.role === "superadmin",
-    isSuperadmin: user?.role === "superadmin",
-  };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+  // ============================
+  // CONTEXT VALUES
+  // ============================
+  const value = useMemo(
+    () => ({
+      user,
+      permissions,
+      loading,
+      login,
+      logout,
+      isAuthenticated: Boolean(user),
+    }),
+    [user, permissions, loading]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// 3️⃣ Hook personalizado (azúcar sintáctica)
-export function useAuth() {
-  return useContext(AuthContext);
-}
+export const useAuth = () => useContext(AuthContext);

@@ -3,8 +3,13 @@ import { apiFetch } from "@core/api/client";
 
 export const ReportsApi = {
   // 📦 Inventario
-  stock: (branchId = null) =>
-    apiFetch(`/reports/stock${branchId ? `?branchId=${branchId}` : ""}`),
+  stock: (branchId = null, categoryId = null) =>
+    apiFetch(
+      `/reports/stock?${branchId ? `branchId=${branchId}` : ""}${
+        categoryId ? `&categoryId=${categoryId}` : ""
+      }`
+    ),
+
 
   // 💰 Ventas por periodo
   sales: (startDate, endDate) =>

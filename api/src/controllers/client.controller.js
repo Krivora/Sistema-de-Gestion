@@ -45,3 +45,24 @@ export async function deactivate(req, res, next) {
     next(err);
   }
 }
+export async function uploadLogo(req, res, next) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No se envió archivo" });
+    }
+
+    const clientId = req.params.id;
+
+    const url = `/uploads/clients/${clientId}/${req.file.filename}`;
+
+    // Guardar logo en DB
+    const updated = await ClientService.updateClient(clientId, {
+      logo_url: url,
+    });
+
+    res.json({ url, client: updated });
+  } catch (err) {
+    next(err);
+  }
+}
+

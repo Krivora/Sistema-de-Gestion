@@ -55,7 +55,20 @@ export async function login({ email, password }) {
   const match = await bcrypt.compare(password, user.password);
   if (!match) throw new Error("Contraseña incorrecta.");
 
-  if (!user.status==='active') throw new Error("Usuario inactivo. Contacte al administrador.");
+  if (user.status !== "active")
+    throw new Error("Usuario inactivo. Contacte al administrador.");
+
+  // 🔥 OBTENER PERMISOS DEL USUARIO (por role_id)
+  const { rows } = await pool.query(
+    `
+      SELECT p.key 
+      FROM permissions p
+      JOIN role_permissions rp ON rp.permission_id = p.id
+      WHERE rp.role_id = $1
+    `,
+    [user.role_id]
+  );
+  const permissions = rows.map(r => r.key);
 
   const token = jwt.sign(
     {
@@ -63,12 +76,12 @@ export async function login({ email, password }) {
       client_id: user.client_id,
       role_id: user.role_id,
       role_name: user.role_name,
+      permissions, // 🔥 GUARDAMOS TAMBIÉN EN EL TOKEN (opcional)
     },
     JWT_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: "1d" }
   );
 
-  // Solo devolvemos datos públicos
   return {
     user: {
       id: user.id,
@@ -78,24 +91,52 @@ export async function login({ email, password }) {
       role_name: user.role_name,
       branch_id: user.branch_id,
       client_id: user.client_id,
+      dark_mode: user.dark_mode,
+      business_name: user.business_name,
+      logo_url: user.logo_url,
+
+      // 🔥 ENVIAR PERMISOS AL FRONT
+      permissions,
     },
     token,
   };
 }
-
 /**
  * Perfil de usuario autenticado
  */
 export async function getProfile(userId, clientId) {
   if (!userId) throw new Error("Datos de sesión incompletos");
 
-  // Si es superadmin (sin client_id), buscar sin filtro de cliente
   const user = clientId
     ? await UserRepo.findById(userId, clientId)
-    : await UserRepo.findByIdNoClient(userId); // 👈 Nueva función para superadmin
+    : await UserRepo.findByIdNoClient(userId);
 
   if (!user) throw new Error("Usuario no encontrado");
+
+  // 🔥 Obtiene permisos igual que en login
+  const { rows } = await pool.query(
+    `SELECT p.key FROM permissions p 
+     JOIN role_permissions rp ON rp.permission_id = p.id
+     WHERE rp.role_id = $1`,
+    [user.role_id]
+  );
+
+  user.permissions = rows.map(r => r.key);
+
   return user;
 }
 
 
+export async function getUserPermissions(roleId) {
+  const { rows } = await pool.query(
+    `
+      SELECT p.key
+      FROM permissions p
+      JOIN role_permissions rp ON rp.permission_id = p.id
+      WHERE rp.role_id = $1
+    `,
+    [roleId]
+  );
+
+  return rows.map(r => r.key);
+}

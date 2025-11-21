@@ -6,7 +6,7 @@ export const UsersApi = {
 
   // Obtener uno
   get: (id) => apiFetch(`/users/${id}`),
-
+  
   // Crear
   create: (payload) =>
     apiFetch("/users", {

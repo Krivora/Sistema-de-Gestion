@@ -30,14 +30,27 @@ export async function findAllGlobal(status = "active") {
 
 // 🧩 Buscar por correo
 export async function findByEmail(email) {
-  const { rows } = await pool.query(`
-    SELECT u.*, r.name AS role_name, r.id AS role_id
+  const { rows } = await pool.query(
+    `
+    SELECT 
+      u.*, 
+      r.name AS role_name, 
+      r.id AS role_id,
+      c.id AS client_id, 
+      c.name AS client_name, 
+      c.business_name, 
+      c.logo_url
     FROM users u
     LEFT JOIN roles r ON r.id = u.role_id
+    LEFT JOIN clients c ON c.id = u.client_id
     WHERE u.email = $1
-  `, [email]);
+    `,
+    [email]
+  );
+
   return rows[0];
 }
+
 
 // 🧩 Buscar por ID (cliente)
 export async function findById(id, clientId) {
@@ -45,7 +58,7 @@ export async function findById(id, clientId) {
     SELECT 
       u.id, u.name, u.email, r.name AS role_name,
       u.branch_id, u.dark_mode, u.status, u.created_at,
-      c.id AS client_id, c.name AS client_name
+      c.id AS client_id, c.name AS client_name, c.business_name, c.logo_url
     FROM users u
     LEFT JOIN roles r ON r.id = u.role_id
     LEFT JOIN clients c ON c.id = u.client_id

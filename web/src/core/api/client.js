@@ -1,21 +1,27 @@
-// src/api/client.js
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
 
 export async function apiFetch(endpoint, options = {}) {
   const token = localStorage.getItem("token");
 
+  // Construimos las cabeceras dinámicamente
+  const headers = {
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+
+  // ⛔ Si NO es FormData → usar JSON
+  if (!options.isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const config = {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-    ...options,
+    headers,
+    ...options, // ← body, method, etc.
   };
 
   const res = await fetch(`${API_URL}${endpoint}`, config);
+
   if (res.status === 401) {
-    // Token inválido o expirado → limpiar sesión
     localStorage.removeItem("token");
     window.location.href = "/login";
     return;
@@ -30,8 +36,12 @@ export async function apiFetch(endpoint, options = {}) {
     throw new Error(errorMsg);
   }
 
-  // No hay contenido
   if (res.status === 204) return null;
 
-  return await res.json();
+  // Intentar parsear JSON
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
 }
