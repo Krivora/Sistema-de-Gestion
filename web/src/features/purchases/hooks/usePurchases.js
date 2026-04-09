@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { PurchasesApi } from "../api/purchases";
 import { BranchProductsApi } from "@features/branchProducts/api/branchProducts";
-import { useAuth } from "@core/context/AuthProvider";
+import { useAuth } from "@core/auth/useAuth"
 
 export function usePurchases(defaultBranchId = "") {
   const [purchases, setPurchases] = useState([]);

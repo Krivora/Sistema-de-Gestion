@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { TransfersApi } from "../api/transfers";
-import { useAuth } from "@core/context/AuthProvider";
+import { useAuth } from "@core/auth/useAuth"
 
 export function useTransfers() {
   const [transfers, setTransfers] = useState([]);

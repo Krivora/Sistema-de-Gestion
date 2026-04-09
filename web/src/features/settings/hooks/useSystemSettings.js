@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { SystemSettingsApi } from "../api/SystemSettingsApi";
 import { useToast } from "@core/utils/alerts/toastUtils";
-import { useAuth } from "@core/context/AuthProvider";
+import { useAuth } from "@core/auth/useAuth"
 
 export function useSystemSettings() {
   const { user } = useAuth();

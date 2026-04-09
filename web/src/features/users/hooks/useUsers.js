@@ -1,7 +1,7 @@
 // src/hooks/useUsers.js
 import { useEffect, useState } from "react";
 import { UsersApi } from "../api/users";
-import { useAuth } from "@core/context/AuthProvider";
+import { useAuth } from "@core/auth/useAuth"
 
 export function useUsers() {
   const [users, setUsers] = useState([]);

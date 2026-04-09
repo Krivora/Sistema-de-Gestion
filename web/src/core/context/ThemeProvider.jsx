@@ -1,114 +1,47 @@
-// src/providers/ThemeProvider.jsx
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { createTheme, ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
-import { AuthApi } from "../api/auth";
-import { UsersApi } from "@features/users/api/users";
 
-const ThemeContext = createContext();
+const ThemeContext = createContext(null);
+
+function applyThemeToDOM(isDark) {
+  if (isDark) document.documentElement.classList.add("dark");
+  else document.documentElement.classList.remove("dark");
+  sessionStorage.setItem("darkMode", String(isDark));
+}
 
 export function ThemeProvider({ children }) {
-  const [darkMode, setDarkMode] = useState(false);
-  const [loaded, setLoaded] = useState(false); // evitar parpadeo
+  const [darkMode, setDarkMode] = useState(() => {
+    // Inicialización síncrona — sin async, sin API calls
+    const stored = sessionStorage.getItem("darkMode");
+    if (stored !== null) return stored === "true";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
 
-  // 🔹 Inicializar tema
+  // Aplicar al DOM cuando cambie
   useEffect(() => {
-    const initTheme = async () => {
-      try {
-        const userJson = localStorage.getItem("user");
+    applyThemeToDOM(darkMode);
+  }, [darkMode]);
 
-        if (userJson) {
-          const parsed = JSON.parse(userJson);
-          const realUser = parsed.user ?? parsed;
+  // toggleDarkMode recibe opcionalmente el userId para persistir en backend
+  // Lo llama quien tiene el contexto de auth (Navbar, UserMenu, etc.)
+  const toggleDarkMode = useCallback((newValue) => {
+    const value = typeof newValue === "boolean" ? newValue : !darkMode;
+    setDarkMode(value);
+  }, [darkMode]);
 
-          if (typeof realUser.dark_mode === "boolean") {
-            setDarkMode(realUser.dark_mode);
-            applyTheme(realUser.dark_mode);
-          }
-
-          // Pedir versión más fresca del backend
-          try {
-            const freshUser = await AuthApi.getProfile();
-
-            if (freshUser?.dark_mode !== undefined) {
-              setDarkMode(freshUser.dark_mode);
-              applyTheme(freshUser.dark_mode);
-
-              // Guardar estructura correcta en localStorage
-              localStorage.setItem(
-                "user",
-                JSON.stringify({ user: freshUser })
-              );
-            }
-          } catch (err) {
-            console.warn("No se pudo sincronizar tema:", err.message);
-          }
-        } else {
-          // Sin usuario logueado
-          const stored = localStorage.getItem("darkMode");
-          const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-          const initial = stored ? stored === "true" : prefersDark;
-          setDarkMode(initial);
-          applyTheme(initial);
-        }
-      } finally {
-        setLoaded(true);
-      }
-    };
-
-    initTheme();
-  }, []);
-
-  // 🔹 Aplicar tema a <html>
-  const applyTheme = (isDark) => {
-    if (isDark) document.documentElement.classList.add("dark");
-    else document.documentElement.classList.remove("dark");
-
-    localStorage.setItem("darkMode", isDark);
-  };
-
-  // 🔹 Alternar el modo oscuro
-  const toggleDarkMode = async () => {
-    const newValue = !darkMode;
-    setDarkMode(newValue);
-    applyTheme(newValue);
-
-    const userJson = localStorage.getItem("user");
-    if (!userJson) return;
-
-    try {
-      const parsed = JSON.parse(userJson);
-      const realUser = parsed.user ?? parsed; // soporta ambas estructuras
-
-      // 🔥 Actualizar backend
-      await UsersApi.updateDarkMode(realUser.id, newValue);
-
-      // 🔥 Guardar estructura consistente
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          ...parsed,
-          user: { ...realUser, dark_mode: newValue }
-        })
-      );
-    } catch (err) {
-      console.error("Error actualizando dark mode en backend:", err.message);
-    }
-  };
-
-  // 🔹 MUI Theme
   const muiTheme = createTheme({
     palette: {
       mode: darkMode ? "dark" : "light",
-      primary: { main: "#725af8ff" },
+      primary: { main: "#725af8" },
       secondary: { main: "#03a9f4" },
       error: { main: "#f44336" },
       success: { main: "#4caf50" },
       background: {
         default: darkMode ? "#121212" : "#f5f5f5",
-        paper: darkMode ? "#1e1e1e" : "#ffffff",
+        paper:   darkMode ? "#1e1e1e" : "#ffffff",
       },
       text: {
-        primary: darkMode ? "#f5f5f5" : "#1e1e1e",
+        primary:   darkMode ? "#f5f5f5" : "#1e1e1e",
         secondary: darkMode ? "#b0b0b0" : "#555555",
       },
     },
@@ -155,8 +88,6 @@ export function ThemeProvider({ children }) {
     },
   });
 
-  if (!loaded) return null;
-
   return (
     <ThemeContext.Provider value={{ darkMode, toggleDarkMode }}>
       <MuiThemeProvider theme={muiTheme}>
@@ -166,4 +97,8 @@ export function ThemeProvider({ children }) {
   );
 }
 
-export const useTheme = () => useContext(ThemeContext);
+export const useTheme = () => {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error("useTheme debe usarse dentro de <ThemeProvider>");
+  return ctx;
+};

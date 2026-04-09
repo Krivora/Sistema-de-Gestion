@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CatalogsApi } from "../api/catalogs";
 import { useToast } from "@core/utils/alerts/toastUtils";
-import { useAuth } from "@core/context/AuthProvider";
+import { useAuth } from "@core/auth/useAuth"
 
 export function useCatalog(code) {
   const [items, setItems] = useState([]);

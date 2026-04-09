@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { CategoriesApi } from "../api/categories";
-import { useAuth } from "@core/context/AuthProvider";
+import { useAuth } from "@core/auth/useAuth"
 
 export function useCategories() {
   const [categories, setCategories] = useState([]);

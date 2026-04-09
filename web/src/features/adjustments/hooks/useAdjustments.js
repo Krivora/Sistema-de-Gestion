@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AdjustmentsApi } from "../api/adjustments";
-import { useAuth } from "@core/context/AuthProvider"; // 👈 usuario actual
+import { useAuth } from "@core/auth/useAuth" // 👈 usuario actual
 
 export function useAdjustments() {
   const [adjustments, setAdjustments] = useState([]);

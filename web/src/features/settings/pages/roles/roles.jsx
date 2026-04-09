@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import PageHeader from "@core/components/common/PageHeader";
 import { useRoleManagement } from "../../hooks/useRoleManagement";
-import { useAbility } from "@core/casl/AbilityContext";
+import { useAbility } from "@core/auth/AbilityContext";
 
 export default function RolesPage() {
   const {

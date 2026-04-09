@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { TextField, Button, MenuItem } from "@mui/material";
 import { Add } from "@mui/icons-material";
-import { useAuth } from "@core/context/AuthProvider";
+import { useAuth } from "@core/auth/useAuth"
 
 export default function TransfersNoteForm({ createItem }) {
   const { user } = useAuth();

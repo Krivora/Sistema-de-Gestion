@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ProductsApi } from "../api/products";
-import { useAuth } from "@core/context/AuthProvider";
+import { useAuth } from "@core/auth/useAuth"
 import { useNotify } from "@core/utils/alerts/notifyUtils";
 
 export function useProducts() {

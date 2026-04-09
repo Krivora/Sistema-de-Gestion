@@ -1,21 +1,33 @@
-// core/components/protected/ProtectedRoute.jsx
 import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "@core/context/AuthProvider";
-import { useAbility } from "@core/casl/AbilityContext";
+import { useAuth } from "@core/auth/useAuth"
+import { useAbility } from "@core/auth/AbilityContext"
 import SessionLoader from "@core/components/ui/SessionLoader";
-export default function ProtectedRoute({ action, subject, children }) {
+
+// permission = "products.read" → action = "read", subject = "products"
+function parsePermission(permission) {
+  if (!permission) return null;
+  const parts = permission.split(".");
+  if (parts.length !== 2) return null;
+  return { subject: parts[0], action: parts[1] };
+}
+
+export default function ProtectedRoute({ permission, children }) {
   const { user, loading } = useAuth();
   const ability = useAbility();
 
   if (loading) return <SessionLoader message="Verificando sesión..." />;
-  // Si no hay usuario → login
   if (!user) return <Navigate to="/login" replace />;
 
-  // Si la ruta requiere permisos y no los tiene → 403
-  if (action && subject && !ability.can(action, subject)) {
-    return <Navigate to="/unauthorized" replace />;
+  if (permission) {
+    const parsed = parsePermission(permission);
+    if (!parsed) {
+      console.warn(`ProtectedRoute: formato de permiso inválido → "${permission}". Usa "subject.action"`);
+      return <Navigate to="/unauthorized" replace />;
+    }
+    if (!ability.can(parsed.action, parsed.subject)) {
+      return <Navigate to="/unauthorized" replace />;
+    }
   }
 
-  // Si la ruta contiene outlet o children
-  return children || <Outlet />;
+  return children ?? <Outlet />;
 }

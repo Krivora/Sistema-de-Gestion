@@ -3,20 +3,20 @@ import MenuIcon from "@mui/icons-material/Menu";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import ThemeToggle from ".//ThemeToggle";
-import { useAuth } from "@core/context/AuthProvider";
+import ThemeToggle from "./ThemeToggle";
+import { useAuth } from "@core/auth/useAuth";
 import { useTheme } from "@core/context/ThemeProvider";
 import { useNavigate } from "react-router-dom";
 
 export default function Navbar({ setOpen }) {
-  const { user, logout } = useAuth(); // 👈 logout en lugar de handleLogout
-  const { darkMode } = useTheme();
+  const { user, logout }  = useAuth();
+  const { darkMode }      = useTheme();
+  const navigate          = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
-  const navigate = useNavigate();
 
-  // Cierra el menú si se hace click fuera
   useEffect(() => {
+    if (!menuOpen) return;
     function handleClickOutside(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setMenuOpen(false);
@@ -24,12 +24,12 @@ export default function Navbar({ setOpen }) {
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
+  }, [menuOpen]); // solo registra el listener cuando el menú está abierto
 
   const handleLogout = () => {
+    setMenuOpen(false);
     logout();
-    navigate("/login", { replace: true }); // 👈 redirige al login
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -39,48 +39,45 @@ export default function Navbar({ setOpen }) {
       }`}
     >
       <div className="h-16 px-6 flex items-center justify-between relative">
-        {/* Botón Sidebar (solo móvil) */}
+
         <button
           onClick={() => setOpen((prev) => !prev)}
+          aria-label="Abrir menú lateral"
           className={`md:hidden p-2 rounded-md transition ${
-            darkMode
-              ? "hover:bg-slate-800 text-white"
-              : "hover:bg-slate-100 text-slate-900"
+            darkMode ? "hover:bg-slate-800 text-white" : "hover:bg-slate-100 text-slate-900"
           }`}
         >
           <MenuIcon />
         </button>
-        {/* Título */}
+
         <h1 className="text-lg font-semibold select-none tracking-wide">
           Inventario Multi-Sucursal
         </h1>
-        {/* Controles derechos */}
+
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          {/* Usuario */}
+
           <div className="relative" ref={menuRef}>
             <button
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={() => setMenuOpen((prev) => !prev)}
+              aria-expanded={menuOpen}
+              aria-haspopup="true"
               className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition ${
-                darkMode
-                  ? "hover:bg-slate-800 text-gray-200"
-                  : "hover:bg-slate-100 text-gray-800"
+                darkMode ? "hover:bg-slate-800 text-gray-200" : "hover:bg-slate-100 text-gray-800"
               }`}
             >
               <AccountCircleIcon fontSize="medium" />
               <span className="hidden sm:inline text-sm font-medium">
-                {user?.name || "Usuario"}
+                {user?.name ?? "Usuario"}
               </span>
               <ArrowDropDownIcon
-                className={`transition-transform duration-200 ${
-                  menuOpen ? "rotate-180" : "rotate-0"
-                }`}
+                className={`transition-transform duration-200 ${menuOpen ? "rotate-180" : "rotate-0"}`}
               />
             </button>
 
-            {/* Menú desplegable */}
             {menuOpen && (
               <div
+                role="menu"
                 className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg border overflow-hidden animate-fade-in ${
                   darkMode
                     ? "bg-[#1e1e1e] border-slate-700 text-gray-200"
@@ -88,11 +85,10 @@ export default function Navbar({ setOpen }) {
                 }`}
               >
                 <button
-                  onClick={handleLogout} // 👈 usa logout directo
+                  role="menuitem"
+                  onClick={handleLogout}
                   className={`w-full flex items-center gap-2 px-4 py-2 text-left text-sm transition ${
-                    darkMode
-                      ? "hover:bg-slate-800"
-                      : "hover:bg-slate-100"
+                    darkMode ? "hover:bg-slate-800" : "hover:bg-slate-100"
                   }`}
                 >
                   <LogoutIcon fontSize="small" />

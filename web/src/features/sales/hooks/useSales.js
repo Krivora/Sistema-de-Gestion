@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { SalesApi } from "../api/sales";
-import { useAuth } from "@core/context/AuthProvider"; // 👈 para obtener el cliente actual
+import { useAuth } from "@core/auth/useAuth" // 👈 para obtener el cliente actual
 
 export function useSales() {
   const [sales, setSales] = useState([]);

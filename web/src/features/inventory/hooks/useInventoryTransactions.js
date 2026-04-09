@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { InventoryTransactionsApi } from "../api/inventoryTransactions";
-import { useAuth } from "@core/context/AuthProvider"; // 👈 para obtener el cliente actual
+import { useAuth } from "@core/auth/useAuth" // 👈 para obtener el cliente actual
 
 export function useInventoryTransactions() {
   const [transactions, setTransactions] = useState([]);

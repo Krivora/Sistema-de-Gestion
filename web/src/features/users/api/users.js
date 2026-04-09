@@ -1,42 +1,65 @@
 import { apiFetch } from "@core/api/client";
 
-export const UsersApi = {
-  // Listar todos
-  list: (status = "active") => apiFetch(`/users?status=${status}`),
+// Valida que el id sea un número positivo antes de cualquier llamada
+function assertId(id, label = "id") {
+  if (!id || typeof id !== "number" || !Number.isInteger(id) || id <= 0) {
+    throw new Error(`UsersApi: "${label}" inválido → ${id}`);
+  }
+}
 
-  // Obtener uno
-  get: (id) => apiFetch(`/users/${id}`),
-  
-  // Crear
-  create: (payload) =>
-    apiFetch("/users", {
+export const UsersApi = {
+  list: (status = "active") => {
+    const allowed = ["active", "inactive", "deleted"];
+    const safe = allowed.includes(status) ? status : "active";
+    return apiFetch(`/users?status=${safe}`);
+  },
+
+  get: (id) => {
+    assertId(id);
+    return apiFetch(`/users/${id}`);
+  },
+
+  create: (payload) => {
+    if (!payload?.name || !payload?.email || !payload?.password || !payload?.role_id) {
+      throw new Error("UsersApi.create: faltan campos requeridos (name, email, password, role_id)");
+    }
+    return apiFetch("/users", {
       method: "POST",
       body: JSON.stringify(payload),
-    }),
+    });
+  },
 
-  // Actualizar
-  update: (id, payload) =>
-    apiFetch(`/users/${id}`, {
+  update: (id, payload) => {
+    assertId(id);
+    if (!payload || typeof payload !== "object" || Object.keys(payload).length === 0) {
+      throw new Error("UsersApi.update: payload vacío");
+    }
+    return apiFetch(`/users/${id}`, {
       method: "PUT",
       body: JSON.stringify(payload),
-    }),
+    });
+  },
 
-  // Desactivar usuario (status = 'inactive')
-  desactive: (id) =>
-    apiFetch(`/users/${id}/deactivate`, {
-      method: "PUT",
-    }),
+  // ← PATCH, no PUT
+  deactivate: (id) => {
+    assertId(id);
+    return apiFetch(`/users/${id}/deactivate`, { method: "PATCH" });
+  },
 
-  // Eliminar usuario (status = 'deleted')
-  remove: (id) =>
-    apiFetch(`/users/${id}/delete`, {
-      method: "PUT",
-    }),
+  // ← PATCH, no PUT
+  remove: (id) => {
+    assertId(id);
+    return apiFetch(`/users/${id}/delete`, { method: "PATCH" });
+  },
 
-  // Cambiar modo oscuro (opcional)
-  updateDarkMode: (userId, darkMode) =>
-    apiFetch(`/users/${userId}/dark-mode`, {
-      method: "PUT",
+  updateDarkMode: (id, darkMode) => {
+    assertId(id);
+    if (typeof darkMode !== "boolean") {
+      throw new Error("UsersApi.updateDarkMode: darkMode debe ser boolean");
+    }
+    return apiFetch(`/users/${id}/dark-mode`, {
+      method: "PATCH",
       body: JSON.stringify({ darkMode }),
-    }),
+    });
+  },
 };

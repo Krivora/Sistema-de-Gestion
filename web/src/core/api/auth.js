@@ -1,53 +1,43 @@
-// src/api/auth.js
-import { apiFetch } from "./client";
+import { apiFetch, tokenStore } from "./client";
 
 export const AuthApi = {
-  // 🔐 Login
   login: async (email, password) => {
+    // Sin token todavía — apiFetch lo maneja
     const data = await apiFetch("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    localStorage.setItem("permissions", JSON.stringify(data.user.permissions || []));
-    return {  
+
+    tokenStore.set(data.token);
+
+    return {
       user: data.user,
       permissions: data.user.permissions || [],
       token: data.token,
+      ability: data.ability || [],
     };
   },
 
-
-
-  // 🧾 Registro
   register: async (payload) => {
     const data = await apiFetch("/auth/register", {
       method: "POST",
       body: JSON.stringify(payload),
     });
 
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+    tokenStore.set(data.token);
     return data.user;
   },
 
-  // 👤 Obtener perfil actual
+  // /auth/me devuelve { user: { ...campos, permissions: [] } }
   getProfile: async () => {
-    const user = await apiFetch("/auth/me");
-
-    localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("permissions", JSON.stringify(user.permissions || []));
-
-    return user;
+    const data = await apiFetch("/auth/me");
+    return {
+      user: data.user,
+      permissions: data.user?.permissions || [],
+    };
   },
 
-
-
-  // 🚪 Logout
   logout: () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("permissions");
+    tokenStore.clear();
   },
 };

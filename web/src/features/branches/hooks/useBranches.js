@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { BranchesApi } from "../api/branches";
-import { useAuth } from "@core/context/AuthProvider";
+import { useAuth } from "@core/auth/useAuth"
 
 export function useBranches() {
   const [branches, setBranches] = useState([]);
