@@ -1,80 +1,79 @@
 import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useMemo,
-  useCallback,
+  createContext, useState, useEffect, useMemo, useCallback,
 } from "react";
-import { AuthApi } from "@core/api/auth";
-import { tokenStore } from "@core/api/client";
-import { ability } from "./ability";
-import { buildRulesFromPermissions } from "./buildRules";
-import { AbilityContext } from "./AbilityContext";
+import { AuthApi }                    from "@core/api/auth";
+import { tokenStore }                 from "@core/api/client";
+import { ability }                    from "./ability";
+import { buildRulesFromPermissions }  from "./buildRules";
+import { AbilityContext }             from "./AbilityContext";
 
 export const AuthContext = createContext(null);
+const hasToken = tokenStore.hasToken();
+// Solo guardamos datos de display — nunca permisos ni token
+const USER_KEY = "app_user_display";
 
-const SESSION_KEY = "app_session";
-
-function saveSession(user, permissions) {
+function saveUserDisplay(user) {
   try {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ user, permissions }));
-  } catch { /* quota exceeded o modo privado */ }
+    // Solo campos de UI — nunca role_id, permissions, etc.
+    const safe = {
+      id:            user.id,
+      name:          user.name,
+      email:         user.email,
+      role_name:     user.role_name,
+      business_name: user.business_name,
+      logo_url:      user.logo_url,
+      dark_mode:     user.dark_mode,
+    };
+    sessionStorage.setItem(USER_KEY, JSON.stringify(safe));
+  } catch { /* quota / private mode */ }
 }
 
-function loadSession() {
+function loadUserDisplay() {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
+    const raw = sessionStorage.getItem(USER_KEY);
     return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
-function clearSession() {
-  sessionStorage.removeItem(SESSION_KEY);
-  sessionStorage.removeItem("_t");
+function clearUserDisplay() {
+  sessionStorage.removeItem(USER_KEY);
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser]             = useState(null);
+  const [user,        setUser]        = useState(null);
   const [permissions, setPermissions] = useState([]);
-  const [loading, setLoading]       = useState(true);
+  const [loading,     setLoading]     = useState(true);
 
-  // Centraliza la actualización de permisos en memoria y en CASL
   const applyPermissions = useCallback((perms) => {
     setPermissions(perms);
     ability.update(buildRulesFromPermissions(perms));
   }, []);
 
-  // Restaurar sesión al recargar página
+  // Restaurar sesión — permisos SIEMPRE vienen del backend, nunca del storage
   useEffect(() => {
-    const session     = loadSession();
-    const storedToken = sessionStorage.getItem("_t");
+    tokenStore.restore();
+    const hasFlag    = tokenStore.hasFlag();
+    const cachedUser = loadUserDisplay();
 
-    if (!storedToken) {
-      clearSession();
+    if (!hasFlag) {
+      clearUserDisplay();
       setLoading(false);
       return;
     }
 
-    // Mostrar datos cacheados optimistamente mientras validamos con el backend
-    if (session?.user) {
-      setUser(session.user);
-      applyPermissions(session.permissions ?? []);
-    }
-
-    tokenStore.set(storedToken);
+    // Mostrar datos de display optimistamente (nombre, avatar)
+    // pero los permisos están vacíos hasta que llegue la respuesta real
+    if (cachedUser) setUser(cachedUser);
 
     AuthApi.getProfile()
       .then(({ user: freshUser, permissions: freshPerms }) => {
         setUser(freshUser);
         applyPermissions(freshPerms);
-        saveSession(freshUser, freshPerms);
+        saveUserDisplay(freshUser);
       })
       .catch(() => {
         tokenStore.clear();
-        clearSession();
+        clearUserDisplay();
         setUser(null);
         applyPermissions([]);
       })
@@ -85,17 +84,18 @@ export function AuthProvider({ children }) {
     const { user: loggedUser, permissions: perms, token } =
       await AuthApi.login(email, password);
 
-    sessionStorage.setItem("_t", token);
+    // Token ya fue seteado en tokenStore por AuthApi.login
+    // Solo guardamos display data en storage
     setUser(loggedUser);
     applyPermissions(perms);
-    saveSession(loggedUser, perms);
+    saveUserDisplay(loggedUser);
 
     return loggedUser;
   }, [applyPermissions]);
 
   const logout = useCallback(() => {
     AuthApi.logout();
-    clearSession();
+    clearUserDisplay();
     setUser(null);
     applyPermissions([]);
   }, [applyPermissions]);
@@ -109,7 +109,6 @@ export function AuthProvider({ children }) {
     isAuthenticated: Boolean(user),
   }), [user, permissions, loading, login, logout]);
 
-  // AuthProvider envuelve AbilityContext — un solo árbol, sin CaslWrapper externo
   return (
     <AuthContext.Provider value={authValue}>
       <AbilityContext.Provider value={ability}>

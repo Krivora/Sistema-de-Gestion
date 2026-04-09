@@ -20,6 +20,23 @@ export function ThemeProvider({ children }) {
   // Aplicar al DOM cuando cambie
   useEffect(() => {
     applyThemeToDOM(darkMode);
+    // Inyectar variables del sidebar según tema
+    const r = document.documentElement;
+    if (darkMode) {
+      r.style.setProperty("--sidebar-bg-from", "#0d0f1a");
+      r.style.setProperty("--sidebar-bg-mid", "#111320");
+      r.style.setProperty("--sidebar-bg-to", "#0f1117");
+      r.style.setProperty("--sidebar-glow-primary", "#7c6ff7");
+      r.style.setProperty("--sidebar-glow-secondary", "#38bdf8");
+      r.style.setProperty("--gradient-accent", "linear-gradient(135deg,#7c6ff7,#38bdf8)");
+    } else {
+      r.style.setProperty("--sidebar-bg-from", "#1a1440");
+      r.style.setProperty("--sidebar-bg-mid", "#1e1750");
+      r.style.setProperty("--sidebar-bg-to", "#1b1648");
+      r.style.setProperty("--sidebar-glow-primary", "#5b4ef0");
+      r.style.setProperty("--sidebar-glow-secondary", "#0284c7");
+      r.style.setProperty("--gradient-accent", "linear-gradient(135deg,#5b4ef0,#0284c7)");
+    }
   }, [darkMode]);
 
   // toggleDarkMode recibe opcionalmente el userId para persistir en backend
@@ -32,20 +49,22 @@ export function ThemeProvider({ children }) {
   const muiTheme = createTheme({
     palette: {
       mode: darkMode ? "dark" : "light",
-      primary: { main: "#725af8" },
-      secondary: { main: "#03a9f4" },
-      error: { main: "#f44336" },
-      success: { main: "#4caf50" },
+      primary: { main: darkMode ? "#7c6ff7" : "#5b4ef0" },
+      secondary: { main: "#0284c7" },
+      error: { main: "#dc2626" },
+      success: { main: darkMode ? "#22c55e" : "#16a34a" },
+      warning: { main: darkMode ? "#f59e0b" : "#d97706" },
       background: {
-        default: darkMode ? "#121212" : "#f5f5f5",
-        paper:   darkMode ? "#1e1e1e" : "#ffffff",
+        default: darkMode ? "#0f1117" : "#f4f6fb",
+        paper: darkMode ? "#181c27" : "#ffffff",
       },
       text: {
-        primary:   darkMode ? "#f5f5f5" : "#1e1e1e",
-        secondary: darkMode ? "#b0b0b0" : "#555555",
+        primary: darkMode ? "#e8ecf4" : "#1a1f36",
+        secondary: darkMode ? "#8b94b0" : "#5a6378",
       },
+      divider: darkMode ? "#2a3048" : "#dde2ee",
     },
-    shape: { borderRadius: 8 },
+    shape: { borderRadius: 10 },
     typography: {
       fontFamily: "'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif",
       fontSize: 14,
@@ -66,7 +85,7 @@ export function ThemeProvider({ children }) {
           },
           containedPrimary: {
             color: "#fff",
-            "&:hover": { backgroundColor: "#4a36b3" },
+            "&:hover": { backgroundColor: darkMode ? "#6558e8" : "#4438d4" },
           },
         },
       },
@@ -74,15 +93,21 @@ export function ThemeProvider({ children }) {
         styleOverrides: {
           root: {
             borderRadius: 10,
+            backgroundImage: "none",
             boxShadow: darkMode
-              ? "0 1px 3px rgba(0,0,0,0.4)"
-              : "0 1px 3px rgba(0,0,0,0.1)",
+              ? "0 4px 12px rgba(0,0,0,0.4)"
+              : "0 4px 12px rgba(26,31,54,0.08)",
           },
         },
       },
       MuiDialog: {
+        styleOverrides: { paper: { borderRadius: 14 } },
+      },
+      MuiTableCell: {
         styleOverrides: {
-          paper: { borderRadius: 12 },
+          root: {
+            borderColor: darkMode ? "#2a3048" : "#dde2ee",
+          },
         },
       },
     },

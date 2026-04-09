@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAbility } from "@core/auth/AbilityContext";
-import { useTheme } from "@core/context/ThemeProvider";
 import { useAuth } from "@core/auth/useAuth";
 import {
   Dashboard as DashboardIcon,
@@ -110,7 +109,6 @@ function NavLink({ item, collapsed, onClick }) {
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 
 export default function Sidebar({ open, setOpen, collapsed, setCollapsed }) {
-  const { darkMode }     = useTheme();
   const { user, logout } = useAuth();
   const ability          = useAbility();
   const navigate         = useNavigate();
@@ -158,9 +156,6 @@ export default function Sidebar({ open, setOpen, collapsed, setCollapsed }) {
   const bottomHasMore = allItems.length > 4;
 
   const initial = user?.business_name?.[0]?.toUpperCase() ?? "K";
-  const bgClass = darkMode
-    ? "bg-[#13131a] border-white/[0.06]"
-    : "bg-[#1e1b4b] border-white/[0.08]";
 
   return (
     <>
@@ -180,7 +175,7 @@ export default function Sidebar({ open, setOpen, collapsed, setCollapsed }) {
         className={`
           fixed top-0 left-0 h-full z-40 flex flex-col
           transition-all duration-300 ease-in-out
-          border-r ${bgClass}
+          border-r border-white/[0.07]
           ${open ? "translate-x-0" : "-translate-x-full"}
           md:translate-x-0
           ${collapsed ? "md:w-[68px]" : "md:w-60"}
@@ -188,21 +183,19 @@ export default function Sidebar({ open, setOpen, collapsed, setCollapsed }) {
           pb-20 md:pb-0
         `}
         style={{
-          background: darkMode
-            ? "linear-gradient(160deg, #13131a 0%, #1a1033 50%, #0e1a3a 100%)"
-            : "linear-gradient(160deg, #1e1b4b 0%, #312e81 60%, #1e3a5f 100%)",
+          background: `linear-gradient(160deg, var(--sidebar-bg-from) 0%, var(--sidebar-bg-mid) 60%, var(--sidebar-bg-to) 100%)`,
         }}
       >
         {/* Glow decorativo */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute top-0 right-0 w-40 h-40 rounded-full opacity-20"
-          style={{ background: "radial-gradient(circle, #725af8 0%, transparent 70%)", transform: "translate(30%, -30%)" }}
+          style={{ background: "radial-gradient(circle, var(--sidebar-glow-primary) 0%, transparent 70%)", transform: "translate(30%, -30%)" }}
         />
         <div
           aria-hidden="true"
           className="pointer-events-none absolute bottom-20 left-0 w-32 h-32 rounded-full opacity-10"
-          style={{ background: "radial-gradient(circle, #03a9f4 0%, transparent 70%)", transform: "translate(-30%, 30%)" }}
+          style={{ background: "radial-gradient(circle, var(--sidebar-glow-secondary) 0%, transparent 70%)", transform: "translate(-30%, 30%)" }}
         />
 
         {/* ── Header / Brand ── */}
@@ -210,7 +203,7 @@ export default function Sidebar({ open, setOpen, collapsed, setCollapsed }) {
           {!collapsed && (
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-bold text-white"
-                style={{ background: "linear-gradient(135deg, #725af8, #03a9f4)" }}>
+                style={{ background: "var(--gradient-accent)" }}>
                 {initial}
               </div>
               <div className="min-w-0">
@@ -314,10 +307,7 @@ export default function Sidebar({ open, setOpen, collapsed, setCollapsed }) {
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around
           h-16 px-2 border-t border-white/[0.08]"
         style={{
-          background: darkMode
-            ? "linear-gradient(0deg, #13131a, #1a1033)"
-            : "linear-gradient(0deg, #1e1b4b, #312e81)",
-          backdropFilter: "blur(12px)",
+          background: `linear-gradient(0deg, var(--sidebar-bg-from), var(--sidebar-bg-mid))`,
         }}
       >
         {bottomPrimary.slice(0, 4).map(item => {

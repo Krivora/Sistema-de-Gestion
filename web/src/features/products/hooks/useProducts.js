@@ -1,74 +1,73 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ProductsApi } from "../api/products";
-import { useAuth } from "@core/auth/useAuth"
-import { useNotify } from "@core/utils/alerts/notifyUtils";
+import { useAuth } from "@core/auth/useAuth";
 
 export function useProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user: currentUser } = useAuth();
-  const notify = useNotify();
+  const { user } = useAuth();
 
-  // 🔹 Obtener productos
-  const fetchProducts = async () => {
-    if (!currentUser?.client_id) return;
+  const fetchProducts = useCallback(async () => {
+    if (!user?.client_id) return;
+
     setLoading(true);
     try {
       const data = await ProductsApi.list();
-      setProducts(data);
+      console.log("Products API response:", data);
+      setProducts(Array.isArray(data) ? data : data?.data ?? []);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.client_id]);
 
-  // 🔹 Crear
+  useEffect(() => {
+    if (user && user.client_id) {
+      fetchProducts();
+    } else {
+      setLoading(false);
+    }
+  }, [user, fetchProducts]);
+
   const addProduct = async (payload) => {
-    const newProd = await ProductsApi.create({
-      ...payload,
-      client_id: currentUser?.client_id ?? null,
-    });
-    fetchProducts();
-    setProducts((prev) => [...prev, newProd]);
+    const newProd = await ProductsApi.create(payload);
+    setProducts((prev) => [newProd, ...prev]);
+    return newProd;
   };
 
-  // 🔹 Actualizar
   const updateProduct = async (id, payload) => {
     const updated = await ProductsApi.update(id, payload);
-    setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
-    notify.success("Producto actualizado", "Cambios guardados.");
-  };
-
-  // 🔹 Desactivar
-  const desactivateProduct = async (id) => {
-    const data = await ProductsApi.desactivate(id);
     setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status: "inactive" } : p))
+      prev.map((p) => (p.id === id ? updated : p))
     );
-    return data.message;
+    return updated;
   };
 
-  // 🔹 Activar
   const activateProduct = async (id) => {
-    const data = await ProductsApi.activate(id);
+    await ProductsApi.activate(id);
     setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status: "active" } : p))
+      prev.map((p) =>
+        p.id === id ? { ...p, status: "active" } : p
+      )
     );
-    return data.message;
   };
 
-  // 🔹 Eliminar
+  const deactivateProduct = async (id) => {
+    await ProductsApi.deactivate(id);
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.id === id ? { ...p, status: "inactive" } : p
+      )
+    );
+  };
+
   const deleteProduct = async (id) => {
-    const data = await ProductsApi.delete(id);
+    await ProductsApi.delete(id);
     setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status: "deleted" } : p))
+      prev.map((p) =>
+        p.id === id ? { ...p, status: "deleted" } : p
+      )
     );
-    return data.message;
   };
-
-  // Inicial
-  useEffect(() => {
-    fetchProducts();
-  }, [currentUser?.client_id]);
 
   return {
     products,
@@ -76,7 +75,8 @@ export function useProducts() {
     addProduct,
     updateProduct,
     activateProduct,
-    desactivateProduct,
+    deactivateProduct,
     deleteProduct,
+    refetch: fetchProducts,
   };
 }

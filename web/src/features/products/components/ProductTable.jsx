@@ -1,255 +1,142 @@
+import { useMemo } from "react";
 import { Edit, Delete, PowerSettingsNew, RestartAlt } from "@mui/icons-material";
-import { IconButton, Tooltip, Chip } from "@mui/material";
-import { useTheme } from "@core/context/ThemeProvider";
+import { IconButton, Tooltip } from "@mui/material";
 import DataTable from "@core/components/common/DataTable";
 
-// ✂️ Truncar descripción
-const truncate = (text = "", max = 80) =>
+const truncate = (text = "", max = 60) =>
   text.length > max ? text.slice(0, max) + "…" : text;
 
-export default function ProductTable({
-  products = [],
-  loading,
-  onEdit,
-  onDelete,
-  onActivate,
-  onDesactivate,
-}) {
-  const { darkMode } = useTheme();
+const STATUS_MAP = {
+  active: { label: "Activo", color: "var(--color-success)", bg: "var(--color-success-soft)" },
+  inactive: { label: "Inactivo", color: "var(--color-warning)", bg: "var(--color-warning-soft)" },
+  deleted: { label: "Eliminado", color: "var(--color-text-muted)", bg: "var(--color-surface-2)" },
+};
 
-  const actionBtn = darkMode
-    ? "rounded-full p-1 text-gray-400 hover:bg-[#333333] hover:text-white"
-    : "rounded-full p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800";
+function StatusBadge({ status }) {
+  const cfg = STATUS_MAP[status] ?? STATUS_MAP.deleted;
+  return (
+    <span
+      className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium"
+      style={{ color: cfg.color, background: cfg.bg }}
+    >
+      {cfg.label}
+    </span>
+  );
+}
 
-  const renderStatusChip = (val) => {
-    const map = {
-      active: { label: "Activo", color: "#22c55e", bg: "#22c55e33" },
-      inactive: { label: "Inactivo", color: "#f59e0b", bg: "#facc1533" },
-      deleted: {
-        label: "Eliminado",
-        color: darkMode ? "#9ca3af" : "#4b5563",
-        bg: "#9ca3af33",
-      },
-    };
-    const cfg = map[val] || map.deleted;
-    return (
-      <Chip
-        label={cfg.label}
-        size="small"
-        sx={{
-          fontWeight: 500,
-          bgcolor: cfg.bg,
-          color: cfg.color,
-        }}
-      />
-    );
-  };
+function ActionButtons({ p, onEdit, onActivate, onDeactivate, onDelete }) {
+  return (
+    <div className="flex items-center gap-1">
+      {p.status !== "deleted" && (
+        <Tooltip title="Editar">
+          <IconButton size="small" onClick={() => onEdit(p)}
+            sx={{ color: "var(--color-text-muted)", "&:hover": { color: "var(--color-primary)", background: "var(--color-primary-soft)" } }}>
+            <Edit sx={{ fontSize: 16 }} />
+          </IconButton>
+        </Tooltip>
+      )}
+      {p.status === "active" && (
+        <Tooltip title="Desactivar">
+          <IconButton size="small" onClick={() => onDeactivate(p.id)}
+            sx={{ color: "var(--color-warning)", "&:hover": { background: "var(--color-warning-soft)" } }}>
+            <PowerSettingsNew sx={{ fontSize: 16 }} />
+          </IconButton>
+        </Tooltip>
+      )}
+      {p.status === "inactive" && (
+        <>
+          <Tooltip title="Activar">
+            <IconButton size="small" onClick={() => onActivate(p.id)}
+              sx={{ color: "var(--color-success)", "&:hover": { background: "var(--color-success-soft)" } }}>
+              <RestartAlt sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Eliminar">
+            <IconButton size="small" onClick={() => onDelete(p)}
+              sx={{ color: "var(--color-danger)", "&:hover": { background: "var(--color-danger-soft)" } }}>
+              <Delete sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function ProductTable({ products = [], loading, onEdit, onDelete, onActivate, onDeactivate }) {
+  const columns = useMemo(() => [
+    { key: "name", label: "Nombre" },
+    { key: "sku", label: "SKU", render: v => v || "—" },
+    { key: "category_name", label: "Categoría", render: v => v || "Sin categoría" },
+    {
+      key: "description",
+      label: "Descripción",
+      render: v => v
+        ? <span style={{ color: "var(--color-text-secondary)" }}>{truncate(v)}</span>
+        : <span style={{ color: "var(--color-text-muted)" }} className="italic">Sin descripción</span>
+    },
+    { key: "status", label: "Estado", render: v => <StatusBadge status={v} /> },
+  ], []);
 
   return (
-    <div
-      className={`rounded-xl border shadow-sm ${
-        darkMode ? "border-gray-700 bg-[#1a1a1a]" : "border-gray-200 bg-white"
-      }`}
-    >
-      {/* 🖥️ Vista Desktop (DataTable) */}
+    <div className="rounded-xl border overflow-hidden"
+      style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
+
+      {/* Desktop */}
       <div className="hidden md:block">
         <DataTable
           data={products}
           loading={loading}
-          darkMode={darkMode}
           dense
           placeholder="Buscar producto..."
           defaultSort={{ key: "name", direction: "asc" }}
-          columns={[
-            { key: "name", label: "Nombre" },
-            { key: "sku", label: "SKU", render: (v) => v || "—" },
-            {
-              key: "category_name",
-              label: "Categoría",
-              render: (v) => v || "Sin categoría",
-            },
-            {
-              key: "description",
-              label: "Descripción",
-              render: (v) =>
-                v ? (
-                  truncate(v, 60)
-                ) : (
-                  <span className="italic text-gray-400">Sin descripción</span>
-                ),
-            },
-            {
-              key: "status",
-              label: "Estado",
-              render: (val) => renderStatusChip(val),
-            },
-          ]}
-          renderActions={(p) => (
-            <div className="flex justify-end gap-1.5">
-              {p.status !== "deleted" && (
-                <Tooltip title="Editar">
-                  <IconButton
-                    size="small"
-                    onClick={() => onEdit(p)}
-                    className={actionBtn}
-                  >
-                    <Edit fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              )}
-
-              {p.status === "active" && (
-                <Tooltip title="Desactivar">
-                  <IconButton
-                    size="small"
-                    onClick={() => onDesactivate(p.id)}
-                    className={actionBtn}
-                  >
-                    <PowerSettingsNew fontSize="small" sx={{ color: "#f59e0b" }} />
-                  </IconButton>
-                </Tooltip>
-              )}
-
-              {p.status === "inactive" && (
-                <>
-                  <Tooltip title="Activar">
-                    <IconButton
-                      size="small"
-                      onClick={() => onActivate(p.id)}
-                      className={actionBtn}
-                    >
-                      <RestartAlt fontSize="small" sx={{ color: "#22c55e" }} />
-                    </IconButton>
-                  </Tooltip>
-
-                  <Tooltip title="Eliminar">
-                    <IconButton
-                      size="small"
-                      onClick={() => onDelete(p)}
-                      className={actionBtn}
-                    >
-                      <Delete fontSize="small" sx={{ color: "#ef4444" }} />
-                    </IconButton>
-                  </Tooltip>
-                </>
-              )}
-            </div>
+          columns={columns}
+          renderActions={p => (
+            <ActionButtons
+              p={p}
+              onEdit={onEdit}
+              onActivate={onActivate}
+              onDeactivate={onDeactivate}
+              onDelete={onDelete}
+            />
           )}
         />
       </div>
 
-      {/* 📱 Vista móvil tipo card */}
-      <div className="md:hidden p-2 space-y-3 overflow-hidden">
+      {/* Mobile */}
+      <div className="md:hidden divide-y" style={{ borderColor: "var(--color-border-soft)" }}>
         {loading ? (
-          <p
-            className={`text-center py-4 text-sm ${
-              darkMode ? "text-gray-500" : "text-gray-600"
-            }`}
-          >
+          <p className="text-center py-8 text-sm" style={{ color: "var(--color-text-muted)" }}>
             Cargando productos...
           </p>
-        ) : products.length > 0 ? (
-          products.map((p) => (
-            <div
-              key={p.id}
-              className={`rounded-lg p-3 shadow-sm border ${
-                darkMode
-                  ? "bg-[#1a1a1a] border-gray-700"
-                  : "bg-white border-gray-200"
-              }`}
-            >
-              <div className="flex justify-between items-center mb-1">
-                <h3 className="font-semibold text-sm">{p.name}</h3>
-                {renderStatusChip(p.status)}
-              </div>
-
-              <p
-                className={`text-xs mb-1 ${
-                  darkMode ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
-                SKU: <span className="font-medium">{p.sku || "—"}</span>
-              </p>
-              <p
-                className={`text-xs mb-1 ${
-                  darkMode ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
-                Categoría:{" "}
-                <span className="font-medium">
-                  {p.category_name || "Sin categoría"}
-                </span>
-              </p>
-              <p
-                className={`text-xs mb-1 ${
-                  darkMode ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
-                {p.description
-                  ? truncate(p.description, 80)
-                  : "Sin descripción"}
-              </p>
-
-              <div className="flex justify-end gap-2 mt-2 flex-wrap">
-                {p.status !== "deleted" && (
-                  <Tooltip title="Editar">
-                    <IconButton
-                      size="small"
-                      onClick={() => onEdit(p)}
-                      className={actionBtn}
-                    >
-                      <Edit fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                )}
-
-                {p.status === "active" && (
-                  <Tooltip title="Desactivar">
-                    <IconButton
-                      size="small"
-                      onClick={() => onDesactivate(p.id)}
-                      className={actionBtn}
-                    >
-                      <PowerSettingsNew fontSize="small" sx={{ color: "#f59e0b" }} />
-                    </IconButton>
-                  </Tooltip>
-                )}
-
-                {p.status === "inactive" && (
-                  <>
-                    <Tooltip title="Activar">
-                      <IconButton
-                        size="small"
-                        onClick={() => onActivate(p.id)}
-                        className={actionBtn}
-                      >
-                        <RestartAlt fontSize="small" sx={{ color: "#22c55e" }} />
-                      </IconButton>
-                    </Tooltip>
-
-                    <Tooltip title="Eliminar">
-                      <IconButton
-                        size="small"
-                        onClick={() => onDelete(p)}
-                        className={actionBtn}
-                      >
-                        <Delete fontSize="small" sx={{ color: "#ef4444" }} />
-                      </IconButton>
-                    </Tooltip>
-                  </>
-                )}
-              </div>
-            </div>
-          ))
-        ) : (
-          <p
-            className={`text-center py-4 text-sm ${
-              darkMode ? "text-gray-500" : "text-gray-600"
-            }`}
-          >
+        ) : products.length === 0 ? (
+          <p className="text-center py-8 text-sm" style={{ color: "var(--color-text-muted)" }}>
             No hay productos registrados.
           </p>
-        )}
+        ) : products.map(p => (
+          <div key={p.id} className="p-4 space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-medium text-sm truncate" style={{ color: "var(--color-text-primary)" }}>
+                  {p.name}
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+                  {p.sku || "Sin SKU"} · {p.category_name || "Sin categoría"}
+                </p>
+              </div>
+              <StatusBadge status={p.status} />
+            </div>
+            {p.description && (
+              <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                {truncate(p.description, 80)}
+              </p>
+            )}
+            <div className="flex justify-end">
+              <ActionButtons p={p} onEdit={onEdit} onActivate={onActivate}
+                onDeactivate={onDeactivate} onDelete={onDelete} />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

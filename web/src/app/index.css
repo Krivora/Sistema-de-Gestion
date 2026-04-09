@@ -1,15 +1,76 @@
 @import "tailwindcss";
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+
+/* ── Paleta Light ───────────────────────────── */
+:root {
+  --color-bg:           #f4f6fb;
+  --color-surface:      #ffffff;
+  --color-surface-2:    #eef1f8;
+  --color-border:       #dde2ee;
+  --color-border-soft:  #eceff6;
+
+  --color-text-primary:   #1a1f36;
+  --color-text-secondary: #5a6378;
+  --color-text-muted:     #9099b0;
+
+  --color-primary:        #5b4ef0;
+  --color-primary-hover:  #4438d4;
+  --color-primary-soft:   #ede9ff;
+  --color-primary-text:   #ffffff;
+
+  --color-success:        #16a34a;
+  --color-success-soft:   #dcfce7;
+  --color-warning:        #d97706;
+  --color-warning-soft:   #fef3c7;
+  --color-danger:         #dc2626;
+  --color-danger-soft:    #fee2e2;
+  --color-info:           #0284c7;
+  --color-info-soft:      #e0f2fe;
+
+  --shadow-sm:  0 1px 2px rgba(26,31,54,0.06);
+  --shadow-md:  0 4px 12px rgba(26,31,54,0.08);
+  --shadow-lg:  0 8px 24px rgba(26,31,54,0.10);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
 }
 
+/* ── Paleta Dark ────────────────────────────── */
+.dark {
+  --color-bg:           #0f1117;
+  --color-surface:      #181c27;
+  --color-surface-2:    #1e2334;
+  --color-border:       #2a3048;
+  --color-border-soft:  #232840;
+
+  --color-text-primary:   #e8ecf4;
+  --color-text-secondary: #8b94b0;
+  --color-text-muted:     #555f7a;
+
+  --color-primary:        #7c6ff7;
+  --color-primary-hover:  #6558e8;
+  --color-primary-soft:   #1e1a3a;
+  --color-primary-text:   #ffffff;
+
+  --color-success:        #22c55e;
+  --color-success-soft:   #052e16;
+  --color-warning:        #f59e0b;
+  --color-warning-soft:   #2d1f04;
+  --color-danger:         #ef4444;
+  --color-danger-soft:    #2d0a0a;
+  --color-info:           #38bdf8;
+  --color-info-soft:      #082030;
+
+  --shadow-sm:  0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg:  0 8px 24px rgba(0,0,0,0.5);
+}
+
+/* ── Animaciones ────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 .animate-fade-in {
   animation: fade-in 0.15s ease-out forwards;
 }

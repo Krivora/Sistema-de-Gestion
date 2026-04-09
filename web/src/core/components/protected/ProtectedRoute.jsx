@@ -5,10 +5,10 @@ import SessionLoader from "@core/components/ui/SessionLoader";
 
 // permission = "products.read" → action = "read", subject = "products"
 function parsePermission(permission) {
-  if (!permission) return null;
-  const parts = permission.split(".");
-  if (parts.length !== 2) return null;
-  return { subject: parts[0], action: parts[1] };
+  if (!permission || typeof permission !== "string") return null;
+  const [subject, action] = permission.split(".");
+  if (!subject || !action) return null;
+  return { subject, action };
 }
 
 export default function ProtectedRoute({ permission, children }) {

@@ -1,29 +1,55 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
 
-// Token vive en memoria — no en localStorage (seguro contra XSS)
-let _memoryToken = null;
+const TOKEN_KEY = "app_token";
+const SESSION_FLAG = "app_has_session";
+
+let _memoryToken = sessionStorage.getItem(TOKEN_KEY) || null;
 
 export const tokenStore = {
   get: () => _memoryToken,
-  set: (token) => { _memoryToken = token; },
-  clear: () => { _memoryToken = null; },
+
+  set: (token) => {
+    _memoryToken = token;
+    try {
+      sessionStorage.setItem(TOKEN_KEY, token);
+      sessionStorage.setItem(SESSION_FLAG, "1");
+    } catch {
+      // Ignorar errores de almacenamiento
+    }
+  },
+
+  clear: () => {
+    _memoryToken = null;
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(SESSION_FLAG);
+  },
+  hasToken: () => {
+  return Boolean(
+      _memoryToken || sessionStorage.getItem(TOKEN_KEY)
+    );
+  },
+  hasFlag: () => sessionStorage.getItem(SESSION_FLAG) === "1",
+
+  restore: () => {
+    const token = sessionStorage.getItem(TOKEN_KEY);
+    if (token) _memoryToken = token;
+    return token;
+  },
 };
 
 export async function apiFetch(endpoint, options = {}) {
   const token = tokenStore.get();
+  const { isFormData, headers: customHeaders = {}, ...fetchOptions } = options;
 
   const headers = {
     ...(token && { Authorization: `Bearer ${token}` }),
-    ...(!options.isFormData && { "Content-Type": "application/json" }),
+    ...(!isFormData && { "Content-Type": "application/json" }),
+    ...customHeaders,
   };
-
-  // Separamos isFormData del resto para no pasarlo al fetch nativo
-  const { isFormData, ...fetchOptions } = options;
 
   let res;
   try {
     res = await fetch(`${API_URL}${endpoint}`, {
-      method: "GET",
       ...fetchOptions,
       headers,
     });
@@ -48,9 +74,9 @@ export async function apiFetch(endpoint, options = {}) {
   }
 
   if (!res.ok) {
-    const message = body?.error || `Error ${res.status}`;
-    const error = new Error(message);
+    const error = new Error(body?.error || `Error ${res.status}`);
     error.status = res.status;
+    error.data = body;
     throw error;
   }
 

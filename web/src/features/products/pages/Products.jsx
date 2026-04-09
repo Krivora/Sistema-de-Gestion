@@ -1,10 +1,8 @@
-import { useState } from "react";
-import { Button } from "@mui/material";
+import { useState, useCallback } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import { useProducts } from "../hooks/useProducts";
 import ProductTable from "../components/ProductTable";
 import ProductForm from "../components/ProductForm";
-import { useToast } from "@core/utils/alerts/toastUtils";
 import { useAlert } from "@core/utils/alerts/alertUtils";
 import { useNotify } from "@core/utils/alerts/notifyUtils";
 import PageHeader from "@core/components/common/PageHeader";
@@ -16,17 +14,34 @@ export default function Products() {
     addProduct,
     updateProduct,
     activateProduct,
-    desactivateProduct,
+    deactivateProduct,
     deleteProduct,
   } = useProducts();
+
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  const toast = useToast();
   const alert = useAlert();
   const notify = useNotify();
 
-  const handleSave = async (data) => {
+  const openCreate = useCallback(() => {
+    setEditing(null);
+    setOpen(true);
+  }, []);
+
+  const openEdit = useCallback((product) => {
+    setEditing(product);
+    setOpen(true);
+  }, []);
+
+  const closeForm = useCallback(() => {
+    setOpen(false);
+    setEditing(null);
+  }, []);
+
+  const handleSave = useCallback(async (data) => {
+    setSaving(true);
     try {
       if (editing) {
         await updateProduct(editing.id, data);
@@ -35,93 +50,97 @@ export default function Products() {
         await addProduct(data);
         notify.success("Producto creado", "Agregado correctamente");
       }
-      setOpen(false);
-    } catch {
-      toast.error("Error al guardar el producto");
+      closeForm();
+    } catch (err) {
+      notify.error("Error al guardar", err.message || "Intenta de nuevo");
+    } finally {
+      setSaving(false);
     }
-  };
+  }, [editing, addProduct, updateProduct, notify, closeForm]);
 
-  const handleActivate = async (id) => {
-    const confirmed = await alert.confirm({
+  const handleActivate = useCallback(async (id) => {
+    const ok = await alert.confirm({
       title: "¿Activar producto?",
-      text: "Esto reactivará también su disponibilidad en sucursales.",
+      text: "Reactivará su disponibilidad en sucursales.",
     });
-    if (!confirmed) return;
+    if (!ok) return;
 
     try {
-      const message = await activateProduct(id);
-      notify.success("Producto activado", message);
+      await activateProduct(id);
+      notify.success("Producto activado");
     } catch (err) {
-      notify.error("Error al activar", err.message || "No se pudo activar el producto");
+      notify.error("Error al activar", err.message);
     }
-  };
+  }, [alert, activateProduct, notify]);
 
-  const handleDesactivate = async (id) => {
-    const confirmed = await alert.confirm({
+  const handleDeactivate = useCallback(async (id) => {
+    const ok = await alert.confirm({
       title: "¿Desactivar producto?",
-      text: "Esto ocultará el producto en el sistema y en sus sucursales.",
+      text: "Se ocultará en el sistema y en sus sucursales.",
     });
-    if (!confirmed) return;
+    if (!ok) return;
 
     try {
-      const message = await desactivateProduct(id);
-      notify.info("Producto desactivado", message);
+      await deactivateProduct(id);
+      notify.info("Producto desactivado");
     } catch (err) {
-      notify.error("Error al desactivar", err.message || "No se pudo desactivar el producto");
+      notify.error("Error al desactivar", err.message);
     }
-  };
+  }, [alert, deactivateProduct, notify]);
 
-  const handleDelete = async (product) => {
-    const confirmed = await alert.confirm({
-       title: `¿Eliminar el producto ${product.name}?`,
-      text: "Esto eliminara el producto completamente. Esta acción no se puede deshacer",
+  const handleDelete = useCallback(async (product) => {
+    const ok = await alert.confirm({
+      title: `¿Eliminar "${product.name}"?`,
+      text: "Esta acción no se puede deshacer.",
     });
-    if (!confirmed) return;
+    if (!ok) return;
 
     try {
-      const message = await deleteProduct(id);
-      notify.warning("Producto eliminado", message);
+      await deleteProduct(product.id);
+      notify.warning("Producto eliminado");
     } catch (err) {
-      notify.error("Error al eliminar", err.message || "No se pudo eliminar el producto");
+      notify.error("Error al eliminar", err.message);
     }
-  };
+  }, [alert, deleteProduct, notify]);
 
   return (
-    <div className="p-6">
+    <div>
       <PageHeader
         title="Productos"
-        description="Administra el catálogo de productos, define precios, categorías, existencias y la información necesaria para las operaciones de inventario y ventas."
+        description="Administra el catálogo de productos del inventario."
+        actions={
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white transition-colors"
+            style={{ background: "var(--color-primary)" }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = "var(--color-primary-hover)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = "var(--color-primary)")
+            }
+          >
+            <AddIcon sx={{ fontSize: 18 }} />
+            Nuevo Producto
+          </button>
+        }
       />
-      <div className="flex justify-start items-center mb-4">
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => {
-            setEditing(null);
-            setOpen(true);
-          }}
-        >
-          Nuevo Producto
-        </Button>
-      </div>
 
       <ProductTable
         products={products}
         loading={loading}
-        onEdit={(p) => {
-          setEditing(p);
-          setOpen(true);
-        }}
+        onEdit={openEdit}
         onActivate={handleActivate}
-        onDesactivate={handleDesactivate}
+        onDeactivate={handleDeactivate}
         onDelete={handleDelete}
       />
 
       <ProductForm
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={closeForm}
         onSave={handleSave}
         product={editing}
+        saving={saving}
       />
     </div>
   );
