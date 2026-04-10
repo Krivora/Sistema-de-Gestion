@@ -1,7 +1,7 @@
 "use client"
 import { useState, useCallback, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, Loader2, CheckCircle2, XCircle, AlertCircle } from "lucide-react"
+import { Eye, EyeOff, Loader2, XCircle, AlertCircle } from "lucide-react"
 import { useAuthStore } from "@/store/auth.store"
 import { apiClient } from "@/lib/api/client"
 import type { LoginResponse } from "@/types/api.types"
