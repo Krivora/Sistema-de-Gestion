@@ -229,8 +229,8 @@ export function Sidebar() {
             {/* Desktop */}
             <aside
                 className={cn(
-                    "hidden md:flex flex-col border-r bg-card transition-all duration-300 ease-in-out relative shrink-0",
-                    collapsed ? "w-[60px]" : "w-[240px]"
+                    "hidden md:flex fixed top-0 left-0 z-40 h-screen flex-col border-r bg-card transition-all duration-300 ease-in-out",
+                    collapsed ? "w-15" : "w-60"
                 )}
             >
                 <SidebarContent collapsed={collapsed} />

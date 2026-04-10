@@ -2,7 +2,7 @@ import pool from "../../config/db.js";
 import * as AdjustmentRepo from "./adjustment.repository.js";
 import * as InventoryRepo from "../inventory/inventory.repository.js";
 
-const VALID_TYPES = ["increase", "decrease"]; // ajusta a tu enum real
+const VALID_TYPES = ["ADJUSTMENT_IN", "ADJUSTMENT_OUT"]; // ajusta a tu enum real
 
 export async function createAndPostAdjustment(payload, user) {
   const { branch_id, note, items, type } = payload;

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import {
     Search, Plus, ChevronLeft, ChevronRight,
-    ShoppingBag, Eye,
+    ShoppingBag, Eye, FileDown
 } from "lucide-react"
 import {
     Select, SelectContent, SelectItem,
@@ -17,7 +17,8 @@ import {
 import { formatDate } from "@/lib/utils"
 import Link from "next/link"
 import { SaleDetailDialog } from "@/features/sales/sale-detail-dialog"
-
+import { useAuthStore } from "@/store/auth.store"
+import { generateSaleReceipt } from "@/lib/pdf/sale-receipt"
 const STATUS_LABEL: Record<Sale["status"], string> = {
     open: "Abierta",
     posted: "Publicada",
@@ -37,6 +38,7 @@ function formatCurrency(n: number) {
 }
 
 export default function SalesPage() {
+    const user = useAuthStore((s) => s.user)
     const [sales, setSales] = useState<Sale[]>([])
     const [branches, setBranches] = useState<Branch[]>([])
     const [loading, setLoading] = useState(true)
@@ -91,7 +93,6 @@ export default function SalesPage() {
     const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
     const paginated = filtered.slice((page - 1) * pageSize, page * pageSize)
     const hasActiveFilters = search || filterStatus !== "all" || filterBranch !== "all" || filterPayment !== "all" || dateFrom || dateTo
-    const totalRevenue = filtered.filter((s) => s.status === "posted").reduce((a, s) => a + s.total, 0)
 
     function clearFilters() {
         setSearch("")
@@ -112,14 +113,6 @@ export default function SalesPage() {
                         <p className="text-sm text-muted-foreground">
                             {sales.filter((s) => s.status === "posted").length} ventas registradas
                         </p>
-                        {filtered.length > 0 && (
-                            <>
-                                <span className="text-border text-sm">·</span>
-                                <p className="text-sm font-medium text-foreground">
-                                    {formatCurrency(totalRevenue)}
-                                </p>
-                            </>
-                        )}
                     </div>
                 </div>
                 <Link href="/dashboard/sales/new" className={buttonVariants({ size: "sm" })}>
@@ -130,7 +123,7 @@ export default function SalesPage() {
 
             {/* Filtros */}
             <div className="flex flex-wrap gap-3">
-                <div className="relative flex-1 min-w-[200px] max-w-sm">
+                <div className="relative flex-1 min-w-50 max-w-sm">
                     <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <Input
                         placeholder="Buscar por folio, cliente, sucursal..."
@@ -153,7 +146,7 @@ export default function SalesPage() {
                 </Select>
 
                 <Select value={filterBranch} onValueChange={setFilterBranch}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-45">
                         <SelectValue placeholder="Sucursal" />
                     </SelectTrigger>
                     <SelectContent>
@@ -165,7 +158,7 @@ export default function SalesPage() {
                 </Select>
 
                 <Select value={filterPayment} onValueChange={setFilterPayment}>
-                    <SelectTrigger className="w-[160px]">
+                    <SelectTrigger className="w-40">
                         <SelectValue placeholder="Método de pago" />
                     </SelectTrigger>
                     <SelectContent>
@@ -181,14 +174,14 @@ export default function SalesPage() {
                         type="date"
                         value={dateFrom}
                         onChange={(e) => setDateFrom(e.target.value)}
-                        className="w-[145px] text-sm"
+                        className="w-36.25 text-sm"
                     />
                     <span className="text-muted-foreground text-sm">—</span>
                     <Input
                         type="date"
                         value={dateTo}
                         onChange={(e) => setDateTo(e.target.value)}
-                        className="w-[145px] text-sm"
+                        className="w-36.25 text-sm"
                     />
                 </div>
 
@@ -249,12 +242,32 @@ export default function SalesPage() {
                                     {formatDate(sale.created_at)}
                                 </td>
                                 <td className="px-4 py-3">
-                                    <button
-                                        onClick={() => setDetailId(sale.id)}
-                                        className={buttonVariants({ variant: "ghost", size: "icon" }) + " h-8 w-8"}
-                                    >
-                                        <Eye size={15} />
-                                    </button>
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => setDetailId(sale.id)}
+                                            className={buttonVariants({ variant: "ghost", size: "icon" }) + " h-8 w-8"}
+                                        >
+                                            <Eye size={15} />
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                const opts = {
+                                                    businessName: user?.business_name ?? sale.branch_name,
+                                                    logoUrl: user?.logo_url,
+                                                    phone: user?.phone,
+                                                    email: user?.email,
+                                                }
+                                                if (sale.items) {
+                                                    generateSaleReceipt(sale, opts)
+                                                } else {
+                                                    salesApi.get(sale.id).then(s => generateSaleReceipt(s, opts))
+                                                }
+                                            }}
+                                            className={buttonVariants({ variant: "ghost", size: "icon" }) + " h-8 w-8"}
+                                        >
+                                            <FileDown size={15} />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -275,7 +288,7 @@ export default function SalesPage() {
                         <div className="flex items-center gap-2">
                             <span>Mostrar</span>
                             <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
-                                <SelectTrigger className="h-8 w-[70px]">
+                                <SelectTrigger className="h-8 w-17.5">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>

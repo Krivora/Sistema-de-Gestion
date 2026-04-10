@@ -1,6 +1,6 @@
 import pool from "../../config/db.js";
 
-const VALID_STATUSES       = ["open", "posted", "cancelled"];
+const VALID_STATUSES = ["open", "posted", "cancelled"];
 const VALID_PAYMENT_METHODS = ["EFECTIVO", "TARJETA", "TRANSFERENCIA", "OTRO"];
 
 export async function findAll(clientId, { status, branch_id, date_from, date_to } = {}) {
@@ -27,10 +27,14 @@ export async function findAll(clientId, { status, branch_id, date_from, date_to 
   const { rows } = await pool.query(
     `SELECT s.id, s.doc_no, s.status, s.payment_method,
             s.subtotal, s.total, s.posted_at, s.created_at,
-            b.name AS branch_name, u.name AS user_name
+            b.name AS branch_name, u.name AS user_name,
+            COALESCE(c.name, s.customer_name) AS customer_name,
+            COALESCE(c.phone, s.customer_phone) AS customer_phone,
+            c.email AS customer_email
      FROM sales s
      LEFT JOIN branches b ON b.id = s.branch_id
      LEFT JOIN users u ON u.id = s.user_id
+     LEFT JOIN customers c ON c.id = s.customer_id
      WHERE ${conds.join(" AND ")}
      ORDER BY s.id DESC
      LIMIT 500`,
@@ -81,8 +85,8 @@ export async function createHeader(trx, payload) {
         customer_name, customer_phone, payment_method, subtotal, total)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,0,0) RETURNING *`,
     [doc_no, payload.branch_id, payload.client_id, payload.user_id ?? null,
-     payload.customer_id ?? null, payload.customer_name ?? null,
-     payload.customer_phone ?? null, payment]
+      payload.customer_id ?? null, payload.customer_name ?? null,
+      payload.customer_phone ?? null, payment]
   );
   return rows[0];
 }

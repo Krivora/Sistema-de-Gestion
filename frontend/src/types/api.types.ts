@@ -9,6 +9,7 @@ export interface User {
     dark_mode: boolean
     business_name?: string
     logo_url?: string
+    phone?: string
     permissions: string[]
 }
 

@@ -41,6 +41,8 @@ export const branchProductsApi = {
     listByBranch: (branchId: number) =>
         apiClient.get<BranchProduct[]>(`/branch-products/branch/${branchId}`).then((r) => r.data),
     get: (id: number) => apiClient.get<BranchProduct>(`/branch-products/${id}`).then((r) => r.data),
+    byBranch: (branchId: number) =>
+        apiClient.get<BranchProduct[]>(`/branch-products/branch/${branchId}`).then((r) => r.data),
     create: (data: CreateBranchProductDto) =>
         apiClient.post<BranchProduct>("/branch-products", data).then((r) => r.data),
     update: (id: number, data: UpdateBranchProductDto) =>

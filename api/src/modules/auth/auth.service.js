@@ -24,6 +24,7 @@ function buildUserPayload(user) {
     dark_mode: user.dark_mode,
     business_name: user.business_name,
     logo_url: user.logo_url,
+    phone: user.phone,
   };
 }
 

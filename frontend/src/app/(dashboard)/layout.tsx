@@ -25,11 +25,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (!token) return null
 
     return (
-        <div className="flex min-h-screen">
+        <div className="min-h-screen bg-background">
+            {/* Sidebar fijo */}
             <Sidebar />
-            <div className="flex flex-col flex-1 overflow-hidden">
-                <Topbar />
-                <main className="flex-1 overflow-y-auto p-6">{children}</main>
+
+            {/* Contenedor principal */}
+            <div className="md:pl-60">
+                <div className="flex flex-col h-screen">
+                    <Topbar />
+                    <main className="flex-1 overflow-y-auto p-6">
+                        {children}
+                    </main>
+                </div>
             </div>
         </div>
     )

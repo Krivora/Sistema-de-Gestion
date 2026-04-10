@@ -4,7 +4,7 @@ const VALID_STATUSES = ["active", "inactive", "deleted"];
 
 const BASE_SELECT = `
   SELECT u.id, u.name, u.email, r.name AS role_name, r.id AS role_id,
-         u.branch_id, u.dark_mode, u.status, u.created_at
+        u.branch_id, u.dark_mode, u.status, u.created_at
   FROM users u
   LEFT JOIN roles r ON r.id = u.role_id
 `;

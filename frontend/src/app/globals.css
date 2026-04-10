@@ -49,6 +49,9 @@
 }
 
 :root {
+  --success: oklch(0.527 0.154 150.069);
+  --success-foreground: oklch(0.985 0 0);
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -84,6 +87,8 @@
 }
 
 .dark {
+  --success: oklch(0.696 0.17 150.069);
+  --success-foreground: oklch(0.145 0 0);
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);

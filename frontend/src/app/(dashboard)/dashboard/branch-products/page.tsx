@@ -141,7 +141,7 @@ export default function BranchProductsPage() {
 
             {/* Filtros */}
             <div className="flex flex-wrap gap-3">
-                <div className="relative flex-1 min-w-[200px] max-w-sm">
+                <div className="relative flex-1 min-w-50 max-w-sm">
                     <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <Input
                         placeholder="Buscar por producto, SKU o sucursal..."
@@ -154,7 +154,7 @@ export default function BranchProductsPage() {
                 {/* Filtro sucursal — solo si no tiene branch_id fijo */}
                 {!user?.branch_id && (
                     <Select value={filterBranch} onValueChange={setFilterBranch}>
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-45">
                             <SelectValue placeholder="Sucursal" />
                         </SelectTrigger>
                         <SelectContent>
@@ -167,7 +167,7 @@ export default function BranchProductsPage() {
                 )}
 
                 <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as typeof filterStatus)}>
-                    <SelectTrigger className="w-[140px]">
+                    <SelectTrigger className="w-35">
                         <SelectValue placeholder="Estado" />
                     </SelectTrigger>
                     <SelectContent>
@@ -178,7 +178,7 @@ export default function BranchProductsPage() {
                 </Select>
 
                 <Select value={filterStock} onValueChange={(v) => setFilterStock(v as typeof filterStock)}>
-                    <SelectTrigger className="w-[150px]">
+                    <SelectTrigger className="w-37.5">
                         <SelectValue placeholder="Stock" />
                     </SelectTrigger>
                     <SelectContent>
@@ -199,7 +199,7 @@ export default function BranchProductsPage() {
                 <table className="w-full text-sm">
                     <thead className="bg-muted/50">
                         <tr>
-                            {["Producto", "Sucursal", "Precio", "Costo", "Stock", "Mín.", "Estado", ""].map((h) => (
+                            {["Producto", "Sucursal", "Costo", "Precio", "Utilidad", "Stock", "Mín.", "Estado", ""].map((h) => (
                                 <th key={h} className="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">
                                     {h}
                                 </th>
@@ -243,16 +243,24 @@ export default function BranchProductsPage() {
                                         </div>
                                     </td>
                                     <td className="px-4 py-3 text-muted-foreground">{item.branch_name}</td>
-                                    <td className="px-4 py-3 font-medium">{formatCurrency(item.price, item.currency)}</td>
                                     <td className="px-4 py-3 text-muted-foreground">{formatCurrency(item.cost, item.currency)}</td>
-                                    {/* Stock con alerta */}
+                                    <td className="px-4 py-3 font-medium">{formatCurrency(item.price, item.currency)}</td>
                                     <td className="px-4 py-3">
-                                        <span className={`flex items-center gap-1.5 font-semibold ${isLowStock ? "text-amber-600 dark:text-amber-400" : ""}`}>
-                                            {isLowStock && <AlertTriangle size={13} />}
-                                            {item.current_stock}
+                                        <span className={item.price - item.cost > 0 ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-red-500 font-medium"}>
+                                            {formatCurrency(item.price - item.cost, item.currency)}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-3 text-muted-foreground">{item.min_stock}</td>
+                                    {/* Stock con alerta */}
+                                    <td className="px-4 py-3">
+                                        <span
+                                            className={`flex items-center gap-1.5 font-semibold ${isLowStock ? "text-amber-600 dark:text-amber-400" : ""
+                                                }`}
+                                        >
+                                            {isLowStock && <AlertTriangle size={13} />}
+                                            {Math.floor(item.current_stock)}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-muted-foreground">{Math.floor(item.min_stock)}</td>
                                     <td className="px-4 py-3">
                                         <Badge variant={item.is_active ? "default" : "secondary"}>
                                             {item.is_active ? "Activo" : "Inactivo"}

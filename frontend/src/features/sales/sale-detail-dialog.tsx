@@ -7,8 +7,11 @@ import { Separator } from "@/components/ui/separator"
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog"
-import { Package, Building2, User, Calendar, CreditCard } from "lucide-react"
+import { Package, Building2, User, Calendar, CreditCard, Download } from "lucide-react"
 import { formatDate } from "@/lib/utils"
+import { generateSaleReceipt } from "@/lib/pdf/sale-receipt"
+import { useAuthStore } from "@/store/auth.store"
+import { Button } from "@/components/ui/button"
 
 interface Props {
     saleId: number | null
@@ -32,6 +35,8 @@ function formatCurrency(n: number) {
 }
 
 export function SaleDetailDialog({ saleId, onClose }: Props) {
+    const user = useAuthStore((s) => s.user)
+    console.log("Usuario en SaleDetailDialog:", user)  // Debug: Verificar que el usuario se carga correctamente
     const [sale, setSale] = useState<Sale | null>(null)
     const [loading, setLoading] = useState(false)
 
@@ -48,14 +53,39 @@ export function SaleDetailDialog({ saleId, onClose }: Props) {
         <Dialog open={!!saleId} onOpenChange={(v) => !v && onClose()}>
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-3">
-                        <span className="font-mono">{sale?.doc_no ?? "..."}</span>
+                    <div className="flex items-center justify-between">
+                        <DialogTitle className="flex items-center gap-3">
+                            <span className="font-mono">{sale?.doc_no ?? "..."}</span>
+                            {sale && (
+                                <Badge variant={STATUS_VARIANT[sale.status]}>
+                                    {STATUS_LABEL[sale.status]}
+                                </Badge>
+                            )}
+                        </DialogTitle>
                         {sale && (
-                            <Badge variant={STATUS_VARIANT[sale.status]}>
-                                {STATUS_LABEL[sale.status]}
-                            </Badge>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-2 mr-6"
+                                onClick={async () => {
+                                    try {
+                                        await generateSaleReceipt(sale, {
+                                            businessName: user?.business_name ?? sale.branch_name,
+                                            logoUrl: user?.logo_url,  
+                                            phone: user?.phone ?? "",
+                                            email: user?.email ?? "",
+                                            accentColor: [0, 102, 204], // Color corporativo opcional
+                                        })
+                                    } catch (error) {
+                                        console.error("Error al generar el PDF:", error)
+                                    }
+                                }}
+                            >
+                                <Download size={14} />
+                                PDF
+                            </Button>
                         )}
-                    </DialogTitle>
+                    </div>
                 </DialogHeader>
 
                 {loading && (
