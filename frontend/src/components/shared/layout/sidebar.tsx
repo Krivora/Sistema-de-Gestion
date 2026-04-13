@@ -41,8 +41,8 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Inventario",
         roles: ["admin", "user"],
         items: [
-            { href: "/dashboard/products", label: "Productos", icon: Package, permission: "products.read" },
             { href: "/dashboard/categories", label: "Categorías", icon: Tag, permission: "categories.read" },
+            { href: "/dashboard/products", label: "Productos", icon: Package, permission: "products.read" },
             { href: "/dashboard/branch-products", label: "Stock por Sucursal", icon: Building2, permission: "products.read" },
         ],
     },
@@ -220,7 +220,8 @@ function SidebarContent({ collapsed, onClose }: { collapsed?: boolean; onClose?:
 }
 
 export function Sidebar() {
-    const [collapsed, setCollapsed] = useState(false)
+    const collapsed = useUIStore((s) => s.sidebarCollapsed)
+    const setSidebarCollapsed = useUIStore((s) => s.setSidebarCollapsed)
     const mobileOpen = useUIStore((s) => s.mobileOpen)
     const setMobileOpen = useUIStore((s) => s.setMobileOpen)
 
@@ -235,7 +236,7 @@ export function Sidebar() {
             >
                 <SidebarContent collapsed={collapsed} />
                 <button
-                    onClick={() => setCollapsed((v) => !v)}
+                    onClick={() => setSidebarCollapsed(!collapsed)}
                     className="absolute -right-3 top-[72px] z-10 flex h-6 w-6 items-center justify-center rounded-full border bg-background shadow-sm hover:bg-muted transition-colors"
                     aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
                 >

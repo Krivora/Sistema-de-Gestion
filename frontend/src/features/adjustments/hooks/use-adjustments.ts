@@ -21,9 +21,10 @@ export function useAdjustments() {
                 return matchSearch && matchType
             },
             defaultPageSize: 25,
+            extraDeps: [filterType,],
         })
 
-    useEffect(() => { setPage(1) }, [filterType])
+
 
     const hasActiveFilters = !!(search || filterType !== "all")
 

@@ -39,9 +39,8 @@ export function useSales() {
         const matchTo = !dateTo || s.created_at <= dateTo + "T23:59:59"
         return matchSearch && matchStatus && matchBranch && matchPayment && matchFrom && matchTo
       },
+        extraDeps: [filterStatus, filterBranch, filterPayment, dateFrom, dateTo],
     })
-
-  useEffect(() => { setPage(1) }, [filterStatus, filterBranch, filterPayment, dateFrom, dateTo])
 
   const hasActiveFilters = !!(search || filterStatus !== "all" || filterBranch !== "all" || filterPayment !== "all" || dateFrom || dateTo)
   const postedCount = entity.data.filter((s) => s.status === "posted").length

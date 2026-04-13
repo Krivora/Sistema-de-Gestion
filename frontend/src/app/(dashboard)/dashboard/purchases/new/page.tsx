@@ -58,7 +58,15 @@ export default function NewPurchasePage() {
 
     const [loading, setLoading] = useState(false)
     const [loadingProducts, setLoadingProducts] = useState(false)
+    const SELECT_WIDTH = "w-full";
+    // Valores seleccionados
+    const selectedBranch = branches.find(
+        (b) => String(b.id) === branchId
+    );
 
+    const selectedSupplier = suppliers.find(
+        (s) => String(s.id) === supplierId
+    );
     // Cargar sucursales y proveedores
     useEffect(() => {
         Promise.all([branchesApi.list(), suppliersApi.list()]).then(([b, s]) => {
@@ -181,18 +189,33 @@ export default function NewPurchasePage() {
 
                         {/* Sucursal */}
                         <div className="space-y-1.5">
-                            <Label>Sucursal <span className="text-destructive">*</span></Label>
+                            <Label>
+                                Sucursal <span className="text-destructive">*</span>
+                            </Label>
                             <Select
                                 value={branchId}
-                                onValueChange={(v) => { setBranchId(v); setCart([]) }}
+                                onValueChange={(v) => {
+                                    setBranchId(v);
+                                    setCart([]);
+                                }}
                                 disabled={!!user?.branch_id}
                             >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Selecciona sucursal" />
+                                <SelectTrigger className={SELECT_WIDTH}>
+                                    <SelectValue placeholder="Selecciona sucursal">
+                                        {selectedBranch ? (
+                                            <span className="block truncate">
+                                                {selectedBranch.name}
+                                            </span>
+                                        ) : (
+                                            "Selecciona sucursal"
+                                        )}
+                                    </SelectValue>
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="md:w-[280px]">
                                     {branches.map((b) => (
-                                        <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>
+                                        <SelectItem key={b.id} value={String(b.id)}>
+                                            <span className="block truncate">{b.name}</span>
+                                        </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -200,15 +223,30 @@ export default function NewPurchasePage() {
 
                         {/* Proveedor */}
                         <div className="space-y-1.5">
-                            <Label>Proveedor <span className="text-xs text-muted-foreground">(opcional)</span></Label>
+                            <Label>
+                                Proveedor{" "}
+                                <span className="text-xs text-muted-foreground">
+                                    (opcional)
+                                </span>
+                            </Label>
                             <Select value={supplierId} onValueChange={setSupplierId}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Sin proveedor" />
+                                <SelectTrigger className={SELECT_WIDTH}>
+                                    <SelectValue placeholder="Sin proveedor">
+                                        {supplierId ? (
+                                            <span className="block truncate">
+                                                {selectedSupplier?.name}
+                                            </span>
+                                        ) : (
+                                            "Sin proveedor"
+                                        )}
+                                    </SelectValue>
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="md:w-[280px]">
                                     <SelectItem value="">Sin proveedor</SelectItem>
                                     {suppliers.map((s) => (
-                                        <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                                        <SelectItem key={s.id} value={String(s.id)}>
+                                            <span className="block truncate">{s.name}</span>
+                                        </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -218,13 +256,16 @@ export default function NewPurchasePage() {
                         <div className="space-y-1.5">
                             <Label htmlFor="doc_no">
                                 No. de documento
-                                <span className="text-xs text-muted-foreground ml-1">(opcional)</span>
+                                <span className="text-xs text-muted-foreground ml-1">
+                                    (opcional)
+                                </span>
                             </Label>
                             <Input
                                 id="doc_no"
                                 placeholder="Ej. FAC-12345"
                                 value={docNo}
                                 onChange={(e) => setDocNo(e.target.value)}
+                                className={SELECT_WIDTH}
                             />
                             <p className="text-xs text-muted-foreground">
                                 Se autogenera si no se especifica
@@ -287,8 +328,8 @@ export default function NewPurchasePage() {
                                         !branchId
                                             ? "Selecciona una sucursal primero..."
                                             : loadingProducts
-                                            ? "Cargando productos..."
-                                            : "Buscar producto por nombre o SKU..."
+                                                ? "Cargando productos..."
+                                                : "Buscar producto por nombre o SKU..."
                                     }
                                     value={productSearch}
                                     onChange={(e) => { setProductSearch(e.target.value); setSearchOpen(true) }}

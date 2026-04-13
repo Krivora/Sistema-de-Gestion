@@ -36,9 +36,8 @@ export function useProducts() {
         const matchCategory = filterCategory === "all" || String(p.category_id) === filterCategory
         return matchSearch && matchStatus && matchCategory
       },
+      extraDeps: [filterStatus, filterCategory],
     })
-
-  useEffect(() => { setPage(1) }, [filterStatus, filterCategory])
 
   const activeCount = products.data.filter((p) => p.status === "active").length
   const hasActiveFilters = !!(search || filterStatus !== "all" || filterCategory !== "all")

@@ -3,16 +3,33 @@ import pool from "../../config/db.js";
 const isSuperAdmin = (role) => role === "superadmin";
 
 function parseDateRange(startDate, endDate) {
-  const start = new Date(startDate);
-  const end   = new Date(endDate);
-  if (isNaN(start) || isNaN(end)) throw Object.assign(new Error("Fechas inválidas"), { status: 400 });
-  if (start > end) throw Object.assign(new Error("startDate debe ser anterior a endDate"), { status: 400 });
+  if (!startDate || !endDate) {
+    throw Object.assign(
+      new Error("startDate y endDate son requeridos"),
+      { status: 400 }
+    );
+  }
+
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+
+  if (isNaN(start) || isNaN(end)) {
+    throw Object.assign(new Error("Fechas inválidas"), { status: 400 });
+  }
+
+  if (start > end) {
+    throw Object.assign(
+      new Error("startDate debe ser anterior a endDate"),
+      { status: 400 }
+    );
+  }
+
   return { start, end };
 }
 
 export async function getCurrentStockByBranch(branchId, categoryId, clientId, roleName) {
   const params = [];
-  const conds  = [];
+  const conds = [];
 
   if (!isSuperAdmin(roleName)) {
     params.push(clientId);
@@ -55,43 +72,55 @@ export async function getCurrentStockByBranch(branchId, categoryId, clientId, ro
 export async function getSalesByPeriod({ startDate, endDate, clientId, roleName }) {
   const { start, end } = parseDateRange(startDate, endDate);
   const params = [start, end];
-  const extra  = !isSuperAdmin(roleName) ? (params.push(clientId), `AND s.client_id = $${params.length}`) : "";
+  const extra = !isSuperAdmin(roleName)
+    ? (params.push(clientId), `AND s.client_id = $${params.length}`)
+    : "";
 
   const { rows } = await pool.query(
     `SELECT DATE(s.created_at) AS date,
             COUNT(DISTINCT s.id) AS sales_count,
             COALESCE(SUM(i.qty * i.unit_price), 0) AS total_sales
-     FROM sales s
-     JOIN sale_items i ON i.sale_id = s.id
-     WHERE s.created_at BETWEEN $1 AND $2 ${extra}
-     GROUP BY DATE(s.created_at) ORDER BY date`,
+      FROM sales s
+      JOIN sale_items i ON i.sale_id = s.id
+      WHERE s.created_at >= $1
+        AND s.created_at < ($2::date + INTERVAL '1 day')
+        ${extra}
+      GROUP BY DATE(s.created_at)
+      ORDER BY date`,
     params
   );
+
   return rows;
 }
 
 export async function getPurchasesByPeriod({ startDate, endDate, clientId, roleName }) {
   const { start, end } = parseDateRange(startDate, endDate);
   const params = [start, end];
-  const extra  = !isSuperAdmin(roleName) ? (params.push(clientId), `AND p.client_id = $${params.length}`) : "";
+  const extra = !isSuperAdmin(roleName)
+    ? (params.push(clientId), `AND p.client_id = $${params.length}`)
+    : "";
 
   const { rows } = await pool.query(
     `SELECT DATE(p.created_at) AS date,
             COUNT(DISTINCT p.id) AS purchase_count,
             COALESCE(SUM(i.qty * i.unit_cost), 0) AS total_spent
-     FROM purchases p
-     JOIN purchase_items i ON i.purchase_id = p.id
-     WHERE p.created_at BETWEEN $1 AND $2 ${extra}
-     GROUP BY DATE(p.created_at) ORDER BY date`,
+      FROM purchases p
+      JOIN purchase_items i ON i.purchase_id = p.id
+      WHERE p.created_at >= $1
+        AND p.created_at < ($2::date + INTERVAL '1 day')
+        ${extra}
+      GROUP BY DATE(p.created_at)
+      ORDER BY date`,
     params
   );
+
   return rows;
 }
 
 export async function getTopSellingProducts(limit, clientId, roleName) {
   const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
-  const params    = [safeLimit];
-  const extra     = !isSuperAdmin(roleName) ? (params.push(clientId), `AND p.client_id = $${params.length}`) : "";
+  const params = [safeLimit];
+  const extra = !isSuperAdmin(roleName) ? (params.push(clientId), `AND p.client_id = $${params.length}`) : "";
 
   const { rows } = await pool.query(
     `SELECT p.name AS product_name,
@@ -111,21 +140,56 @@ export async function getTopSellingProducts(limit, clientId, roleName) {
 export async function getDashboardSummary({ startDate, endDate, clientId, roleName }) {
   const { start, end } = parseDateRange(startDate, endDate);
   const params = [start, end];
-  const extra  = !isSuperAdmin(roleName) ? (params.push(clientId), `AND client_id = $${params.length}`) : "";
 
-  // Una sola query con CTEs en lugar de 4 subqueries con parámetros repetidos
+  const salesFilter = !isSuperAdmin(roleName)
+    ? (params.push(clientId), `AND client_id = $${params.length}`)
+    : "";
+
+  const purchasesFilter = !isSuperAdmin(roleName)
+    ? `AND client_id = $${params.length}`
+    : "";
+
+  const revenueFilter = !isSuperAdmin(roleName)
+    ? `AND s.client_id = $${params.length}`
+    : "";
+
+  const expenseFilter = !isSuperAdmin(roleName)
+    ? `AND p.client_id = $${params.length}`
+    : "";
+
   const { rows } = await pool.query(
-    `WITH period AS (SELECT $1::timestamptz AS s, $2::timestamptz AS e)
-     SELECT
-       (SELECT COUNT(*)        FROM sales         WHERE created_at BETWEEN (SELECT s FROM period) AND (SELECT e FROM period) ${extra}) AS total_sales,
-       (SELECT COUNT(*)        FROM purchases      WHERE created_at BETWEEN (SELECT s FROM period) AND (SELECT e FROM period) ${extra}) AS total_purchases,
-       (SELECT COALESCE(SUM(i.qty * i.unit_price),0)
-          FROM sale_items i JOIN sales s ON s.id=i.sale_id
-          WHERE s.created_at BETWEEN (SELECT s FROM period) AND (SELECT e FROM period) ${extra.replace("client_id", "s.client_id")}) AS total_revenue,
-       (SELECT COALESCE(SUM(i.qty * i.unit_cost),0)
-          FROM purchase_items i JOIN purchases p ON p.id=i.purchase_id
-          WHERE p.created_at BETWEEN (SELECT s FROM period) AND (SELECT e FROM period) ${extra.replace("client_id", "p.client_id")}) AS total_expense`,
+    `WITH period AS (
+        SELECT $1::timestamptz AS s,
+              ($2::date + INTERVAL '1 day') AS e
+    )
+    SELECT
+      (SELECT COUNT(*)
+        FROM sales
+        WHERE created_at >= (SELECT s FROM period)
+          AND created_at <  (SELECT e FROM period)
+          ${salesFilter}) AS total_sales,
+
+      (SELECT COUNT(*)
+        FROM purchases
+        WHERE created_at >= (SELECT s FROM period)
+          AND created_at <  (SELECT e FROM period)
+          ${purchasesFilter}) AS total_purchases,
+
+       (SELECT COALESCE(SUM(i.qty * i.unit_price), 0)
+        FROM sale_items i
+        JOIN sales s ON s.id = i.sale_id
+        WHERE s.created_at >= (SELECT s FROM period)
+          AND s.created_at <  (SELECT e FROM period)
+          ${revenueFilter}) AS total_revenue,
+
+       (SELECT COALESCE(SUM(i.qty * i.unit_cost), 0)
+        FROM purchase_items i
+        JOIN purchases p ON p.id = i.purchase_id
+        WHERE p.created_at >= (SELECT s FROM period)
+          AND p.created_at <  (SELECT e FROM period)
+          ${expenseFilter}) AS total_expense;`,
     params
   );
+
   return rows[0];
 }

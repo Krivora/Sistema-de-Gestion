@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Plus, Search } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,6 +24,10 @@ export default function PurchasesPage() {
     page, setPage, pageSize, setPageSize,
     filtered, paginated, totalPages,
   } = usePurchases()
+  const selectedBranch = useMemo(
+    () => branches.find((b) => String(b.id) === filterBranch),
+    [branches, filterBranch]
+  );
 
   return (
     <div className="space-y-6">
@@ -40,14 +44,24 @@ export default function PurchasesPage() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
+        <div className="relative flex-1 min-w-50 max-w-sm">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Buscar por folio, sucursal o usuario..." value={search}
             onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
 
         <Select value={filterStatus} onValueChange={(v) => setFilterStatus((v ?? "all") as typeof filterStatus)}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Estado" /></SelectTrigger>
+          <SelectTrigger className="w-37.5">
+            <SelectValue placeholder="Estado">
+              {filterStatus === "all"
+                ? "Todos los estados"
+                : filterStatus === "posted"
+                  ? "Publicadas"
+                  : filterStatus === "draft"
+                    ? "Borradores"
+                    : "Canceladas"}
+            </SelectValue>
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos los estados</SelectItem>
             <SelectItem value="posted">Publicadas</SelectItem>
@@ -56,20 +70,31 @@ export default function PurchasesPage() {
           </SelectContent>
         </Select>
 
-        <Select value={filterBranch} onValueChange={(v) => setFilterBranch(v ?? "all")}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Sucursal" /></SelectTrigger>
+        <Select
+          value={filterBranch}
+          onValueChange={(v) => setFilterBranch(v ?? "all")}
+        >
+          <SelectTrigger className="w-45">
+            <SelectValue placeholder="Sucursal">
+              {filterBranch === "all" || !filterBranch
+                ? "Todas las sucursales"
+                : selectedBranch?.name ?? "Sucursal"}
+            </SelectValue>
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas las sucursales</SelectItem>
             {branches.map((b) => (
-              <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>
+              <SelectItem key={b.id} value={String(b.id)}>
+                <span className="truncate block">{b.name}</span>
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
         <div className="flex items-center gap-2">
-          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-[145px] text-sm" />
+          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-36 text-sm" />
           <span className="text-muted-foreground text-sm">—</span>
-          <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-[145px] text-sm" />
+          <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-36 text-sm" />
         </div>
 
         {hasActiveFilters && (

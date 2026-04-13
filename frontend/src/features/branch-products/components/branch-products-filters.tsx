@@ -42,7 +42,11 @@ export function BranchProductsFilters({
       {showBranchFilter && (
         <Select value={filterBranch} onValueChange={onBranchChange}>
           <SelectTrigger className="w-45">
-            <SelectValue placeholder="Sucursal" />
+            <SelectValue placeholder="Sucursal">
+              {filterBranch === "all" || !filterBranch
+                ? "Todas las sucursales"
+                : branches.find((b) => String(b.id) === filterBranch)?.name ?? filterBranch}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas las sucursales</SelectItem>
@@ -54,7 +58,11 @@ export function BranchProductsFilters({
       )}
 
       <Select value={filterStatus} onValueChange={(v) => onStatusChange(v as typeof filterStatus)}>
-        <SelectTrigger className="w-35"><SelectValue placeholder="Estado" /></SelectTrigger>
+        <SelectTrigger className="w-35">
+          <SelectValue placeholder="Estado">
+            {filterStatus === "all" ? "Todos" : filterStatus === "active" ? "Activos" : "Inactivos"}
+          </SelectValue>
+        </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todos</SelectItem>
           <SelectItem value="active">Activos</SelectItem>
@@ -63,7 +71,11 @@ export function BranchProductsFilters({
       </Select>
 
       <Select value={filterStock} onValueChange={(v) => onStockChange(v as typeof filterStock)}>
-        <SelectTrigger className="w-37.5"><SelectValue placeholder="Stock" /></SelectTrigger>
+        <SelectTrigger className="w-37.5">
+          <SelectValue placeholder="Stock">
+            {filterStock === "all" ? "Todo el stock" : "Stock bajo"}
+          </SelectValue>
+        </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todo el stock</SelectItem>
           <SelectItem value="low">Stock bajo</SelectItem>

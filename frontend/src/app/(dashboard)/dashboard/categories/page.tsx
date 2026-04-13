@@ -19,7 +19,7 @@ export default function CategoriesPage() {
     search, setSearch,
     page, setPage, pageSize, setPageSize,
     filtered, paginated, totalPages, categories,
-    handleActivate, openConfirm, handleConfirm, load,
+    handleActivate, openConfirm, handleConfirm, reload,
     confirmDialog, setConfirmDialog,
   } = useCategories()
 
@@ -74,7 +74,7 @@ export default function CategoriesPage() {
       />
 
       <CategoryDialog open={dialogOpen} onClose={() => setDialogOpen(false)}
-        category={selected} onSuccess={() => { setDialogOpen(false); load() }} />
+        category={selected} onSuccess={() => { setDialogOpen(false); reload() }} />
     </div>
   )
 }

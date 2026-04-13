@@ -1,15 +1,13 @@
 import dotenv from "dotenv";
-dotenv.config();
-
 import app from "./app.js";
 
+dotenv.config();
+
 const PORT = process.env.PORT || 4000;
+const HOST = "0.0.0.0";
 
-if (!process.env.JWT_SECRET) {
-  console.error("❌ JWT_SECRET no definido en .env");
-  process.exit(1);
-}
-
-app.listen(PORT, () => {
-  console.log(`🚀 API corriendo en http://localhost:${PORT} [${process.env.NODE_ENV || "development"}]`);
+app.listen(PORT, HOST, () => {
+  console.log(`🚀 Servidor iniciado correctamente`);
+  console.log(`📍 Local:   http://localhost:${PORT}`);
+  console.log(`🌐 Network: http://192.168.45.222:${PORT}`);
 });

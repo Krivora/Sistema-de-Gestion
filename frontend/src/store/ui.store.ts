@@ -1,19 +1,16 @@
 import { create } from "zustand"
 
+// store/ui.store.ts
 interface UIState {
-    sidebarOpen: boolean
     mobileOpen: boolean
-    toggleSidebar: () => void
-    setSidebarOpen: (v: boolean) => void
-    toggleMobile: () => void
     setMobileOpen: (v: boolean) => void
+    sidebarCollapsed: boolean
+    setSidebarCollapsed: (v: boolean) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
-    sidebarOpen: true,
     mobileOpen: false,
-    toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
-    setSidebarOpen: (v) => set({ sidebarOpen: v }),
-    toggleMobile: () => set((s) => ({ mobileOpen: !s.mobileOpen })),
     setMobileOpen: (v) => set({ mobileOpen: v }),
+    sidebarCollapsed: false,
+    setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
 }))

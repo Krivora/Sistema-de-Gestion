@@ -38,6 +38,7 @@ export function ProductDialog({ open, onClose, product, onSuccess }: Props) {
     const [optionalOpen, setOptionalOpen] = useState(false)
     const filledRequired = [form.name.trim(), form.category_id].filter(Boolean).length
     const allFilled = filledRequired === 2
+    const SELECT_WIDTH = "w-full md:w-65";
     // Cargar categorías activas
     useEffect(() => {
         categoriesApi.list().then((data) =>
@@ -110,7 +111,7 @@ export function ProductDialog({ open, onClose, product, onSuccess }: Props) {
 
     return (
         <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-            <DialogContent className="sm:max-w-[460px] p-0 gap-0 overflow-hidden rounded-2xl">
+            <DialogContent className="sm:max-w-115 p-0 gap-0 overflow-hidden rounded-2xl">
 
                 {/* Header */}
                 <div className="px-6 pt-5 pb-4 border-b flex items-start justify-between gap-3">
@@ -177,15 +178,24 @@ export function ProductDialog({ open, onClose, product, onSuccess }: Props) {
                                 setErrors((prev) => ({ ...prev, category_id: undefined }))
                             }}
                         >
-                            <SelectTrigger className={errors.category_id ? "border-destructive focus:ring-destructive" : ""}>
-                                <SelectValue placeholder="Selecciona una categoría">
-                                    {selectedCategory?.name}
+                            <SelectTrigger
+                                className={`${SELECT_WIDTH} ${errors.category_id
+                                    ? "border-destructive focus:ring-destructive"
+                                    : ""
+                                    }`}
+                            >
+                                <SelectValue
+                                    placeholder="Selecciona una categoría"
+                                    className="truncate"
+                                >
+                                    {selectedCategory?.name ?? "Selecciona una categoría"}
                                 </SelectValue>
                             </SelectTrigger>
-                            <SelectContent>
+
+                            <SelectContent className="md:w-65">
                                 {categories.map((cat) => (
                                     <SelectItem key={cat.id} value={String(cat.id)}>
-                                        {cat.name}
+                                        <span className="block truncate">{cat.name}</span>
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -220,12 +230,35 @@ export function ProductDialog({ open, onClose, product, onSuccess }: Props) {
                     </button>
 
                     {/* Opcionales colapsables */}
-                    <div className={cn(
-                        "grid grid-cols-2 gap-4 overflow-hidden transition-all duration-200",
-                        optionalOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                    )}>
-                        <div className="overflow-hidden space-y-1.5">
-                            <Label htmlFor="sku" className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">SKU</Label>
+                    <div
+                        className={cn(
+                            "grid gap-4 overflow-hidden transition-all duration-300 ease-in-out",
+                            "grid-cols-1 md:grid-cols-[4fr_2fr]",
+                            optionalOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
+                        )}
+                    >
+                        <div className="space-y-1.5">
+                            <Label
+                                htmlFor="description"
+                                className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground"
+                            >
+                                Descripción
+                            </Label>
+                            <Input
+                                id="description"
+                                name="description"
+                                placeholder="Descripción breve..."
+                                value={form.description}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label
+                                htmlFor="sku"
+                                className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground"
+                            >
+                                SKU
+                            </Label>
                             <Input
                                 id="sku"
                                 name="sku"
@@ -234,17 +267,9 @@ export function ProductDialog({ open, onClose, product, onSuccess }: Props) {
                                 onChange={handleChange}
                                 className="font-mono text-sm"
                             />
-                            <p className="text-[11px] text-muted-foreground">Se autogenera si vacío</p>
-                        </div>
-                        <div className="overflow-hidden space-y-1.5">
-                            <Label htmlFor="description" className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">Descripción</Label>
-                            <Input
-                                id="description"
-                                name="description"
-                                placeholder="Descripción breve..."
-                                value={form.description}
-                                onChange={handleChange}
-                            />
+                            <p className="text-[11px] text-muted-foreground">
+                                Se autogenera si vacío
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -258,7 +283,7 @@ export function ProductDialog({ open, onClose, product, onSuccess }: Props) {
                         <Button variant="ghost" size="sm" onClick={onClose} disabled={loading}>
                             Cancelar
                         </Button>
-                        <Button size="sm" onClick={handleSubmit} disabled={loading} className="min-w-[120px]">
+                        <Button size="sm" onClick={handleSubmit} disabled={loading} className="min-w-30">
                             {loading ? (
                                 <span className="flex items-center gap-2">
                                     <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

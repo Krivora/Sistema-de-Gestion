@@ -1,0 +1,38 @@
+.root {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding-bottom: 40px;
+}
+
+.hero {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.chartsPrimary {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+}
+
+.chartsSecondary {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+}
+
+@media (min-width: 1024px) {
+    .chartsPrimary {
+        grid-template-columns: 2fr 1fr;
+    }
+}
+
+@media (min-width: 900px) {
+    .chartsSecondary {
+        grid-template-columns: 1fr 1fr;
+    }
+}

@@ -50,7 +50,11 @@ export default function SalesPage() {
         </div>
 
         <Select value={filterStatus} onValueChange={(v) => setFilterStatus((v ?? "all") as typeof filterStatus)}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Estado" /></SelectTrigger>
+          <SelectTrigger className="w-37.5">
+            <SelectValue placeholder="Estado">
+              {filterStatus === "all" ? "Todos los estados" : filterStatus === "posted" ? "Publicadas" : filterStatus === "open" ? "Abiertas" : "Canceladas"}
+            </SelectValue>
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos los estados</SelectItem>
             <SelectItem value="posted">Publicadas</SelectItem>
@@ -60,7 +64,11 @@ export default function SalesPage() {
         </Select>
 
         <Select value={filterBranch} onValueChange={(v) => setFilterBranch(v ?? "all")}>
-          <SelectTrigger className="w-45"><SelectValue placeholder="Sucursal" /></SelectTrigger>
+          <SelectTrigger className="w-45">
+            <SelectValue placeholder="Sucursal">
+              {filterBranch === "all" || !filterBranch ? "Todas las sucursales" : branches.find((b) => String(b.id) === filterBranch)?.name ?? filterBranch}
+            </SelectValue>
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas las sucursales</SelectItem>
             {branches.map((b) => (
@@ -70,7 +78,11 @@ export default function SalesPage() {
         </Select>
 
         <Select value={filterPayment} onValueChange={(v) => setFilterPayment(v ?? "all")}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Método de pago" /></SelectTrigger>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Método de pago">
+              {filterPayment === "all" ? "Todos los métodos" : PAYMENT_METHODS.find((m) => m.value === filterPayment)?.label ?? filterPayment}
+            </SelectValue>
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos los métodos</SelectItem>
             {PAYMENT_METHODS.map((m) => (

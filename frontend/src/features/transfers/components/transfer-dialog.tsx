@@ -65,6 +65,9 @@ export function TransferDialog({ open, onClose, onSuccess }: Props) {
     const filledRequired = [form.from_branch_id, form.to_branch_id, form.items.length > 0 ? "ok" : ""].filter(Boolean).length
     const progress = Math.round((filledRequired / 3) * 100)
 
+    const SELECT_WIDTH = "w-full";
+    const SELECT_CONTENT_WIDTH = "md:w-100";
+
 
     return (
         <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -105,7 +108,8 @@ export function TransferDialog({ open, onClose, onSuccess }: Props) {
                 <div className="px-6 py-5 space-y-5 max-h-[65vh] overflow-y-auto">
 
                     {/* Origen → Destino */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {/* Origen */}
                         <div className="space-y-1.5">
                             <Label className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">
                                 Origen <span className="text-destructive">*</span>
@@ -113,24 +117,35 @@ export function TransferDialog({ open, onClose, onSuccess }: Props) {
                             <Select
                                 value={String(form.from_branch_id || "")}
                                 onValueChange={(v) =>
-                                    setForm((p) => ({ ...p, from_branch_id: Number(v), items: [] }))
+                                    setForm((p) => ({
+                                        ...p,
+                                        from_branch_id: Number(v),
+                                        items: [],
+                                    }))
                                 }
                             >
-                                <SelectTrigger>
+                                <SelectTrigger className={SELECT_WIDTH}>
                                     <SelectValue placeholder="Selecciona sucursal">
-                                        {fromBranch?.name}
+                                        {fromBranch ? (
+                                            <span className="block truncate">
+                                                {fromBranch.name}
+                                            </span>
+                                        ) : (
+                                            "Selecciona sucursal"
+                                        )}
                                     </SelectValue>
                                 </SelectTrigger>
-
-                                <SelectContent>
+                                <SelectContent className={SELECT_CONTENT_WIDTH}>
                                     {branches.map((b) => (
                                         <SelectItem key={b.id} value={String(b.id)}>
-                                            {b.name}
+                                            <span className="block truncate">{b.name}</span>
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        {/* Destino */}
                         <div className="space-y-1.5">
                             <Label className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">
                                 Destino <span className="text-destructive">*</span>
@@ -138,21 +153,31 @@ export function TransferDialog({ open, onClose, onSuccess }: Props) {
                             <Select
                                 value={String(form.to_branch_id || "")}
                                 onValueChange={(v) =>
-                                    setForm((p) => ({ ...p, to_branch_id: Number(v) }))
+                                    setForm((p) => ({
+                                        ...p,
+                                        to_branch_id: Number(v),
+                                    }))
                                 }
                             >
-                                <SelectTrigger>
+                                <SelectTrigger className={SELECT_WIDTH}>
                                     <SelectValue placeholder="Selecciona sucursal">
-                                        {toBranch?.name}
+                                        {toBranch ? (
+                                            <span className="block truncate">
+                                                {toBranch.name}
+                                            </span>
+                                        ) : (
+                                            "Selecciona sucursal"
+                                        )}
                                     </SelectValue>
                                 </SelectTrigger>
-
-                                <SelectContent>
+                                <SelectContent className={SELECT_CONTENT_WIDTH}>
                                     {branches
                                         .filter((b) => b.id !== form.from_branch_id)
                                         .map((b) => (
                                             <SelectItem key={b.id} value={String(b.id)}>
-                                                {b.name}
+                                                <span className="block truncate">
+                                                    {b.name}
+                                                </span>
                                             </SelectItem>
                                         ))}
                                 </SelectContent>
@@ -166,8 +191,14 @@ export function TransferDialog({ open, onClose, onSuccess }: Props) {
                             <Label className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">
                                 Productos <span className="text-destructive">*</span>
                             </Label>
-                            <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={!form.from_branch_id}
-                                className="h-7 text-xs gap-1">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={addItem}
+                                disabled={!form.from_branch_id}
+                                className="h-7 text-xs gap-1"
+                            >
                                 <Plus size={12} /> Agregar
                             </Button>
                         </div>
@@ -175,60 +206,110 @@ export function TransferDialog({ open, onClose, onSuccess }: Props) {
                         {form.items.length === 0 ? (
                             <div className="border border-dashed rounded-lg py-6 text-center">
                                 <p className="text-sm text-muted-foreground">
-                                    {form.from_branch_id ? "Agrega los productos a transferir" : "Selecciona el origen primero"}
+                                    {form.from_branch_id
+                                        ? "Agrega los productos a transferir"
+                                        : "Selecciona la sucursal de origen primero"}
                                 </p>
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                <div className="grid grid-cols-[1fr_90px_32px] gap-2 items-start">
-                                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">Producto</span>
-                                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">Cantidad</span>
-                                    <span />
-                                </div>
                                 {form.items.map((item, i) => {
-                                    const bp = branchProducts.find((p) => p.product_id === item.product_id)
-                                    const overStock = bp && item.qty > bp.current_stock
-                                    const selectedProduct = branchProducts.find(
+                                    const bp = branchProducts.find(
                                         (p) => p.product_id === item.product_id
                                     )
+                                    const selectedProduct = bp
+                                    const overStock = bp && item.qty > bp.current_stock
                                     return (
                                         <div
                                             key={i}
-                                            className="flex items-center gap-5 p-2 rounded-lg border bg-muted/20"
+                                            className="grid grid-cols-1 md:grid-cols-[7fr_2fr_auto] gap-3 items-start p-3 rounded-lg border bg-muted/20"
                                         >
-                                            <Select
-                                                value={String(item.product_id || "")}
-                                                onValueChange={(v) => updateItem(i, "product_id", Number(v))}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Selecciona producto">
-                                                        {selectedProduct?.product_name}
-                                                    </SelectValue>
-                                                </SelectTrigger>
+                                            {/* Producto */}
+                                            <div className="space-y-1">
+                                                <Select
+                                                    value={String(item.product_id || "")}
+                                                    onValueChange={(v) =>
+                                                        updateItem(i, "product_id", Number(v))
+                                                    }
+                                                >
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue placeholder="Selecciona producto">
+                                                            {selectedProduct ? (
+                                                                <span className="flex items-center justify-between gap-2 w-full">
+                                                                    <span className="truncate">
+                                                                        {selectedProduct.product_name}
+                                                                    </span>
+                                                                    <span className="text-xs text-muted-foreground font-mono shrink-0">
+                                                                        {selectedProduct.sku}
+                                                                    </span>
+                                                                </span>
+                                                            ) : (
+                                                                "Selecciona producto"
+                                                            )}
+                                                        </SelectValue>
+                                                    </SelectTrigger>
 
-                                                <SelectContent>
-                                                    {branchProducts
-                                                        .filter((bp) => bp.is_active)
-                                                        .map((bp) => (
-                                                            <SelectItem key={bp.product_id} value={String(bp.product_id)}>
-                                                                <span>{bp.product_name}</span>
-                                                            </SelectItem>
-                                                        ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <div>
-                                                <Input type="number" min={1} value={item.qty}
-                                                    onChange={(e) => updateItem(i, "qty", Number(e.target.value))}
-                                                    className={cn("text-center", overStock && "border-destructive focus-visible:ring-destructive")} />
+                                                    <SelectContent>
+                                                        {branchProducts
+                                                            .filter((bp) => bp.is_active)
+                                                            .map((bp) => (
+                                                                <SelectItem
+                                                                    key={bp.product_id}
+                                                                    value={String(bp.product_id)}
+                                                                >
+                                                                    <div className="flex justify-between w-full gap-2">
+                                                                        <span className="truncate">
+                                                                            {bp.product_name}
+                                                                        </span>
+                                                                        <span className="text-xs text-muted-foreground">
+                                                                            ({bp.current_stock} disp.)
+                                                                        </span>
+                                                                    </div>
+                                                                </SelectItem>
+                                                            ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+
+                                            {/* Cantidad */}
+                                            <div className="space-y-1">
+                                                <Input
+                                                    type="number"
+                                                    min={1}
+                                                    value={item.qty}
+                                                    onChange={(e) =>
+                                                        updateItem(
+                                                            i,
+                                                            "qty",
+                                                            Number(e.target.value)
+                                                        )
+                                                    }
+                                                    className={cn(
+                                                        "text-center w-full",
+                                                        overStock &&
+                                                        "border-destructive focus-visible:ring-destructive"
+                                                    )}
+                                                />
                                                 {overStock && (
-                                                    <p className="text-[10px] text-destructive mt-0.5">Stock disponible: {Math.floor(bp?.current_stock)}</p>
+                                                    <p className="text-[10px] text-destructive">
+                                                        Stock disponible:{" "}
+                                                        {Math.floor(bp?.current_stock ?? 0)}
+                                                    </p>
                                                 )}
                                             </div>
-                                            <Button type="button" variant="ghost" size="icon"
-                                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                                onClick={() => removeItem(i)}>
-                                                <Trash2 size={13} />
-                                            </Button>
+
+                                            {/* Eliminar */}
+                                            <div className="flex items-center justify-center pt-1">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                    onClick={() => removeItem(i)}
+                                                >
+                                                    <Trash2 size={13} />
+                                                </Button>
+                                            </div>
                                         </div>
                                     )
                                 })}
@@ -251,7 +332,7 @@ export function TransferDialog({ open, onClose, onSuccess }: Props) {
                     </p>
                     <div className="flex gap-2">
                         <Button variant="ghost" size="sm" onClick={onClose} disabled={loading}>Cancelar</Button>
-                        <Button size="sm" onClick={handleSubmit} disabled={loading} className="min-w-[140px]">
+                        <Button size="sm" onClick={handleSubmit} disabled={loading} className="min-w-35">
                             {loading ? (
                                 <span className="flex items-center gap-2">
                                     <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

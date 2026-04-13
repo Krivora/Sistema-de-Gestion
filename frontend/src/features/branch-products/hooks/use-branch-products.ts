@@ -44,10 +44,9 @@ export function useBranchProducts() {
         const matchStock = filterStock === "all" || (filterStock === "low" && i.current_stock <= i.min_stock)
         return matchSearch && matchBranch && matchStatus && matchStock
       },
+      extraDeps: [filterBranch, filterStatus, filterStock],
     })
 
-  // Re-filtrar cuando cambian filtros extra (no solo search)
-  useEffect(() => { setPage(1) }, [filterBranch, filterStatus, filterStock])
 
   const hasActiveFilters = !!(search || filterBranch !== "all" || filterStatus !== "all" || filterStock !== "all")
   const lowStockCount = entity.data.filter((i) => i.is_active && i.current_stock <= i.min_stock).length

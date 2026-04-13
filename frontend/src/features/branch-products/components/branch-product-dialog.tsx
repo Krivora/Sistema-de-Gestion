@@ -30,7 +30,7 @@ export function BranchProductDialog({ open, onClose, branchProduct, onSuccess }:
     const [errors, setErrors] = useState<Partial<Record<keyof CreateBranchProductDto, string>>>({})
     const [loading, setLoading] = useState(false)
     const [optionalOpen, setOptionalOpen] = useState(false)
-
+    const SELECT_WIDTH = "w-full md:w-100";
     useEffect(() => {
         Promise.all([branchesApi.list(), productsApi.list()]).then(([b, p]) => {
             setBranches(b.filter((br) => br.is_active))
@@ -110,7 +110,7 @@ export function BranchProductDialog({ open, onClose, branchProduct, onSuccess }:
 
     return (
         <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-            <DialogContent className="sm:max-w-[480px] p-0 gap-0 overflow-hidden rounded-2xl">
+            <DialogContent className="sm:max-w-120 p-0 gap-0 overflow-hidden rounded-2xl">
 
                 {/* Header */}
                 <div className="px-6 pt-5 pb-4 border-b">
@@ -144,7 +144,6 @@ export function BranchProductDialog({ open, onClose, branchProduct, onSuccess }:
                 </div>
 
                 <div className="px-6 py-5 space-y-4">
-
                     {/* Sucursal */}
                     <div className="space-y-1.5">
                         <Label className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">
@@ -155,7 +154,12 @@ export function BranchProductDialog({ open, onClose, branchProduct, onSuccess }:
                             onValueChange={(v) => { setForm((p) => ({ ...p, branch_id: Number(v) })); setErrors((p) => ({ ...p, branch_id: undefined })) }}
                             disabled={isEdit || !!user?.branch_id}
                         >
-                            <SelectTrigger className={cn(errors.branch_id && "border-destructive")}>
+                            <SelectTrigger
+                                className={cn(
+                                    SELECT_WIDTH,
+                                    errors.branch_id && "border-destructive"
+                                )}
+                            >
                                 <SelectValue placeholder="Selecciona una sucursal">
                                     {selectedBranch?.name}
                                 </SelectValue>
@@ -177,7 +181,7 @@ export function BranchProductDialog({ open, onClose, branchProduct, onSuccess }:
                             onValueChange={(v) => { setForm((p) => ({ ...p, product_id: Number(v) })); setErrors((p) => ({ ...p, product_id: undefined })) }}
                             disabled={isEdit}
                         >
-                            <SelectTrigger className={cn(errors.product_id && "border-destructive")}>
+                            <SelectTrigger className={cn(SELECT_WIDTH, errors.product_id && "border-destructive")}>
                                 <SelectValue placeholder="Selecciona un producto">
                                     {selectedProduct && (
                                         <span className="flex items-center gap-2">
@@ -202,21 +206,21 @@ export function BranchProductDialog({ open, onClose, branchProduct, onSuccess }:
                     <div className="grid grid-cols-[1fr_1fr_100px] gap-3">
                         <div className="space-y-1.5">
                             <Label className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">
-                                Precio <span className="text-destructive">*</span>
-                            </Label>
-                            <Input placeholder="0.00" value={form.price} inputMode="decimal"
-                                onChange={(e) => handleNumericChange("price", e.target.value, true)}
-                                className={cn(errors.price && "border-destructive")} />
-                            {errors.price && <p className="text-[11px] text-destructive">{errors.price}</p>}
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">
                                 Costo <span className="text-destructive">*</span>
                             </Label>
                             <Input placeholder="0.00" value={form.cost} inputMode="decimal"
                                 onChange={(e) => handleNumericChange("cost", e.target.value, true)}
                                 className={cn(errors.cost && "border-destructive")} />
                             {errors.cost && <p className="text-[11px] text-destructive">{errors.cost}</p>}
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">
+                                Precio <span className="text-destructive">*</span>
+                            </Label>
+                            <Input placeholder="0.00" value={form.price} inputMode="decimal"
+                                onChange={(e) => handleNumericChange("price", e.target.value, true)}
+                                className={cn(errors.price && "border-destructive")} />
+                            {errors.price && <p className="text-[11px] text-destructive">{errors.price}</p>}
                         </div>
                         <div className="space-y-1.5">
                             <Label className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">Moneda</Label>
@@ -277,7 +281,7 @@ export function BranchProductDialog({ open, onClose, branchProduct, onSuccess }:
                     </p>
                     <div className="flex gap-2">
                         <Button variant="ghost" size="sm" onClick={onClose} disabled={loading}>Cancelar</Button>
-                        <Button size="sm" onClick={handleSubmit} disabled={loading} className="min-w-[130px]">
+                        <Button size="sm" onClick={handleSubmit} disabled={loading} className="min-w-32.5">
                             {loading ? (
                                 <span className="flex items-center gap-2">
                                     <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>

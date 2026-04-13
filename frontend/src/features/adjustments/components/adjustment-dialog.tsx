@@ -27,7 +27,7 @@ export function AdjustmentDialog({ open, onClose, onSuccess }: Props) {
     const [branches, setBranches] = useState<Branch[]>([])
     const [branchProducts, setBranchProducts] = useState<BranchProduct[]>([])
     const [loading, setLoading] = useState(false)
-
+    const SELECT_WIDTH = "w-full";
     useEffect(() => { branchesApi.list().then(setBranches) }, [])
     useEffect(() => { if (open) setForm(EMPTY) }, [open])
     useEffect(() => {
@@ -104,37 +104,69 @@ export function AdjustmentDialog({ open, onClose, onSuccess }: Props) {
 
                 <div className="px-6 py-5 space-y-5 max-h-[65vh] overflow-y-auto">
                     {/* Sucursal + Tipo */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+                        {/* Sucursal */}
                         <div className="space-y-1.5">
                             <Label className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">
                                 Sucursal <span className="text-destructive">*</span>
                             </Label>
-                            {/* Sucursal */}
-                            <Select value={String(form.branch_id)} onValueChange={(v) => setForm((p) => ({ ...p, branch_id: Number(v), items: [] }))}>
-                                <SelectTrigger>
+                            <Select
+                                value={form.branch_id ? String(form.branch_id) : ""}
+                                onValueChange={(v) =>
+                                    setForm((p) => ({
+                                        ...p,
+                                        branch_id: Number(v),
+                                        items: [],
+                                    }))
+                                }
+                            >
+                                <SelectTrigger className={SELECT_WIDTH}>
                                     <SelectValue placeholder="Selecciona sucursal">
-                                        {selectedBranch?.name}
+                                        {form.branch_id
+                                            ? selectedBranch?.name
+                                            : "Selecciona sucursal"}
                                     </SelectValue>
                                 </SelectTrigger>
-                                <SelectContent>
-                                    {branches.map((b) => <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>)}
+                                <SelectContent className="md:w-70">
+                                    {branches.map((b) => (
+                                        <SelectItem key={b.id} value={String(b.id)}>
+                                            <span className="block truncate">{b.name}</span>
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        {/* Tipo */}
                         <div className="space-y-1.5">
                             <Label className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">
                                 Tipo <span className="text-destructive">*</span>
                             </Label>
-                            <Select value={form.type} onValueChange={(v) => setForm((p) => ({ ...p, type: v as "ADJUSTMENT_IN" | "ADJUSTMENT_OUT" }))}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Tipo de ajuste">
-                                        {form.type === "ADJUSTMENT_IN" && "↑ Entrada — aumenta stock"}
-                                        {form.type === "ADJUSTMENT_OUT" && "↓ Salida — disminuye stock"}
+                            <Select
+                                value={form.type || ""}
+                                onValueChange={(v) =>
+                                    setForm((p) => ({
+                                        ...p,
+                                        type: v as "ADJUSTMENT_IN" | "ADJUSTMENT_OUT",
+                                    }))
+                                }
+                            >
+                                <SelectTrigger className={SELECT_WIDTH}>
+                                    <SelectValue placeholder="Selecciona el tipo de ajuste">
+                                        {!form.type && "Selecciona el tipo de ajuste"}
+                                        {form.type === "ADJUSTMENT_IN" &&
+                                            "↑ Entrada — aumenta stock"}
+                                        {form.type === "ADJUSTMENT_OUT" &&
+                                            "↓ Salida — disminuye stock"}
                                     </SelectValue>
                                 </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="ADJUSTMENT_IN">↑ Entrada — aumenta stock</SelectItem>
-                                    <SelectItem value="ADJUSTMENT_OUT">↓ Salida — disminuye stock</SelectItem>
+                                <SelectContent className="md:w-70">
+                                    <SelectItem value="ADJUSTMENT_IN">
+                                        ↑ Entrada — aumenta stock
+                                    </SelectItem>
+                                    <SelectItem value="ADJUSTMENT_OUT">
+                                        ↓ Salida — disminuye stock
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -146,8 +178,14 @@ export function AdjustmentDialog({ open, onClose, onSuccess }: Props) {
                             <Label className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">
                                 Productos <span className="text-destructive">*</span>
                             </Label>
-                            <Button type="button" variant="outline" size="sm" onClick={addItem}
-                                disabled={!form.branch_id} className="h-7 text-xs gap-1">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={addItem}
+                                disabled={!form.branch_id}
+                                className="h-7 text-xs gap-1"
+                            >
                                 <Plus size={12} /> Agregar
                             </Button>
                         </div>
@@ -155,43 +193,113 @@ export function AdjustmentDialog({ open, onClose, onSuccess }: Props) {
                         {form.items.length === 0 ? (
                             <div className="border border-dashed rounded-lg py-6 text-center">
                                 <p className="text-sm text-muted-foreground">
-                                    {form.branch_id ? "Agrega los productos a ajustar" : "Selecciona la sucursal primero"}
+                                    {form.branch_id
+                                        ? "Agrega los productos a ajustar"
+                                        : "Selecciona la sucursal primero"}
                                 </p>
                             </div>
                         ) : (
                             <div className="space-y-2">
                                 {form.items.map((item, i) => {
-                                    const bp = branchProducts.find((p) => p.product_id === item.product_id)
-                                    const overStock = form.type === "ADJUSTMENT_OUT" && bp && item.qty > bp.current_stock
-                                    const selectedProduct = branchProducts.find((p) => p.product_id === item.product_id)
+                                    const bp = branchProducts.find(
+                                        (p) => p.product_id === item.product_id
+                                    )
+                                    const selectedProduct = bp
+                                    const overStock =
+                                        form.type === "ADJUSTMENT_OUT" &&
+                                        bp &&
+                                        item.qty > bp.current_stock
+
                                     return (
-                                        <div key={i} className="flex items-center gap-5 p-2 rounded-lg border bg-muted/20">
-                                            <Select value={String(item.product_id || "")} onValueChange={(v) => updateItem(i, "product_id", Number(v))}>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Selecciona producto">
-                                                        {selectedProduct?.product_name}
-                                                    </SelectValue>
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {branchProducts.filter((bp) => bp.is_active).map((bp) => (
-                                                        <SelectItem key={bp.product_id} value={String(bp.product_id)}>
-                                                            <span>{bp.product_name}</span>
-                                                            <span className="ml-2 text-xs text-muted-foreground">({bp.current_stock} disp.)</span>
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <div>
-                                                <Input type="number" min={1} value={item.qty}
-                                                    onChange={(e) => updateItem(i, "qty", Number(e.target.value))}
-                                                    className={cn("text-center", overStock && "border-destructive focus-visible:ring-destructive")} />
-                                                {overStock && <p className="text-[10px] text-destructive mt-0.5">Stock disponible: {Math.floor(bp?.current_stock)}</p>}
+                                        <div
+                                            key={i}
+                                            className="grid grid-cols-1 md:grid-cols-[7fr_2fr_auto] gap-3 items-start p-3 rounded-lg border bg-muted/20"
+                                        >
+                                            {/* Producto */}
+                                            <div className="space-y-1">
+                                                <Select
+                                                    value={String(item.product_id || "")}
+                                                    onValueChange={(v) =>
+                                                        updateItem(i, "product_id", Number(v))
+                                                    }
+                                                >
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue placeholder="Selecciona producto">
+                                                            {selectedProduct ? (
+                                                                <span className="flex items-center justify-between gap-2 w-full">
+                                                                    <span className="truncate">
+                                                                        {selectedProduct.product_name}
+                                                                    </span>
+                                                                    <span className="text-xs text-muted-foreground font-mono shrink-0">
+                                                                        {selectedProduct.sku}
+                                                                    </span>
+                                                                </span>
+                                                            ) : (
+                                                                "Selecciona producto"
+                                                            )}
+                                                        </SelectValue>
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {branchProducts
+                                                            .filter((bp) => bp.is_active)
+                                                            .map((bp) => (
+                                                                <SelectItem
+                                                                    key={bp.product_id}
+                                                                    value={String(bp.product_id)}
+                                                                >
+                                                                    <div className="flex justify-between w-full gap-2">
+                                                                        <span className="truncate">
+                                                                            {bp.product_name}
+                                                                        </span>
+                                                                        <span className="text-xs text-muted-foreground">
+                                                                            ({bp.current_stock} disp.)
+                                                                        </span>
+                                                                    </div>
+                                                                </SelectItem>
+                                                            ))}
+                                                    </SelectContent>
+                                                </Select>
                                             </div>
-                                            <Button type="button" variant="ghost" size="icon"
-                                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                                onClick={() => removeItem(i)}>
-                                                <Trash2 size={13} />
-                                            </Button>
+
+                                            {/* Cantidad */}
+                                            <div className="space-y-1">
+                                                <Input
+                                                    type="number"
+                                                    min={1}
+                                                    value={item.qty}
+                                                    onChange={(e) =>
+                                                        updateItem(
+                                                            i,
+                                                            "qty",
+                                                            Number(e.target.value)
+                                                        )
+                                                    }
+                                                    className={cn(
+                                                        "text-center w-full",
+                                                        overStock &&
+                                                        "border-destructive focus-visible:ring-destructive"
+                                                    )}
+                                                />
+                                                {overStock && (
+                                                    <p className="text-[10px] text-destructive">
+                                                        Stock disponible:{" "}
+                                                        {Math.floor(bp?.current_stock ?? 0)}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            {/* Eliminar */}
+                                            <div className="flex items-center justify-center pt-1">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                    onClick={() => removeItem(i)}
+                                                >
+                                                    <Trash2 size={13} />
+                                                </Button>
+                                            </div>
                                         </div>
                                     )
                                 })}

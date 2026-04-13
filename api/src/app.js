@@ -6,11 +6,17 @@ import routes from "./routes/index.js";
 
 const app = express();
 
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(",") || [];
+/**
+ * Orígenes permitidos
+ * Se limpian espacios para evitar errores en la comparación.
+ */
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map(origin => origin.trim())
+  : [];
 
 app.use(
   helmet({
-    crossOriginResourcePolicy: { policy: "same-site" },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
@@ -20,29 +26,57 @@ app.use(
   })
 );
 
+/**
+ * Configuración de CORS
+ */
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-      callback(new Error("Not allowed by CORS"));
+      // Permitir herramientas como Postman o solicitudes sin origin
+      if (!origin) return callback(null, true);
+
+      // En desarrollo, permitir cualquier origen
+      if (process.env.NODE_ENV === "development") {
+        return callback(null, true);
+      }
+
+      // Validar contra la lista permitida
+      if (ALLOWED_ORIGINS.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`Not allowed by CORS: ${origin}`));
     },
     credentials: true,
   })
 );
 
-app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
+app.use(
+  morgan(process.env.NODE_ENV === "production" ? "combined" : "dev")
+);
+
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
+// Archivos estáticos
 app.use("/uploads", express.static("uploads"));
+
+// Rutas principales
 app.use("/api", routes);
 
-app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
+// Endpoint de verificación
+app.get("/api/health", (_req, res) => {
+  res.json({ status: "ok" });
+});
 
 // Handler global de errores
 app.use((err, _req, res, _next) => {
   const status = err.status || 500;
-  const message = process.env.NODE_ENV === "production" ? "Error interno" : err.message;
+  const message =
+    process.env.NODE_ENV === "production"
+      ? "Error interno"
+      : err.message;
+
   res.status(status).json({ error: message });
 });
 

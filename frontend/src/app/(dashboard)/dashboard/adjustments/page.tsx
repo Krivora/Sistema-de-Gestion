@@ -23,6 +23,11 @@ export default function AdjustmentsPage() {
     filtered, paginated, totalPages,
     reload,
   } = useAdjustments()
+  const ADJUSTMENT_TYPE_LABELS: Record<string, string> = {
+    all: "Todos los tipos",
+    ADJUSTMENT_IN: "Entrada",
+    ADJUSTMENT_OUT: "Salida",
+  };
 
   return (
     <div className="space-y-6">
@@ -44,8 +49,17 @@ export default function AdjustmentsPage() {
           <Input placeholder="Buscar por doc, sucursal o usuario..." value={search}
             onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
-        <Select value={filterType} onValueChange={(v) => setFilterType(v as typeof filterType)}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Tipo" /></SelectTrigger>
+        <Select
+          value={filterType}
+          onValueChange={(v) =>
+            setFilterType((v ?? "all") as typeof filterType)
+          }
+        >
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Tipo">
+              {ADJUSTMENT_TYPE_LABELS[filterType] ?? "Tipo"}
+            </SelectValue>
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos los tipos</SelectItem>
             <SelectItem value="ADJUSTMENT_IN">Entrada</SelectItem>

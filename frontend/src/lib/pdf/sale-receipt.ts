@@ -227,44 +227,60 @@ export async function generateSaleReceipt(
     autoTable(doc, {
         startY: y,
         margin: { left: M, right: M },
-        head: [["Producto", "SKU", "Cant.", "Precio", "Importe"]],
+        tableWidth: W - M * 2,
+        head: [["Producto", "Cant.", "Precio", "Importe"]],
         body: sale.items.map((item) => [
             item.product_name,
-            item.sku,
-            item.qty.toString(),
+            Math.floor(item.qty),
             fmt(item.unit_price),
             fmt(item.qty * item.unit_price),
         ]),
         theme: "plain",
-        headStyles: {
-            fontStyle: "bold",
-            fontSize: 9,
-            textColor: COLORS.secondary,
-        },
         styles: {
             font: "helvetica",
             fontSize: 9,
             cellPadding: 4,
             textColor: COLORS.primary,
+            overflow: "linebreak",
+            valign: "middle",
+            halign: "left", // Alineación por defecto
+        },
+        headStyles: {
+            fontStyle: "bold",
+            fontSize: 9,
+            textColor: COLORS.secondary,
+            fillColor: false,
+            halign: "left",
+            valign: "middle",
         },
         columnStyles: {
-            2: { halign: "center", cellWidth: 18 },
-            3: { halign: "right", cellWidth: 28 },
-            4: { halign: "right", cellWidth: 32, fontStyle: "bold" },
+            0: { cellWidth: "auto", halign: "left" },   // Producto
+            1: { cellWidth: 20, halign: "center" },     // Cantidad
+            2: { cellWidth: 30, halign: "right" },      // Precio
+            3: { cellWidth: 35, halign: "right", fontStyle: "bold" }, // Importe
+        },
+        didParseCell: (data) => {
+            // Garantiza que el encabezado tenga la misma alineación
+            if (data.section === "head") {
+                if (data.column.index === 1) data.cell.styles.halign = "center";
+                if (data.column.index === 2 || data.column.index === 3) {
+                    data.cell.styles.halign = "right";
+                }
+            }
         },
         didDrawCell: (data) => {
             if (data.section === "body") {
-                doc.setDrawColor(...COLORS.border)
-                doc.setLineWidth(0.2)
+                doc.setDrawColor(...COLORS.border);
+                doc.setLineWidth(0.2);
                 doc.line(
                     data.cell.x,
                     data.cell.y + data.cell.height,
                     data.cell.x + data.cell.width,
                     data.cell.y + data.cell.height
-                )
+                );
             }
         },
-    })
+    });
 
     y = (doc as any).lastAutoTable.finalY + 10
 
@@ -300,13 +316,17 @@ export async function generateSaleReceipt(
     // ─────────────────────────────────────────────────────────
     // RESUMEN DE PRODUCTOS
     // ─────────────────────────────────────────────────────────
-    const totalUnits = sale.items.reduce((sum, i) => sum + i.qty, 0)
+    const totalUnits = sale.items?.reduce(
+        (sum, i) => sum + Number(i.qty),
+        0
+    );
+    const formattedUnits = Math.floor(totalUnits);
 
     doc.setFont("helvetica", "normal")
     doc.setFontSize(8)
     doc.setTextColor(...COLORS.secondary)
     doc.text(
-        `${sale.items.length} producto(s) · ${totalUnits} unidad(es)`,
+        `${sale.items?.length} producto(s) · ${formattedUnits} unidad(es)`,
         M,
         y
     )
