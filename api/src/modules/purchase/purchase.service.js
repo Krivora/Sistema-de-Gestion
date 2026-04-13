@@ -24,10 +24,10 @@ export async function createAndPostPurchase(payload, user) {
   // Validar items antes de abrir transacción
   for (const item of items) {
     if (!item.product_id) throw Object.assign(new Error("product_id requerido en cada item"), { status: 400 });
-    const qty  = Number(item.qty);
+    const qty = Number(item.qty);
     const cost = Number(item.unit_cost);
-    if (!Number.isFinite(qty)  || qty  <= 0) throw Object.assign(new Error(`Cantidad inválida en producto ${item.product_id}`),  { status: 400 });
-    if (!Number.isFinite(cost) || cost <  0) throw Object.assign(new Error(`Costo inválido en producto ${item.product_id}`), { status: 400 });
+    if (!Number.isFinite(qty) || qty <= 0) throw Object.assign(new Error(`Cantidad inválida en producto ${item.product_id}`), { status: 400 });
+    if (!Number.isFinite(cost) || cost < 0) throw Object.assign(new Error(`Costo inválido en producto ${item.product_id}`), { status: 400 });
   }
 
   const trx = await pool.connect();
@@ -39,7 +39,7 @@ export async function createAndPostPurchase(payload, user) {
     });
 
     for (const item of items) {
-      const qty  = Number(item.qty);
+      const qty = Number(item.qty);
       const cost = Number(item.unit_cost);
 
       await PurchaseRepo.addItem(trx, {
@@ -54,6 +54,14 @@ export async function createAndPostPurchase(payload, user) {
         note: `Compra ${purchase.doc_no}`,
         ref_type: "purchases", ref_id: purchase.id,
       }, client_id, user_id);
+
+      await PurchaseRepo.updateAverageCost(trx, {
+        branch_id,
+        product_id: item.product_id,
+        client_id,
+        new_qty: qty,
+        new_unit_cost: cost,
+      });
     }
 
     const posted = await PurchaseRepo.setPosted(trx, purchase.id, client_id);

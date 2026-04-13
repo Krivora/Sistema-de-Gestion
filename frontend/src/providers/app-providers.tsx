@@ -6,7 +6,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     return (
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             {children}
-            <Toaster position="top-right" theme="system" />
+            <Toaster position="top-center" theme="system" />
         </ThemeProvider>
     )
 }

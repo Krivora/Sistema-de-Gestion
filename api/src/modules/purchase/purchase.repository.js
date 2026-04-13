@@ -96,3 +96,49 @@ export async function setPosted(trx, purchaseId, clientId) {
   );
   return rows[0] ?? null;
 }
+
+
+/**
+ * Recalcula y actualiza el costo promedio ponderado en branch_products.
+ * stock_actual ya incluye la qty recién ingresada (inventory apply ya corrió).
+ */
+export async function updateAverageCost(trx, { branch_id, product_id, client_id, new_qty, new_unit_cost }) {
+  // Obtenemos costo actual y stock ANTES de esta compra
+  const { rows } = await trx.query(
+    `SELECT bp.cost,
+            COALESCE(SUM(it.qty * CASE WHEN it.type IN ('PURCHASE','ADJUSTMENT_IN','TRANSFER_IN') THEN 1
+                                       WHEN it.type IN ('SALE','ADJUSTMENT_OUT','TRANSFER_OUT') THEN -1
+                                       ELSE 0 END), 0) AS stock_previo
+     FROM branch_products bp
+     LEFT JOIN inventory_transactions it
+            ON it.branch_id = bp.branch_id
+           AND it.product_id = bp.product_id
+           AND it.client_id = bp.client_id
+           AND it.id < (SELECT MAX(id) FROM inventory_transactions
+                        WHERE branch_id=$1 AND product_id=$2 AND client_id=$3)
+     WHERE bp.branch_id=$1 AND bp.product_id=$2 AND bp.client_id=$3
+     GROUP BY bp.cost`,
+    [branch_id, product_id, client_id]
+  );
+
+  if (!rows[0]) return; // si no existe la relación branch_product, no hay nada que actualizar
+
+  const costo_anterior = parseFloat(rows[0].cost ?? 0);
+  const stock_previo = parseFloat(rows[0].stock_previo ?? 0);
+
+  // Fórmula CPP
+  const valor_anterior = stock_previo * costo_anterior;
+  const valor_nuevo = new_qty * new_unit_cost;
+  const stock_total = stock_previo + new_qty;
+
+  const costo_promedio = stock_total > 0
+    ? (valor_anterior + valor_nuevo) / stock_total
+    : new_unit_cost; // si no había stock previo, el costo es directo
+
+  await trx.query(
+    `UPDATE branch_products
+     SET cost = ROUND($1::numeric, 4)
+     WHERE branch_id=$2 AND product_id=$3 AND client_id=$4`,
+    [costo_promedio, branch_id, product_id, client_id]
+  );
+}

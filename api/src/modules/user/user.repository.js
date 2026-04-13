@@ -34,7 +34,7 @@ export async function findAll(clientId, status = "active") {
   }
 
   const { rows } = await pool.query(
-    `${BASE_SELECT}, u.desactivated_at ${where} ORDER BY u.id ASC`,
+   `${BASE_SELECT} ${where} ORDER BY u.id ASC`,
     params
   );
   return rows;

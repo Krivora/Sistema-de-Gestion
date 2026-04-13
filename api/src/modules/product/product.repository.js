@@ -85,15 +85,16 @@ export async function update(id, clientId, data) {
 export async function updateStatus(id, status) {
   const { rows } = await pool.query(
     `UPDATE products
-     SET status = $2,
-         deleted_at = CASE WHEN $2 = 'deleted' THEN NOW() ELSE NULL END,
-         updated_at = NOW()
-     WHERE id = $1 RETURNING *`,
+   SET status = $2::status_enum,
+       deleted_at = CASE WHEN $2::status_enum = 'deleted' THEN NOW() ELSE NULL END,
+       updated_at = NOW()
+   WHERE id = $1
+   RETURNING *`,
     [id, status]
   );
   return rows[0] ?? null;
 }
 
-export const activate   = (id) => updateStatus(id, "active");
+export const activate = (id) => updateStatus(id, "active");
 export const deactivate = (id) => updateStatus(id, "inactive");
 export const softDelete = (id) => updateStatus(id, "deleted");

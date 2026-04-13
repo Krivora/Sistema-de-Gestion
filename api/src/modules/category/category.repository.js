@@ -29,7 +29,7 @@ export async function findById(id, clientId = null) {
 
 export async function create({ name, description, code, client_id }) {
   if (!name?.trim()) throw Object.assign(new Error("El nombre es requerido"), { status: 400 });
-  if (!client_id)    throw Object.assign(new Error("client_id requerido"), { status: 400 });
+  if (!client_id) throw Object.assign(new Error("client_id requerido"), { status: 400 });
 
   const { rows: existing } = await pool.query(
     `SELECT id FROM categories WHERE client_id=$1 AND name ILIKE $2 AND status='active'`,
@@ -96,15 +96,20 @@ async function updateStatusCascade(id, clientId, status) {
 
     await client.query(
       `UPDATE products
-       SET status=$2, deleted_at=CASE WHEN $2='deleted' THEN NOW() ELSE NULL END, updated_at=NOW()
-       WHERE category_id=$1`,
+   SET status = $2::status_enum,
+       deleted_at = CASE WHEN $2::status_enum = 'deleted' THEN NOW() ELSE NULL END,
+       updated_at = NOW()
+   WHERE category_id = $1`,
       [id, status]
     );
 
     const { rows } = await client.query(
       `UPDATE categories
-       SET status=$2, deleted_at=CASE WHEN $2='deleted' THEN NOW() ELSE NULL END, updated_at=NOW()
-       WHERE id=$1 RETURNING *`,
+   SET status = $2::status_enum,
+       deleted_at = CASE WHEN $2::status_enum = 'deleted' THEN NOW() ELSE NULL END,
+       updated_at = NOW()
+   WHERE id = $1
+   RETURNING *`,
       [id, status]
     );
 
@@ -118,6 +123,8 @@ async function updateStatusCascade(id, clientId, status) {
   }
 }
 
-export const activate   = (id, clientId) => updateStatusCascade(id, clientId, "active");
+
+
+export const activate = (id, clientId) => updateStatusCascade(id, clientId, "active");
 export const deactivate = (id, clientId) => updateStatusCascade(id, clientId, "inactive");
 export const softDelete = (id, clientId) => updateStatusCascade(id, clientId, "deleted");

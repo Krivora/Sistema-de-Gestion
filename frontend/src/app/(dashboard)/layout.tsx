@@ -2,8 +2,8 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/auth.store"
-import { Sidebar } from "@/components/shared/sidebar"
-import { Topbar } from "@/components/shared/topbar"
+import { Sidebar } from "@/components/shared/layout/sidebar"
+import { Topbar } from "@/components/shared/layout/topbar"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const token = useAuthStore((s) => s.token)
