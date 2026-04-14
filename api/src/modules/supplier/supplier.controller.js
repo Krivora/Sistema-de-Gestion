@@ -1,4 +1,5 @@
 import * as SupplierService from "./supplier.service.js";
+import { extractRequestMeta } from "../../core/utils/audit.js";
 
 export async function list(req, res, next) {
   try {
@@ -18,18 +19,30 @@ export async function create(req, res, next) {
   try {
     const { name, phone, email, address } = req.body;
     if (!name) return res.status(400).json({ error: "El nombre es requerido" });
-    res.status(201).json(await SupplierService.create({ name, phone, email, address }, req.user));
+    res.status(201).json(await SupplierService.create({ name, phone, email, address }, req.user, extractRequestMeta(req)));
   } catch (err) { next(err); }
 }
 
 export async function update(req, res, next) {
   try {
-    res.json(await SupplierService.update(req.params.id, req.body, req.user));
+    res.json(await SupplierService.update(req.params.id, req.body, req.user, extractRequestMeta(req)));
+  } catch (err) { next(err); }
+}
+
+export async function activate(req, res, next) {
+  try {
+    res.json(await SupplierService.activate(req.params.id, req.user, extractRequestMeta(req)));
   } catch (err) { next(err); }
 }
 
 export async function deactivate(req, res, next) {
   try {
-    res.json(await SupplierService.deactivate(req.params.id, req.user));
+    res.json(await SupplierService.deactivate(req.params.id, req.user, extractRequestMeta(req)));
+  } catch (err) { next(err); }
+}
+
+export async function remove(req, res, next) {
+  try {
+    res.json(await SupplierService.remove(req.params.id, req.user, extractRequestMeta(req)));
   } catch (err) { next(err); }
 }

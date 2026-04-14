@@ -1,4 +1,5 @@
 import * as BranchService from "./branch.service.js";
+import { extractRequestMeta } from "../../core/utils/audit.js";
 
 export async function getAll(req, res, next) {
   try {
@@ -16,18 +17,18 @@ export async function getById(req, res, next) {
 
 export async function create(req, res, next) {
   try {
-    res.status(201).json(await BranchService.createBranch(req.body, req.user.client_id, req.user.role_name));
+    res.status(201).json(await BranchService.createBranch(req.body, req.user, extractRequestMeta(req)));
   } catch (err) { next(err); }
 }
 
 export async function update(req, res, next) {
   try {
-    res.json(await BranchService.updateBranch(req.params.id, req.user.client_id, req.user.role_name, req.body));
+    res.json(await BranchService.updateBranch(req.params.id, req.body, req.user, extractRequestMeta(req)));
   } catch (err) { next(err); }
 }
 
 export async function deactivateBranch(req, res, next) {
   try {
-    res.json(await BranchService.deactivateBranch(req.params.id));
+    res.json(await BranchService.deactivateBranch(req.params.id, req.user, extractRequestMeta(req)));
   } catch (err) { next(err); }
 }

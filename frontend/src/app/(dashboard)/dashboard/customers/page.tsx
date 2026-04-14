@@ -19,7 +19,7 @@ export default function CustomersPage() {
     search, setSearch,
     page, setPage, pageSize, setPageSize,
     filtered, paginated, totalPages,
-    openConfirm, handleDeactivate,
+    openConfirm, handleConfirm, handleActivate,
     reload, confirmDialog, setConfirmDialog,
   } = useCustomers()
 
@@ -49,6 +49,7 @@ export default function CustomersPage() {
         hasActiveFilters={!!search}
         onEdit={(c) => { setSelected(c); setDialogOpen(true) }}
         onConfirm={openConfirm}
+        onActivate={handleActivate}
       />
 
       {!loading && filtered.length > 0 && (
@@ -62,10 +63,14 @@ export default function CustomersPage() {
       <ConfirmDialog
         open={confirmDialog.open}
         onOpenChange={(open) => setConfirmDialog((d) => ({ ...d, open }))}
-        title="¿Desactivar cliente?"
-        description={`"${confirmDialog.customer?.name}" quedará inactivo hasta que lo actives de nuevo.`}
-        confirmLabel="Desactivar"
-        onConfirm={handleDeactivate}
+        title={confirmDialog.action === "delete" ? "¿Eliminar cliente?" : "¿Desactivar cliente?"}
+        description={
+          confirmDialog.action === "delete"
+            ? `"${confirmDialog.customer?.name}" será eliminado permanentemente.`
+            : `"${confirmDialog.customer?.name}" quedará inactivo hasta que lo actives de nuevo.`
+        }
+        confirmLabel={confirmDialog.action === "delete" ? "Eliminar" : "Desactivar"}
+        onConfirm={handleConfirm}
       />
 
       <CustomerDialog open={dialogOpen} onClose={() => setDialogOpen(false)}

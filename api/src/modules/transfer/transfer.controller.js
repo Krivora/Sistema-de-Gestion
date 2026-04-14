@@ -1,4 +1,5 @@
 import * as TransferService from "./transfer.service.js";
+import { extractRequestMeta } from "../../core/utils/audit.js";
 
 export async function getAll(req, res, next) {
   try {
@@ -21,8 +22,12 @@ export async function create(req, res, next) {
     if (!from_branch_id || !to_branch_id || !items) {
       return res.status(400).json({ error: "from_branch_id, to_branch_id e items son requeridos" });
     }
-    res.status(201).json(await TransferService.createAndPostTransfer(
-      { from_branch_id, to_branch_id, note, items }, req.user
-    ));
+    res.status(201).json(
+      await TransferService.createAndPostTransfer(
+        { from_branch_id, to_branch_id, note, items },
+        req.user,
+        extractRequestMeta(req)
+      )
+    );
   } catch (err) { next(err); }
 }

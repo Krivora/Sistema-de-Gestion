@@ -8,6 +8,8 @@ router.get("/",               allow("read",   "customers"), CustomerController.l
 router.get("/:id",            allow("read",   "customers"), CustomerController.getById);
 router.post("/",              allow("create", "customers"), CustomerController.create);
 router.put("/:id",            allow("update", "customers"), CustomerController.update);
+router.patch("/:id/activate",   allow("update", "customers"), CustomerController.activate);
 router.patch("/:id/deactivate", allow("delete", "customers"), CustomerController.deactivate);
+router.delete("/:id",           allow("delete", "customers"), CustomerController.remove);
 
 export default router;

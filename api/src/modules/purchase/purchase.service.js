@@ -1,6 +1,7 @@
 import pool from "../../config/db.js";
 import * as PurchaseRepo from "./purchase.repository.js";
 import * as InventoryRepo from "../inventory/inventory.repository.js";
+import { logAction } from "../../core/utils/audit.js";
 
 export async function listPurchases(clientId, filters) {
   if (!clientId) throw Object.assign(new Error("client_id requerido"), { status: 400 });
@@ -14,14 +15,13 @@ export async function getPurchaseById(id, clientId) {
   return { ...header, items };
 }
 
-export async function createAndPostPurchase(payload, user) {
+export async function createAndPostPurchase(payload, user, meta = {}) {
   const { branch_id, items, supplier_id, doc_no } = payload;
   const { client_id, id: user_id } = user;
 
   if (!branch_id) throw Object.assign(new Error("branch_id requerido"), { status: 400 });
   if (!Array.isArray(items) || !items.length) throw Object.assign(new Error("Se requiere al menos un producto"), { status: 400 });
 
-  // Validar items antes de abrir transacción
   for (const item of items) {
     if (!item.product_id) throw Object.assign(new Error("product_id requerido en cada item"), { status: 400 });
     const qty = Number(item.qty);
@@ -56,25 +56,26 @@ export async function createAndPostPurchase(payload, user) {
       }, client_id, user_id);
 
       await PurchaseRepo.updateAverageCost(trx, {
-        branch_id,
-        product_id: item.product_id,
-        client_id,
-        new_qty: qty,
-        new_unit_cost: cost,
+        branch_id, product_id: item.product_id,
+        client_id, new_qty: qty, new_unit_cost: cost,
       });
     }
 
     const posted = await PurchaseRepo.setPosted(trx, purchase.id, client_id);
     if (!posted) throw new Error("Error al publicar la compra");
 
-    await InventoryRepo.logActivity(trx, user_id, client_id,
-      "CREATE_PURCHASE",
-      `Compra ${posted.doc_no} creada (${items.length} productos)`,
-      "purchases", posted.id
-    );
-
     await trx.query("COMMIT");
+
     const itemsResp = await PurchaseRepo.findItems(posted.id, client_id);
+
+    await logAction({
+      ...meta, client_id, user_id,
+      action: "CREATE_PURCHASE",
+      description: `Compra ${posted.doc_no} creada con ${items.length} producto(s)`,
+      ref_table: "purchases", ref_id: posted.id,
+      new_data: { ...posted, items: itemsResp },
+    });
+
     return { ...posted, items: itemsResp };
   } catch (err) {
     await trx.query("ROLLBACK");

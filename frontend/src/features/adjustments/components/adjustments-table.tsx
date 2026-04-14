@@ -1,8 +1,9 @@
 import { DataTable, type ColumnDef } from "@/components/shared/table/data-table"
 import { Badge } from "@/components/ui/badge"
-import { ArrowDownCircle, ArrowUpCircle, ClipboardList } from "lucide-react"
+import { ArrowDownCircle, ArrowUpCircle, ClipboardList, Eye } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import type { Adjustment } from "@/lib/api/adjustments"
+import { buttonVariants } from "@/components/ui/button"
 
 interface AdjustmentsTableProps {
   adjustments: Adjustment[]
@@ -40,11 +41,11 @@ const columns = (onDetail: (id: number) => void): ColumnDef<Adjustment>[] => [
     cell: (a) => <span className="text-muted-foreground whitespace-nowrap">{formatDate(a.created_at)}</span>,
   },
   {
-    key: "actions", header: "", width: 100,
+    key: "actions", header: "", width: 48,
     cell: (a) => (
       <button onClick={() => onDetail(a.id)}
-        className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1">
-        Ver detalle
+        className={buttonVariants({ variant: "ghost", size: "icon" }) + " h-8 w-8"}>
+        <Eye size={15} />
       </button>
     ),
   },

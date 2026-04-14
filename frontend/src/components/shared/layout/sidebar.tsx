@@ -65,14 +65,6 @@ const NAV_GROUPS: NavGroup[] = [
         ],
     },
     {
-        label: "Reportes",
-        roles: ["admin", "user"],
-        items: [
-            { href: "/dashboard/reports", label: "Reportes", icon: BarChart2, permission: "reports.read" },
-            { href: "/dashboard/activities", label: "Actividad", icon: ClipboardList, roles: ["admin"] },
-        ],
-    },
-    {
         label: "Administración",
         roles: ["admin"],
         items: [
@@ -87,6 +79,7 @@ const NAV_GROUPS: NavGroup[] = [
         roles: ["superadmin"],
         items: [
             { href: "/dashboard/clients", label: "Clientes", icon: Building2 },
+            { href: "/dashboard/activities", label: "Actividad", icon: ClipboardList },
             { href: "/dashboard/roles", label: "Roles", icon: Users },
             { href: "/dashboard/settings", label: "Configuración", icon: Settings },
         ],

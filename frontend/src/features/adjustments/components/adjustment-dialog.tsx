@@ -16,7 +16,49 @@ import { cn } from "@/lib/utils"
 interface Props { open: boolean; onClose: () => void; onSuccess: () => void }
 
 const EMPTY: CreateAdjustmentDto = { branch_id: "", type: "", note: "", items: [] }
+const NOTE_OPTIONS = {
+    ADJUSTMENT_IN: [
+        "Ajuste por migración de sistema",
+        "Carga inicial de inventario",
+        "Compra urgente no registrada",
+        "Conteo físico de inventario",
+        "Corrección de error",
+        "Devolución de cliente",
+        "Ingreso por consignación",
+        "Producto encontrado",
+        "Producción terminada",
+        "Recepción de mercancía",
+        "Recepción parcial previa no registrada",
+        "Recuperación de producto",
+        "Regularización administrativa",
+        "Reempaque o conversión de unidades",
+        "Sincronización de sistema",
+        "Transferencia recibida de otra sucursal"
+    ],
 
+    ADJUSTMENT_OUT: [
+        "Ajuste por migración de sistema",
+        "Baja administrativa",
+        "Consumo en producción",
+        "Conversión de unidades",
+        "Corrección de error",
+        "Depuración de inventario",
+        "Desensamble de producto",
+        "Entrega parcial no registrada",
+        "Merma o producto dañado",
+        "Muestra o regalo",
+        "Pérdida por desastre (incendio, inundación, etc.)",
+        "Producto en cuarentena",
+        "Producto no localizado",
+        "Producto vencido",
+        "Retiro por defecto de calidad",
+        "Retiro sanitario",
+        "Robo o extravío",
+        "Salida por consignación",
+        "Transferencia a otra sucursal",
+        "Venta no registrada"
+    ]
+};
 const TYPE_CONFIG = {
     ADJUSTMENT_IN: { label: "Entrada", desc: "Aumenta el stock", color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400" },
     ADJUSTMENT_OUT: { label: "Salida", desc: "Disminuye el stock", color: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400" },
@@ -148,6 +190,7 @@ export function AdjustmentDialog({ open, onClose, onSuccess }: Props) {
                                     setForm((p) => ({
                                         ...p,
                                         type: v as "ADJUSTMENT_IN" | "ADJUSTMENT_OUT",
+                                        note: "",
                                     }))
                                 }
                             >
@@ -309,9 +352,21 @@ export function AdjustmentDialog({ open, onClose, onSuccess }: Props) {
 
                     {/* Nota general */}
                     <div className="space-y-1.5">
-                        <Label className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">Nota general</Label>
-                        <Input placeholder="Ej. Conteo físico enero" value={form.note}
-                            onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))} />
+                        <Label className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">Motivo</Label>
+                        <Select
+                            value={form.note || ""}
+                            onValueChange={(v) => setForm((p) => ({ ...p, note: v === "__custom__" ? "" : v }))}
+                            disabled={!form.type}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder={form.type ? "Selecciona el motivo" : "Selecciona el tipo primero"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {(NOTE_OPTIONS[form.type as keyof typeof NOTE_OPTIONS] ?? []).map((opt) => (
+                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
 

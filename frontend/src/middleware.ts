@@ -4,13 +4,12 @@ import type { NextRequest } from "next/server"
 const PUBLIC = ["/login"]
 
 // Rutas exclusivas de superadmin
-const SUPERADMIN_ONLY = ["/dashboard/clients", "/dashboard/roles"]
+const SUPERADMIN_ONLY = ["/dashboard/clients", "/dashboard/roles", "/dashboard/activities"]
 
 // Rutas exclusivas de admin+
 const ADMIN_ONLY = [
   "/dashboard/users",
   "/dashboard/branches",
-  "/dashboard/activities",
 ]
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl

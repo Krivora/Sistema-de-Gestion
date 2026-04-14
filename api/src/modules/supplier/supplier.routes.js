@@ -8,6 +8,7 @@ router.get("/",                 allow("read",   "suppliers"), SupplierController
 router.get("/:id",              allow("read",   "suppliers"), SupplierController.getById);
 router.post("/",                allow("create", "suppliers"), SupplierController.create);
 router.put("/:id",              allow("update", "suppliers"), SupplierController.update);
+router.patch("/:id/activate", allow("update", "suppliers"), SupplierController.activate);
 router.patch("/:id/deactivate", allow("delete", "suppliers"), SupplierController.deactivate);
-
+router.delete("/:id",         allow("delete", "suppliers"), SupplierController.remove);
 export default router;

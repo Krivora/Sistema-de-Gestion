@@ -59,8 +59,8 @@ export function CategoriesTable({
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => onEdit(cat)}>Editar</DropdownMenuItem>
             <DropdownMenuSeparator />
-            {cat.status === "active" && (
-              <DropdownMenuItem onClick={() => onConfirm("deactivate", cat)}>Desactivar</DropdownMenuItem>
+             {cat.status === "active" && (
+              <DropdownMenuItem onClick={() => onConfirm("deactivate", cat)} variant="destructive">Desactivar</DropdownMenuItem>
             )}
             {cat.status === "inactive" && (
               <>

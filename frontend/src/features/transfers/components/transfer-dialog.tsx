@@ -16,7 +16,17 @@ import { cn } from "@/lib/utils"
 interface Props { open: boolean; onClose: () => void; onSuccess: () => void }
 
 const EMPTY: CreateTransferDto = { from_branch_id: "", to_branch_id: "", note: "", items: [] }
-
+const NOTE_OPTIONS = [
+    "Abastecimiento de sucursal",
+    "Corrección de error",
+    "Error en transferencia previa",
+    "Optimización logística",
+    "Reabastecimiento mensual",
+    "Rebalanceo de inventario",
+    "Redistribución por demanda",
+    "Solicitud de sucursal",
+    "Transferencia urgente"
+];
 export function TransferDialog({ open, onClose, onSuccess }: Props) {
     const [form, setForm] = useState<CreateTransferDto>(EMPTY)
     const [branches, setBranches] = useState<Branch[]>([])
@@ -320,8 +330,19 @@ export function TransferDialog({ open, onClose, onSuccess }: Props) {
                     {/* Nota */}
                     <div className="space-y-1.5">
                         <Label className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">Nota</Label>
-                        <Input placeholder="Ej. Reabastecimiento mensual" value={form.note}
-                            onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))} />
+                        <Select
+                            value={form.note || ""}
+                            onValueChange={(v) => setForm((p) => ({ ...p, note: v }))}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Selecciona el motivo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {NOTE_OPTIONS.map((opt) => (
+                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
 

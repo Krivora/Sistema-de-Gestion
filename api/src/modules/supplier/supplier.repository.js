@@ -5,7 +5,7 @@ const ALLOWED_UPDATE_FIELDS = ["name", "phone", "email", "address"];
 export async function findAll(clientId) {
   const { rows } = await pool.query(
     `SELECT id, name, phone, email, address, is_active, created_at
-     FROM suppliers WHERE client_id=$1 ORDER BY name ASC`,
+     FROM suppliers WHERE client_id=$1 AND is_deleted=FALSE ORDER BY name ASC`,
     [clientId]
   );
   return rows;
@@ -14,7 +14,7 @@ export async function findAll(clientId) {
 export async function findById(id, clientId) {
   const { rows } = await pool.query(
     `SELECT id, name, phone, email, address, is_active, created_at
-     FROM suppliers WHERE id=$1 AND client_id=$2`,
+     FROM suppliers WHERE id=$1 AND client_id=$2 AND is_deleted=FALSE`,
     [id, clientId]
   );
   return rows[0] ?? null;
@@ -47,9 +47,27 @@ export async function update(id, clientId, data) {
   return rows[0] ?? null;
 }
 
+export async function activate(id, clientId) {
+  const { rows } = await pool.query(
+    `UPDATE suppliers SET is_active=TRUE, updated_at=NOW()
+     WHERE id=$1 AND client_id=$2 AND is_deleted=FALSE RETURNING *`,
+    [id, clientId]
+  );
+  return rows[0] ?? null;
+}
+
 export async function deactivate(id, clientId) {
   const { rows } = await pool.query(
     `UPDATE suppliers SET is_active=FALSE, updated_at=NOW()
+     WHERE id=$1 AND client_id=$2 RETURNING *`,
+    [id, clientId]
+  );
+  return rows[0] ?? null;
+}
+
+export async function softDelete(id, clientId) {
+  const { rows } = await pool.query(
+    `UPDATE suppliers SET is_deleted=TRUE, deleted_at=NOW(), updated_at=NOW()
      WHERE id=$1 AND client_id=$2 RETURNING *`,
     [id, clientId]
   );

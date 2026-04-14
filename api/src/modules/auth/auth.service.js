@@ -4,6 +4,7 @@ import * as AuthRepo from "./auth.repository.js";
 import * as UserRepo from "../user/user.repository.js";
 import * as PermRepo from "../permission/permission.repository.js";
 import pool from "../../config/db.js";
+import { logAction } from "../../core/utils/audit.js";
 
 const SALT_ROUNDS = 12;
 const TOKEN_EXPIRY = "1d";
@@ -28,7 +29,7 @@ function buildUserPayload(user) {
   };
 }
 
-export async function register(data, clientContext = null) {
+export async function register(data, clientContext = null, meta = {}) {
   const { email, password, role_id, branch_id, client_id, name } = data;
   const finalClientId = clientContext || client_id;
 
@@ -44,11 +45,21 @@ export async function register(data, clientContext = null) {
   const role_name = rows[0]?.name || "unknown";
 
   const token = signToken({ id: user.id, client_id: finalClientId, role_id, role_name });
+
+  const { password: _pw, ...safeUser } = user;
+
+  await logAction({
+    ...meta, client_id: finalClientId, user_id: user.id,
+    action: "REGISTER",
+    description: `Usuario "${user.name}" registrado`,
+    ref_table: "users", ref_id: user.id,
+    new_data: safeUser,
+  });
+
   return { user, token };
 }
 
-export async function login({ email, password }) {
-  // Mismo mensaje para email y password — evita user enumeration
+export async function login({ email, password }, meta = {}) {
   const INVALID_MSG = "Credenciales inválidas";
 
   const user = await AuthRepo.findByEmail(email);
@@ -61,6 +72,13 @@ export async function login({ email, password }) {
 
   const permissions = await PermRepo.findKeysByRoleId(user.role_id);
   const token = signToken({ id: user.id, client_id: user.client_id, role_id: user.role_id, role_name: user.role_name });
+
+  await logAction({
+    ...meta, client_id: user.client_id, user_id: user.id,
+    action: "LOGIN",
+    description: `Usuario "${user.name}" inició sesión`,
+    ref_table: "users", ref_id: user.id,
+  });
 
   return { user: { ...buildUserPayload(user), permissions }, token };
 }

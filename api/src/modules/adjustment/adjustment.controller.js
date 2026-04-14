@@ -1,8 +1,9 @@
 import * as AdjustmentService from "./adjustment.service.js";
+import { extractRequestMeta } from "../../core/utils/audit.js";
 
 export async function createAndPost(req, res, next) {
   try {
-    const result = await AdjustmentService.createAndPostAdjustment(req.body, req.user);
+    const result = await AdjustmentService.createAndPostAdjustment(req.body, req.user, extractRequestMeta(req));
     res.status(201).json({ success: true, message: "Ajuste creado correctamente", data: result });
   } catch (err) { next(err); }
 }

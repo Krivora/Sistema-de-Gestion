@@ -8,8 +8,8 @@ export function useCustomers() {
   const entity = useEntity<Customer>("customers")
 
   const [confirmDialog, setConfirmDialog] = useState<{
-    open: boolean; customer: Customer | null
-  }>({ open: false, customer: null })
+    open: boolean; customer: Customer | null; action: "deactivate" | "activate" | "delete"
+  }>({ open: false, customer: null, action: "deactivate" })
 
   useEffect(() => { entity.load(customersApi.list) }, [])
 
@@ -24,22 +24,53 @@ export function useCustomers() {
 
   const activeCount = entity.data.filter((c) => c.is_active).length
 
-  function openConfirm(customer: Customer) {
-    setConfirmDialog({ open: true, customer })
+  function openConfirm(customer: Customer, action: "deactivate" | "delete") {
+    setConfirmDialog({ open: true, customer, action })
   }
 
-  async function handleDeactivate() {
-    const { customer } = confirmDialog
+  async function handleConfirm() {
+    const { customer, action } = confirmDialog
     if (!customer) return
     setConfirmDialog((d) => ({ ...d, open: false }))
-    entity.optimisticUpdate(customer.id, { is_active: false })
+
+    if (action === "deactivate") {
+      entity.optimisticUpdate(customer.id, { is_active: false })
+      try {
+        await customersApi.deactivate(customer.id)
+        sileo.success({ title: `"${customer.name}" desactivado` })
+      } catch {
+        sileo.error({ title: "Error al desactivar cliente" })
+      }
+    } else if (action === "activate") {
+      entity.optimisticUpdate(customer.id, { is_active: true })
+      try {
+        await customersApi.activate(customer.id)
+        sileo.success({ title: `"${customer.name}" activado` })
+      } catch {
+        sileo.error({ title: "Error al activar cliente" })
+      }
+    } else if (action === "delete") {
+      entity.optimisticRemove(customer.id)
+      try {
+        await customersApi.remove(customer.id)
+        sileo.success({ title: `"${customer.name}" eliminado` })
+      } catch {
+        sileo.error({ title: "Error al eliminar cliente" })
+      }
+    }
+
+    entity.load(customersApi.list, true)
+  }
+
+  async function handleActivate(customer: Customer) {
+    entity.optimisticUpdate(customer.id, { is_active: true })
     try {
-      await customersApi.deactivate(customer.id)
-      sileo.success({ title: `"${customer.name}" desactivado` })
+      await customersApi.activate(customer.id)
+      sileo.success({ title: `"${customer.name}" activado` })
       entity.load(customersApi.list, true)
     } catch {
       entity.load(customersApi.list, true)
-      sileo.error({ title: "Error al desactivar cliente" })
+      sileo.error({ title: "Error al activar cliente" })
     }
   }
 
@@ -50,7 +81,7 @@ export function useCustomers() {
     search, setSearch,
     page, setPage, pageSize, setPageSize,
     filtered, paginated, totalPages,
-    openConfirm, handleDeactivate,
+    openConfirm, handleConfirm, handleActivate,
     reload: () => entity.load(customersApi.list, true),
     confirmDialog, setConfirmDialog,
   }

@@ -69,8 +69,8 @@ const columns = (
           <DropdownMenuItem onClick={() => onEdit(p)}>Editar</DropdownMenuItem>
           <DropdownMenuSeparator />
           {p.status === "active" && (
-            <DropdownMenuItem onClick={() => onConfirm("deactivate", p)}>Desactivar</DropdownMenuItem>
-          )}
+              <DropdownMenuItem onClick={() => onConfirm("deactivate", p)} variant="destructive">Desactivar</DropdownMenuItem>
+            )}
           {p.status === "inactive" && (
             <>
               <DropdownMenuItem onClick={() => onActivate(p)}>Activar</DropdownMenuItem>

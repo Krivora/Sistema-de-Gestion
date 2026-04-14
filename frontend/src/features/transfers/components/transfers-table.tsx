@@ -1,12 +1,6 @@
 import { DataTable, type ColumnDef } from "@/components/shared/table/data-table"
 import { buttonVariants } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { ArrowLeftRight, MoreHorizontal } from "lucide-react"
+import { ArrowLeftRight, Eye } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import type { Transfer } from "@/lib/api/transfers"
 
@@ -55,16 +49,12 @@ const columns = (
     ),
   },
   {
-    key: "actions", header: "", width: 48,
+    key: "actions", header: "", width: 60,
     cell: (t) => (
-      <DropdownMenu>
-        <DropdownMenuTrigger className={buttonVariants({ variant: "ghost", size: "icon" }) + " h-8 w-8"}>
-          <MoreHorizontal size={16} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onViewDetail(t.id)}>Ver detalle</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <button onClick={() => onViewDetail(t.id)}
+        className={buttonVariants({ variant: "ghost", size: "icon" }) + " h-8 w-8"}>
+        <Eye size={15} />
+      </button>
     ),
   },
 ]

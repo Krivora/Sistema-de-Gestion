@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { requireRole } from "../../core/middleware/auth.middleware.js";
-import { allow } from "../../core/middleware/allow.js";
-import * as ActivityController from "./activity.controller.js";
+import { requireRole } from "../../core/middleware/role.middleware.js";
+import * as Controller from "./activity.controller.js";
 
 const router = Router();
-// authRequired + attachPermissions vienen de routes/index.js
-
-router.get("/", requireRole("superadmin", "admin"), allow("read", "activities"), ActivityController.list);
+router.get("/",                          requireRole("superadmin"), Controller.getAll);
+router.get("/stats",                     requireRole("superadmin"), Controller.getStats);
+router.get("/:id",                       requireRole("superadmin"), Controller.getById);
+router.get("/entity/:ref_table/:ref_id", requireRole("superadmin"), Controller.getByEntity);
 
 export default router;

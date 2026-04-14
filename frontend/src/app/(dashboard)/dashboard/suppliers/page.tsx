@@ -8,6 +8,7 @@ import { SuppliersTable } from "@/features/suppliers/components/suppliers-table"
 import { SupplierDialog } from "@/features/suppliers/components/supplier-dialog"
 import { useSuppliers } from "@/features/suppliers/hooks/use-suppliers"
 import type { Supplier } from "@/lib/api/suppliers"
+import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 
 export default function SuppliersPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -18,8 +19,9 @@ export default function SuppliersPage() {
     filtered, paginated, activeCount, hasActiveFilters,
     search, setSearch,
     page, setPage, pageSize, setPageSize, totalPages,
-    handleDeactivate, reload,
-    suppliers,
+    openConfirm, handleConfirm, handleActivate,
+    reload, suppliers,
+    confirmDialog, setConfirmDialog,
   } = useSuppliers()
 
   return (
@@ -51,7 +53,8 @@ export default function SuppliersPage() {
         loading={loading}
         hasActiveFilters={hasActiveFilters}
         onEdit={(s) => { setSelected(s); setDialogOpen(true) }}
-        onDeactivate={handleDeactivate}
+        onConfirm={openConfirm}
+        onActivate={handleActivate}
       />
 
       {!loading && filtered.length > 0 && (
@@ -61,7 +64,19 @@ export default function SuppliersPage() {
           entityLabel="proveedor" onPageChange={setPage} onPageSizeChange={setPageSize}
         />
       )}
-
+      
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog((d) => ({ ...d, open }))}
+        title={confirmDialog.action === "delete" ? "¿Eliminar proveedor?" : "¿Desactivar proveedor?"}
+        description={
+          confirmDialog.action === "delete"
+            ? `"${confirmDialog.supplier?.name}" será eliminado permanentemente.`
+            : `"${confirmDialog.supplier?.name}" quedará inactivo hasta que lo actives de nuevo.`
+        }
+        confirmLabel={confirmDialog.action === "delete" ? "Eliminar" : "Desactivar"}
+        onConfirm={handleConfirm}
+      />
       <SupplierDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}

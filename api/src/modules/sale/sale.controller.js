@@ -1,4 +1,5 @@
 import * as SaleService from "./sale.service.js";
+import { extractRequestMeta } from "../../core/utils/audit.js";
 
 export async function list(req, res, next) {
   try {
@@ -19,9 +20,12 @@ export async function createAndPost(req, res, next) {
   try {
     const { branch_id, items, customer_id, customer_name, customer_phone, payment_method, doc_no } = req.body;
     if (!branch_id || !items) return res.status(400).json({ error: "branch_id e items son requeridos" });
-    res.status(201).json(await SaleService.createAndPostSale(
-      { branch_id, items, customer_id, customer_name, customer_phone, payment_method, doc_no },
-      req.user
-    ));
+    res.status(201).json(
+      await SaleService.createAndPostSale(
+        { branch_id, items, customer_id, customer_name, customer_phone, payment_method, doc_no },
+        req.user,
+        extractRequestMeta(req)
+      )
+    );
   } catch (err) { next(err); }
 }

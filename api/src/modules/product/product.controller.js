@@ -1,4 +1,5 @@
 import * as ProductService from "./product.service.js";
+import { extractRequestMeta } from "../../core/utils/audit.js";
 
 export async function getAll(req, res, next) {
   try {
@@ -16,33 +17,33 @@ export async function getById(req, res, next) {
 
 export async function create(req, res, next) {
   try {
-    res.status(201).json(await ProductService.createProduct(req.body, req.user.client_id, req.user.role_name));
+    res.status(201).json(await ProductService.createProduct(req.body, req.user, extractRequestMeta(req)));
   } catch (err) { next(err); }
 }
 
 export async function update(req, res, next) {
   try {
-    res.json(await ProductService.updateProduct(req.params.id, req.body, req.user.client_id, req.user.role_name));
+    res.json(await ProductService.updateProduct(req.params.id, req.body, req.user, extractRequestMeta(req)));
   } catch (err) { next(err); }
 }
 
 export async function activateProduct(req, res, next) {
   try {
-    const product = await ProductService.activateProduct(req.params.id);
+    const product = await ProductService.activateProduct(req.params.id, req.user, extractRequestMeta(req));
     res.json({ success: true, message: `Producto "${product.name}" activado`, product });
   } catch (err) { next(err); }
 }
 
 export async function deactivateProduct(req, res, next) {
   try {
-    const product = await ProductService.deactivateProduct(req.params.id);
+    const product = await ProductService.deactivateProduct(req.params.id, req.user, extractRequestMeta(req));
     res.json({ success: true, message: `Producto "${product.name}" desactivado`, product });
   } catch (err) { next(err); }
 }
 
 export async function deleteProduct(req, res, next) {
   try {
-    const product = await ProductService.deleteProduct(req.params.id);
+    const product = await ProductService.deleteProduct(req.params.id, req.user, extractRequestMeta(req));
     res.json({ success: true, message: `Producto "${product.name}" eliminado`, product });
   } catch (err) { next(err); }
 }

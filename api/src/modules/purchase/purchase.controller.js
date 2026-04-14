@@ -1,4 +1,5 @@
 import * as PurchaseService from "./purchase.service.js";
+import { extractRequestMeta } from "../../core/utils/audit.js";
 
 export async function list(req, res, next) {
   try {
@@ -19,6 +20,8 @@ export async function createAndPost(req, res, next) {
   try {
     const { branch_id, items, supplier_id, doc_no } = req.body;
     if (!branch_id || !items) return res.status(400).json({ error: "branch_id e items son requeridos" });
-    res.status(201).json(await PurchaseService.createAndPostPurchase({ branch_id, items, supplier_id, doc_no }, req.user));
+    res.status(201).json(
+      await PurchaseService.createAndPostPurchase({ branch_id, items, supplier_id, doc_no }, req.user, extractRequestMeta(req))
+    );
   } catch (err) { next(err); }
 }

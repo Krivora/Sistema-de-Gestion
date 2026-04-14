@@ -1,6 +1,7 @@
 import pool from "../../config/db.js";
 import * as SaleRepo from "./sale.repository.js";
 import * as InventoryRepo from "../inventory/inventory.repository.js";
+import { logAction } from "../../core/utils/audit.js";
 
 export async function listSales(clientId, filters) {
   if (!clientId) throw Object.assign(new Error("client_id requerido"), { status: 400 });
@@ -14,14 +15,13 @@ export async function getSaleById(id, clientId) {
   return { ...header, items };
 }
 
-export async function createAndPostSale(payload, user) {
+export async function createAndPostSale(payload, user, meta = {}) {
   const { branch_id, items, customer_id, customer_name, customer_phone, payment_method, doc_no } = payload;
   const { client_id, id: user_id } = user;
 
   if (!branch_id) throw Object.assign(new Error("branch_id requerido"), { status: 400 });
   if (!Array.isArray(items) || !items.length) throw Object.assign(new Error("Se requiere al menos un producto"), { status: 400 });
 
-  // Validar items antes de abrir transacción
   for (const item of items) {
     if (!item.product_id) throw Object.assign(new Error("product_id requerido en cada item"), { status: 400 });
     const qty   = Number(item.qty);
@@ -60,14 +60,18 @@ export async function createAndPostSale(payload, user) {
     const posted = await SaleRepo.setPosted(trx, sale.id, client_id);
     if (!posted) throw new Error("Error al publicar la venta");
 
-    await InventoryRepo.logActivity(trx, user_id, client_id,
-      "CREATE_SALE",
-      `Venta ${posted.doc_no} creada (${items.length} productos)`,
-      "sales", posted.id
-    );
-
     await trx.query("COMMIT");
-    const itemsResp = await SaleRepo.findItems(sale.id, client_id);
+
+    const itemsResp = await SaleRepo.findItems(posted.id, client_id);
+
+    await logAction({
+      ...meta, client_id, user_id,
+      action: "CREATE_SALE",
+      description: `Venta ${posted.doc_no} creada con ${items.length} producto(s)`,
+      ref_table: "sales", ref_id: posted.id,
+      new_data: { ...posted, items: itemsResp },
+    });
+
     return { ...posted, items: itemsResp };
   } catch (err) {
     await trx.query("ROLLBACK");
