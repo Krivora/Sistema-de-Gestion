@@ -1,3 +1,4 @@
+// fix: mobile sidebar overlay + safe padding
 "use client"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -25,12 +26,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Sidebar />
             <div className={cn(
                 "transition-all duration-300 ease-in-out",
-                "md:pl-60",           // default expandido
-                collapsed && "md:pl-15" // colapsado (igual que w-15 del sidebar)
+                "md:pl-60",
+                collapsed && "md:pl-14"
             )}>
-                <div className="flex flex-col h-screen">
+                <div className="flex flex-col min-h-screen">
                     <Topbar />
-                    <main className="flex-1 overflow-y-auto p-6">
+                    <main className="flex-1 overflow-y-auto p-5">
                         {children}
                     </main>
                 </div>

@@ -1,9 +1,8 @@
 "use client"
-import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-    LayoutDashboard, Package, ShoppingCart, BarChart2, Settings, LogOut,
+    LayoutDashboard, Package, ShoppingCart, LogOut,
     ChevronLeft, ChevronRight, Users, Building2, Truck, ArrowLeftRight,
     SlidersHorizontal, Tag, UserCircle, ClipboardList, X
 } from "lucide-react"
@@ -15,6 +14,7 @@ import { Separator } from "@/components/ui/separator"
 import { useUIStore } from "@/store/ui.store"
 import { useRole } from "@/hooks/use-role"
 import { useAbility } from "@/hooks/use-ability"
+
 interface NavItem {
     href: string
     label: string
@@ -23,12 +23,12 @@ interface NavItem {
     permission?: string
     roles?: string[]
 }
-
 interface NavGroup {
     label: string
     roles: string[]
     items: NavItem[]
 }
+
 const NAV_GROUPS: NavGroup[] = [
     {
         label: "General",
@@ -70,10 +70,8 @@ const NAV_GROUPS: NavGroup[] = [
         items: [
             { href: "/dashboard/users", label: "Usuarios", icon: Users },
             { href: "/dashboard/branches", label: "Sucursales", icon: Building2 },
-            { href: "/dashboard/settings", label: "Configuración", icon: Settings },
         ],
     },
-    // Solo superadmin
     {
         label: "Sistema",
         roles: ["superadmin"],
@@ -81,17 +79,14 @@ const NAV_GROUPS: NavGroup[] = [
             { href: "/dashboard/clients", label: "Clientes", icon: Building2 },
             { href: "/dashboard/activities", label: "Actividad", icon: ClipboardList },
             { href: "/dashboard/roles", label: "Roles", icon: Users },
-            { href: "/dashboard/settings", label: "Configuración", icon: Settings },
         ],
     },
 ]
 
 function isActive(pathname: string, href: string, exact?: boolean) {
-    if (exact) return pathname === href
-    return pathname.startsWith(href)
+    return exact ? pathname === href : pathname.startsWith(href)
 }
 
-// ── Contenido del sidebar (reutilizado en desktop y mobile) ──────────────────
 function SidebarContent({ collapsed, onClose }: { collapsed?: boolean; onClose?: () => void }) {
     const { role } = useRole()
     const ability = useAbility()
@@ -100,32 +95,34 @@ function SidebarContent({ collapsed, onClose }: { collapsed?: boolean; onClose?:
     const user = useAuthStore((s) => s.user)
     const router = useRouter()
     const initials = user?.name?.split(" ").map((n) => n[0]).slice(0, 2).join("") ?? "U"
+
     const visibleGroups = NAV_GROUPS
-        .filter((group) => group.roles.includes(role ?? ""))
-        .map((group) => ({
-            ...group,
-            items: group.items.filter((item) => {
-                // Si el item tiene rol específico requerido
+        .filter((g) => g.roles.includes(role ?? ""))
+        .map((g) => ({
+            ...g,
+            items: g.items.filter((item) => {
                 if ("roles" in item && item.roles) return item.roles.includes(role ?? "")
-                // Si tiene permiso CASL requerido
                 if (item.permission) {
                     const [subject, action] = item.permission.split(".")
                     return ability.can(action, subject)
                 }
-                // Sin restricción adicional
                 return true
             }),
         }))
-        .filter((group) => group.items.length > 0)
+        .filter((g) => g.items.length > 0)
+
     function handleLogout() {
         logout()
         router.push("/login")
     }
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full overflow-hidden">
             {/* Header */}
-            <div className={cn("h-14 border-b flex items-center gap-3 px-4 py-4", collapsed && "justify-center px-2")}>
+            <div className={cn(
+                "h-14 border-b flex items-center gap-3 px-4 shrink-0",
+                collapsed && "justify-center px-2"
+            )}>
                 <Avatar className="h-8 w-8 shrink-0">
                     <AvatarFallback className="text-xs bg-primary text-primary-foreground font-semibold">
                         {initials}
@@ -140,8 +137,12 @@ function SidebarContent({ collapsed, onClose }: { collapsed?: boolean; onClose?:
                     </div>
                 )}
                 {onClose && (
-                    <button onClick={onClose} className="ml-auto p-1 rounded hover:bg-muted transition-colors">
-                        <X size={16} />
+                    <button
+                        onClick={onClose}
+                        aria-label="Cerrar menú"
+                        className="ml-auto p-1.5 rounded-md hover:bg-muted transition-colors min-w-8 min-h-8 flex items-center justify-center"
+                    >
+                        <X size={16} aria-hidden />
                     </button>
                 )}
             </div>
@@ -149,11 +150,15 @@ function SidebarContent({ collapsed, onClose }: { collapsed?: boolean; onClose?:
             <Separator />
 
             {/* Nav */}
-            <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4 scrollbar-thin">
+            <nav
+                aria-label="Navegación principal"
+                className="flex-1 overflow-y-auto py-3 px-2 space-y-4"
+                style={{ scrollbarWidth: "thin" }}
+            >
                 {visibleGroups.map((group) => (
                     <div key={group.label}>
                         {!collapsed && (
-                            <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 select-none">
+                            <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50 select-none">
                                 {group.label}
                             </p>
                         )}
@@ -164,25 +169,35 @@ function SidebarContent({ collapsed, onClose }: { collapsed?: boolean; onClose?:
                                     <Link
                                         key={href}
                                         href={href}
-                                        title={collapsed ? label : undefined}
+                                        aria-label={collapsed ? label : undefined}
+                                        aria-current={active ? "page" : undefined}
                                         className={cn(
-                                            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
-                                            collapsed && "justify-center px-2",
+                                            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
+                                            "min-h-10", // touch target
+                                            collapsed && "justify-center px-0",
                                             active
                                                 ? "bg-primary/10 text-primary dark:bg-primary/20"
                                                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                         )}
                                     >
                                         <Icon
-                                            size={16}
+                                            size={17}
+                                            aria-hidden
                                             className={cn(
                                                 "shrink-0 transition-colors",
                                                 active ? "text-primary" : "text-muted-foreground"
                                             )}
                                         />
-                                        {!collapsed && <span className="truncate">{label}</span>}
-                                        {active && !collapsed && (
-                                            <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                                        {!collapsed && (
+                                            <>
+                                                <span className="truncate flex-1">{label}</span>
+                                                {active && (
+                                                    <span
+                                                        aria-hidden
+                                                        className="w-1.5 h-1.5 rounded-full bg-primary shrink-0"
+                                                    />
+                                                )}
+                                            </>
                                         )}
                                     </Link>
                                 )
@@ -194,18 +209,19 @@ function SidebarContent({ collapsed, onClose }: { collapsed?: boolean; onClose?:
 
             <Separator />
 
-            {/* Footer — logout */}
-            <div className="p-2">
+            {/* Footer */}
+            <div className="p-2 shrink-0">
                 <button
                     onClick={handleLogout}
+                    aria-label="Cerrar sesión"
                     className={cn(
-                        "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-150",
-                        collapsed && "justify-center px-2"
+                        "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium min-h-10",
+                        "text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-150",
+                        collapsed && "justify-center px-0"
                     )}
-                    title={collapsed ? "Cerrar sesión" : undefined}
                 >
-                    <LogOut size={16} className="shrink-0" />
-                    {!collapsed && "Cerrar sesión"}
+                    <LogOut size={16} aria-hidden className="shrink-0" />
+                    {!collapsed && <span>Cerrar sesión</span>}
                 </button>
             </div>
         </div>
@@ -223,29 +239,37 @@ export function Sidebar() {
             {/* Desktop */}
             <aside
                 className={cn(
-                    "hidden md:flex fixed top-0 left-0 z-40 h-screen flex-col border-r bg-card transition-all duration-300 ease-in-out",
-                    collapsed ? "w-15" : "w-60"
+                    "hidden md:flex fixed top-0 left-0 z-40 h-screen flex-col border-r bg-card",
+                    "transition-[width] duration-300 ease-in-out",
+                    collapsed ? "w-14" : "w-60"
                 )}
+                aria-label="Sidebar"
             >
                 <SidebarContent collapsed={collapsed} />
                 <button
                     onClick={() => setSidebarCollapsed(!collapsed)}
-                    className="absolute -right-3 top-[72px] z-10 flex h-6 w-6 items-center justify-center rounded-full border bg-background shadow-sm hover:bg-muted transition-colors"
                     aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
+                    className="absolute -right-3 top-18 z-10 flex h-6 w-6 items-center justify-center rounded-full border bg-background shadow-sm hover:bg-muted transition-colors"
                 >
-                    {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+                    {collapsed
+                        ? <ChevronRight size={12} aria-hidden />
+                        : <ChevronLeft size={12} aria-hidden />
+                    }
                 </button>
             </aside>
 
-            {/* Mobile drawer */}
+            {/* Mobile overlay + drawer */}
             {mobileOpen && (
                 <>
                     <div
-                        className="fixed inset-0 z-40 bg-black/50 md:hidden"
+                        className="fixed inset-0 z-40 bg-black/50 md:hidden backdrop-blur-[2px]"
                         onClick={() => setMobileOpen(false)}
                         aria-hidden="true"
                     />
-                    <aside className="fixed left-0 top-0 z-50 h-full w-[260px] bg-card border-r shadow-xl md:hidden flex flex-col">
+                    <aside
+                        className="fixed left-0 top-0 z-50 h-full w-70 bg-card border-r shadow-2xl md:hidden flex flex-col"
+                        aria-label="Menú de navegación"
+                    >
                         <SidebarContent onClose={() => setMobileOpen(false)} />
                     </aside>
                 </>

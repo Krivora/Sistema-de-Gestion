@@ -8,11 +8,10 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { LogOut, User } from "lucide-react"
+import { LogOut } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export function Topbar() {
@@ -27,16 +26,15 @@ export function Topbar() {
     }
 
     return (
-        <header className="h-14 border-b flex items-center justify-between px-4 gap-3 bg-background">
-            {/* Left — hamburger mobile + breadcrumbs */}
+        <header className="h-14 border-b flex items-center justify-between px-4 gap-3 bg-background shrink-0 sticky top-0 z-30">
             <div className="flex items-center gap-2 min-w-0">
                 <MobileMenuButton />
                 <Breadcrumbs />
             </div>
 
-            {/* Right — actions */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
                 <ThemeToggle />
+
                 <DropdownMenu>
                     <DropdownMenuTrigger className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary">
                         <Avatar className="h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity">
@@ -46,15 +44,10 @@ export function Topbar() {
                         </Avatar>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuLabel>
+                        <div className="px-2 py-1.5">
                             <p className="font-medium text-sm truncate">{user?.name}</p>
                             <p className="text-xs text-muted-foreground truncate font-normal">{user?.email}</p>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
-                            <User size={14} className="mr-2" />
-                            Mi perfil
-                        </DropdownMenuItem>
+                        </div>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
                             <LogOut size={14} className="mr-2" />

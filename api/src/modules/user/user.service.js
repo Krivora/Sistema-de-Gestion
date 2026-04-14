@@ -25,7 +25,7 @@ async function checkUserLimit(clientId) {
   );
 }
 
-export async function getAllUsers(clientId, role, status = "active") {
+export async function getAllUsers(clientId, role, status = null) {
   return isSuperAdmin(role)
     ? UserRepo.findAllGlobal(status)
     : UserRepo.findAll(clientId, status);
@@ -85,6 +85,23 @@ export async function updateUser(id, clientId, role, data, user, meta = {}) {
   });
 
   return updated;
+}
+
+export async function activateUser(id, user, meta = {}) {
+  const before = await UserRepo.findByIdNoClient(id);
+  if (!before) throw Object.assign(new Error("Usuario no encontrado"), { status: 404 });
+
+  const activated = await UserRepo.activate(id);
+  if (!activated) throw Object.assign(new Error("Usuario no encontrado"), { status: 404 });
+
+  await logAction({
+    ...meta, client_id: activated.client_id, user_id: user.id,
+    action: "ACTIVATE_USER",
+    description: `Usuario "${activated.name}" activado`,
+    ref_table: "users", ref_id: activated.id,
+  });
+
+  return activated;
 }
 
 export async function deactivateUser(id, user, meta = {}) {

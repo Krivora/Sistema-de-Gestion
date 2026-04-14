@@ -5,16 +5,22 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Building2, MoreHorizontal } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import type { Branch } from "@/lib/api/branches"
+import type { BranchConfirmType } from "@/features/branches/hooks/use-branches"
 
 interface BranchesTableProps {
   branches: Branch[]
   loading: boolean
   hasActiveFilters: boolean
   onEdit: (b: Branch) => void
-  onConfirm: (b: Branch) => void
+  onActivate: (b: Branch) => void
+  onConfirm: (type: BranchConfirmType, b: Branch) => void
 }
 
-const columns = (onEdit: (b: Branch) => void, onConfirm: (b: Branch) => void): ColumnDef<Branch>[] => [
+const columns = (
+  onEdit: (b: Branch) => void,
+  onActivate: (b: Branch) => void,
+  onConfirm: (type: BranchConfirmType, b: Branch) => void,
+): ColumnDef<Branch>[] => [
   {
     key: "name", header: "Sucursal", width: "25%",
     cell: (b) => (
@@ -60,10 +66,14 @@ const columns = (onEdit: (b: Branch) => void, onConfirm: (b: Branch) => void): C
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => onEdit(b)}>Editar</DropdownMenuItem>
+          <DropdownMenuSeparator />
           {b.is_active && (
+            <DropdownMenuItem onClick={() => onConfirm("deactivate", b)} variant="destructive">Desactivar</DropdownMenuItem>
+          )}
+          {!b.is_active && (
             <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onConfirm(b)} variant="destructive">Desactivar</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onActivate(b)}>Activar</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onConfirm("delete", b)} variant="destructive">Eliminar</DropdownMenuItem>
             </>
           )}
         </DropdownMenuContent>
@@ -72,16 +82,16 @@ const columns = (onEdit: (b: Branch) => void, onConfirm: (b: Branch) => void): C
   },
 ]
 
-export function BranchesTable({ branches, loading, hasActiveFilters, onEdit, onConfirm }: BranchesTableProps) {
+export function BranchesTable({ branches, loading, hasActiveFilters, onEdit, onActivate, onConfirm }: BranchesTableProps) {
   return (
     <DataTable
-      columns={columns(onEdit, onConfirm)}
+      columns={columns(onEdit, onActivate, onConfirm)}
       data={branches}
       loading={loading}
       rowKey={(b) => b.id}
       emptyIcon={<Building2 size={32} className="text-muted-foreground/40" />}
       emptyText="No hay sucursales registradas"
-      emptyFilterText="Sin resultados para tu búsqueda"
+      emptyFilterText="Sin resultados para los filtros aplicados"
       hasActiveFilters={hasActiveFilters}
     />
   )

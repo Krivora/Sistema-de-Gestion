@@ -3,7 +3,7 @@ import { extractRequestMeta } from "../../core/utils/audit.js";
 
 export async function getAll(req, res, next) {
   try {
-    const { status = "active" } = req.query;
+    const { status } = req.query;
     res.json(await UserService.getAllUsers(req.user.client_id, req.user.role_name, status));
   } catch (err) { next(err); }
 }
@@ -43,6 +43,12 @@ export async function update(req, res, next) {
       req.user,
       extractRequestMeta(req)
     ));
+  } catch (err) { next(err); }
+}
+
+export async function activateUser(req, res, next) {
+  try {
+    res.json(await UserService.activateUser(req.params.id, req.user, extractRequestMeta(req)));
   } catch (err) { next(err); }
 }
 

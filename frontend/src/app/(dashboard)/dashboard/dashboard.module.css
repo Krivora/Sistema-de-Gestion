@@ -1,38 +1,44 @@
 .root {
     display: flex;
     flex-direction: column;
-    gap: 28px;
-    padding-bottom: 40px;
+    gap: 1rem;
+    padding: 1rem 1rem 2.5rem;
 }
 
 .hero {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
 .chartsPrimary {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 1rem;
 }
 
 .chartsSecondary {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 1rem;
 }
 
-@media (min-width: 1024px) {
-    .chartsPrimary {
-        grid-template-columns: 2fr 1fr;
+@media (min-width: 640px) {
+    .root { padding: 1.25rem 1.25rem 2.5rem; gap: 1.25rem; }
+
+    .hero {
+        flex-direction: row;
+        align-items: flex-end;
+        justify-content: space-between;
+        flex-wrap: wrap;
     }
 }
 
 @media (min-width: 900px) {
-    .chartsSecondary {
-        grid-template-columns: 1fr 1fr;
-    }
+    .chartsSecondary { grid-template-columns: 1fr 1fr; }
+}
+
+@media (min-width: 1024px) {
+    .root { padding: 1.5rem 1.5rem 2.5rem; gap: 1.5rem; }
+    .chartsPrimary { grid-template-columns: 2fr 1fr; }
 }

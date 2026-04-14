@@ -24,23 +24,30 @@ export default function CategoriesPage() {
   } = useCategories()
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Categorías</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold">Categorías</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             {activeCount} activa{activeCount !== 1 ? "s" : ""}
           </p>
         </div>
         <Button onClick={() => { setSelected(null); setDialogOpen(true) }} size="sm">
-          <Plus size={16} className="mr-2" />Nueva categoría
+          <Plus size={16} className="sm:mr-2" />
+          <span className="hidden sm:inline">Nueva categoría</span>
         </Button>
       </div>
 
-      <div className="relative max-w-sm">
+      {/* Search */}
+      <div className="relative w-full sm:max-w-sm">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Buscar por nombre o código..." value={search}
-          onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        <Input
+          placeholder="Buscar por nombre o código..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
       </div>
 
       <CategoriesTable
@@ -73,8 +80,12 @@ export default function CategoriesPage() {
         onConfirm={handleConfirm}
       />
 
-      <CategoryDialog open={dialogOpen} onClose={() => setDialogOpen(false)}
-        category={selected} onSuccess={() => { setDialogOpen(false); reload() }} />
+      <CategoryDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        category={selected}
+        onSuccess={() => { setDialogOpen(false); reload() }}
+      />
     </div>
   )
 }

@@ -19,36 +19,61 @@ export function TopProductsChart({ topProducts, loading }: Props) {
             {loading ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {[...Array(5)].map((_, i) => (
-                        <div key={i} className="skeleton-line" style={{ height: 16, width: `${75 + i * 3}%` }} />
+                        <div key={i} className="skeleton-line" style={{ height: 14, width: `${85 - i * 8}%` }} />
                     ))}
                 </div>
             ) : topProducts.length === 0 ? (
                 <div className="db-empty"><Package size={32} /><p>Sin datos</p></div>
             ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <ol style={{ display: "flex", flexDirection: "column", gap: 10, padding: 0, margin: 0, listStyle: "none" }}>
                     {topProducts.map((p, i) => (
-                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", width: 18, textAlign: "right", flexShrink: 0 }}>
+                        <li key={i} style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                            <span aria-hidden style={{
+                                fontSize: 11, fontWeight: 700,
+                                color: "var(--muted-foreground)",
+                                width: 20, textAlign: "right", flexShrink: 0,
+                            }}>
                                 #{i + 1}
                             </span>
-                            <span style={{ fontSize: 12, color: "var(--foreground)", flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
-                                title={p.product_name}>
+
+                            <span style={{
+                                fontSize: 12, color: "var(--foreground)",
+                                flex: 1, minWidth: 0,
+                                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                            }} title={p.product_name}>
                                 {p.product_name}
                             </span>
-                            <div style={{ width: 90, height: 6, background: "var(--border)", borderRadius: 99, overflow: "hidden", flexShrink: 0 }}>
+
+                            {/* barra: oculta en <360px via clamp */}
+                            <div
+                                role="progressbar"
+                                aria-valuenow={Math.round((p.total_sales / max) * 100)}
+                                aria-valuemin={0} aria-valuemax={100}
+                                aria-label={`${p.product_name} ${Math.round((p.total_sales / max) * 100)}%`}
+                                style={{
+                                    width: "clamp(48px, 12%, 96px)", height: 6,
+                                    background: "var(--border)", borderRadius: 99,
+                                    overflow: "hidden", flexShrink: 0,
+                                }}
+                            >
                                 <div style={{
                                     height: "100%", borderRadius: 99,
                                     background: PALETTE[i % PALETTE.length],
                                     width: `${(p.total_sales / max) * 100}%`,
-                                    transition: "width .6s ease",
+                                    transition: "width .5s ease",
                                 }} />
                             </div>
-                            <span style={{ fontSize: 11, color: "var(--muted-foreground)", width: 70, textAlign: "right", flexShrink: 0 }}>
+
+                            <span style={{
+                                fontSize: 11, color: "var(--muted-foreground)",
+                                width: "clamp(56px, 16%, 72px)",
+                                textAlign: "right", flexShrink: 0,
+                            }}>
                                 {formatCurrency(p.total_sales)}
                             </span>
-                        </div>
+                        </li>
                     ))}
-                </div>
+                </ol>
             )}
         </div>
     )

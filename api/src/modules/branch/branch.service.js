@@ -77,6 +77,24 @@ export async function updateBranch(id, data, user, meta = {}) {
   return updated;
 }
 
+export async function activateBranch(id, user, meta = {}) {
+  const { client_id, id: user_id } = user;
+
+  const branch = await BranchRepo.activate(id);
+  if (!branch) throw Object.assign(new Error("Sucursal no encontrada"), { status: 404 });
+
+  await logAction({
+    ...meta,
+    client_id, user_id,
+    action: "ACTIVATE_BRANCH",
+    description: `Sucursal "${branch.name}" activada`,
+    ref_table: "branches", ref_id: branch.id,
+    new_data: branch,
+  });
+
+  return branch;
+}
+
 export async function deactivateBranch(id, user, meta = {}) {
   const { client_id, id: user_id } = user;
 
@@ -88,6 +106,24 @@ export async function deactivateBranch(id, user, meta = {}) {
     client_id, user_id,
     action: "DEACTIVATE_BRANCH",
     description: `Sucursal "${branch.name}" desactivada`,
+    ref_table: "branches", ref_id: branch.id,
+    old_data: branch,
+  });
+
+  return branch;
+}
+
+export async function deleteBranch(id, user, meta = {}) {
+  const { client_id, id: user_id } = user;
+
+  const branch = await BranchRepo.softDelete(id);
+  if (!branch) throw Object.assign(new Error("Sucursal no encontrada o ya eliminada"), { status: 404 });
+
+  await logAction({
+    ...meta,
+    client_id, user_id,
+    action: "DELETE_BRANCH",
+    description: `Sucursal "${branch.name}" eliminada`,
     ref_table: "branches", ref_id: branch.id,
     old_data: branch,
   });

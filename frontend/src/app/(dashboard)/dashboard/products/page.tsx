@@ -1,117 +1,105 @@
 "use client"
 import { useState } from "react"
-import { Plus, Search } from "lucide-react"
+import { Plus, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DataTablePagination } from "@/components/shared/table/data-table-pagination"
 import { ConfirmDialog } from "@/components/shared/confirm-dialog"
-import { ProductsTable } from "@/features/products/components/products-table"
-import { ProductDialog } from "@/features/products/components/product-dialog"
-import { useProducts } from "@/features/products/hooks/use-products"
-import type { Product } from "@/lib/api/products"
+import { BranchProductDialog } from "@/features/branch-products/components/branch-product-dialog"
+import { BranchProductsFilters } from "@/features/branch-products/components/branch-products-filters"
+import { BranchProductsTable } from "@/features/branch-products/components/branch-products-table"
+import { useBranchProducts } from "@/features/branch-products/hooks/use-branch-products"
+import type { BranchProduct } from "@/lib/api/branch-products"
 
-export default function ProductsPage() {
+export default function BranchProductsPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [selected, setSelected] = useState<Product | null>(null)
+  const [selected, setSelected] = useState<BranchProduct | null>(null)
 
   const {
-    products, categories, loading,
-    filtered, paginated, activeCount, hasActiveFilters,
+    items, branches, loading, lowStockCount, hasActiveFilters,
     search, setSearch,
+    filterBranch, setFilterBranch,
     filterStatus, setFilterStatus,
-    filterCategory, setFilterCategory,
+    filterStock, setFilterStock,
     clearFilters,
-    page, setPage, pageSize, setPageSize, totalPages,
-    handleActivate, openConfirm, handleConfirm, reload,
-    confirmDialog, setConfirmDialog,
-  } = useProducts()
-
-  const selectedFilterCategory = categories.find((c) => String(c.id) === filterCategory)
+    page, setPage, pageSize, setPageSize,
+    filtered, paginated, totalPages,
+    user, openConfirm, handleConfirm,
+    reload, confirmDialog, setConfirmDialog,
+  } = useBranchProducts()
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      {/* header */}
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Productos</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {activeCount} producto{activeCount !== 1 ? "s" : ""} activo{activeCount !== 1 ? "s" : ""}
-          </p>
+          <h1 className="text-xl sm:text-2xl font-semibold">Stock por Sucursal</h1>
+          <div className="flex items-center gap-3 mt-0.5">
+            <p className="text-sm text-muted-foreground">
+              {items.length} asignación{items.length !== 1 ? "es" : ""}
+            </p>
+            {lowStockCount > 0 && (
+              <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 font-medium">
+                <AlertTriangle size={12} />{lowStockCount} con stock bajo
+              </span>
+            )}
+          </div>
         </div>
         <Button onClick={() => { setSelected(null); setDialogOpen(true) }} size="sm">
-          <Plus size={16} className="mr-2" />Nuevo producto
+          <Plus size={16} className="sm:mr-2" />
+          <span className="hidden sm:inline">Asignar producto</span>
         </Button>
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Buscar por nombre, SKU o categoría..." value={search}
-            onChange={(e) => setSearch(e.target.value)} className="pl-9" />
-        </div>
+      <BranchProductsFilters
+        search={search} onSearchChange={setSearch}
+        filterBranch={filterBranch} onBranchChange={setFilterBranch}
+        filterStatus={filterStatus} onStatusChange={setFilterStatus}
+        filterStock={filterStock} onStockChange={setFilterStock}
+        branches={branches}
+        hasActiveFilters={hasActiveFilters}
+        onClear={clearFilters}
+        showBranchFilter={!user?.branch_id}
+      />
 
-        <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as typeof filterStatus)}>
-          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Estado" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los estados</SelectItem>
-            <SelectItem value="active">Activos</SelectItem>
-            <SelectItem value="inactive">Inactivos</SelectItem>
-            <SelectItem value="deleted">Eliminados</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v ?? "all")}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Categoría">
-              {filterCategory === "all" ? "Todas las categorías" : selectedFilterCategory?.name}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas las categorías</SelectItem>
-            {categories.map((cat) => (
-              <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
-            Limpiar filtros
-          </Button>
-        )}
-      </div>
-
-      <ProductsTable
+      <BranchProductsTable
         products={paginated}
         loading={loading}
         hasActiveFilters={hasActiveFilters}
         onEdit={(p) => { setSelected(p); setDialogOpen(true) }}
-        onActivate={handleActivate}
         onConfirm={openConfirm}
       />
 
       {!loading && filtered.length > 0 && (
         <DataTablePagination
           page={page} totalPages={totalPages} pageSize={pageSize}
-          filteredCount={filtered.length} totalCount={products.length}
-          entityLabel="producto" onPageChange={setPage} onPageSizeChange={setPageSize}
+          filteredCount={filtered.length} totalCount={items.length}
+          entityLabel="asignación"
+          onPageChange={setPage} onPageSizeChange={setPageSize}
         />
       )}
 
       <ConfirmDialog
         open={confirmDialog.open}
         onOpenChange={(open) => setConfirmDialog((d) => ({ ...d, open }))}
-        title={confirmDialog.type === "delete" ? "¿Eliminar producto?" : "¿Desactivar producto?"}
-        description={confirmDialog.type === "delete"
-          ? `"${confirmDialog.product?.name}" será eliminado permanentemente. Esta acción no se puede deshacer.`
-          : `"${confirmDialog.product?.name}" quedará inactivo hasta que lo actives de nuevo.`}
-        confirmLabel={confirmDialog.type === "delete" ? "Eliminar" : "Desactivar"}
+        title={confirmDialog.type === "delete" ? "¿Eliminar asignación?" : confirmDialog.item?.is_active ? "¿Desactivar producto?" : "¿Activar producto?"}
+        description={
+          confirmDialog.type === "delete"
+            ? `"${confirmDialog.item?.product_name}" será eliminado de ${confirmDialog.item?.branch_name}.`
+            : confirmDialog.item?.is_active
+              ? `"${confirmDialog.item?.product_name}" quedará inactivo en ${confirmDialog.item?.branch_name}.`
+              : `"${confirmDialog.item?.product_name}" volverá a estar activo en ${confirmDialog.item?.branch_name}.`
+        }
+        confirmLabel={confirmDialog.type === "delete" ? "Eliminar" : confirmDialog.item?.is_active ? "Desactivar" : "Activar"}
         variant={confirmDialog.type === "delete" ? "destructive" : "default"}
         onConfirm={handleConfirm}
       />
 
-      <ProductDialog open={dialogOpen} onClose={() => setDialogOpen(false)}
-        product={selected} onSuccess={() => { setDialogOpen(false); reload() }} />
+      <BranchProductDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        branchProduct={selected}
+        onSuccess={() => { setDialogOpen(false); reload() }}
+      />
     </div>
   )
 }

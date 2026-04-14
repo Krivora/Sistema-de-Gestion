@@ -3,6 +3,7 @@ import { useState } from "react"
 import { Plus, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DataTablePagination } from "@/components/shared/table/data-table-pagination"
 import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 import { BranchesTable } from "@/features/branches/components/branches-table"
@@ -15,13 +16,20 @@ export default function BranchesPage() {
   const [selected, setSelected] = useState<Branch | null>(null)
 
   const {
-    branches, loading, activeCount,
+    branches, loading, activeCount, hasActiveFilters,
+    filtered, paginated,
     search, setSearch,
-    page, setPage, pageSize, setPageSize,
-    filtered, paginated, totalPages,
-    openConfirm, handleDeactivate,
+    filterStatus, setFilterStatus,
+    clearFilters,
+    page, setPage, pageSize, setPageSize, totalPages,
+    handleActivate, openConfirm, handleConfirm,
     reload, confirmDialog, setConfirmDialog,
   } = useBranches()
+  const statusLabels = {
+    all: "Todos los estados",
+    active: "Activas",
+    inactive: "Inactivas",
+  } as const;
 
   return (
     <div className="space-y-6">
@@ -37,17 +45,42 @@ export default function BranchesPage() {
         </Button>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Buscar por nombre, código o dirección..." value={search}
-          onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+      <div className="flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-50 max-w-sm">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Buscar por nombre, código o dirección..." value={search}
+            onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        </div>
+
+        <Select
+          value={filterStatus}
+          onValueChange={(v) => setFilterStatus(v as keyof typeof statusLabels)}
+        >
+          <SelectTrigger className="w-40">
+            <SelectValue>
+              {statusLabels[filterStatus]}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{statusLabels.all}</SelectItem>
+            <SelectItem value="active">{statusLabels.active}</SelectItem>
+            <SelectItem value="inactive">{statusLabels.inactive}</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
+            Limpiar filtros
+          </Button>
+        )}
       </div>
 
       <BranchesTable
         branches={paginated}
         loading={loading}
-        hasActiveFilters={!!search}
+        hasActiveFilters={hasActiveFilters}
         onEdit={(b) => { setSelected(b); setDialogOpen(true) }}
+        onActivate={handleActivate}
         onConfirm={openConfirm}
       />
 
@@ -62,10 +95,13 @@ export default function BranchesPage() {
       <ConfirmDialog
         open={confirmDialog.open}
         onOpenChange={(open) => setConfirmDialog((d) => ({ ...d, open }))}
-        title="¿Desactivar sucursal?"
-        description={`"${confirmDialog.branch?.name}" quedará inactiva hasta que la actives de nuevo.`}
-        confirmLabel="Desactivar"
-        onConfirm={handleDeactivate}
+        title={confirmDialog.type === "delete" ? "¿Eliminar sucursal?" : "¿Desactivar sucursal?"}
+        description={confirmDialog.type === "delete"
+          ? `"${confirmDialog.branch?.name}" será eliminada permanentemente. Esta acción no se puede deshacer.`
+          : `"${confirmDialog.branch?.name}" quedará inactiva hasta que la actives de nuevo.`}
+        confirmLabel={confirmDialog.type === "delete" ? "Eliminar" : "Desactivar"}
+        variant="destructive"
+        onConfirm={handleConfirm}
       />
 
       <BranchDialog open={dialogOpen} onClose={() => setDialogOpen(false)}

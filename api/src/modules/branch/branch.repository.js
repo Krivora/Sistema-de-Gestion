@@ -12,8 +12,9 @@ const BASE_SELECT = `
 export async function findAll(clientId = null) {
   const { rows } = await pool.query(
     `${BASE_SELECT}
-     WHERE b.is_active = TRUE ${clientId ? "AND b.client_id = $1" : ""}
-     ORDER BY b.id ASC`,
+     WHERE b.deleted_at IS NULL
+     ${clientId ? "AND b.client_id = $1" : ""}
+     ORDER BY b.is_active DESC, b.id ASC`,
     clientId ? [clientId] : []
   );
   return rows;
@@ -21,9 +22,11 @@ export async function findAll(clientId = null) {
 
 export async function findById(id, clientId = null) {
   const { rows } = await pool.query(
-    `SELECT b.id, b.code, b.name, b.address, b.phone, b.is_active, b.created_at
+    `SELECT b.id, b.code, b.name, b.address, b.phone, b.is_active,
+            b.created_at, b.deactivated_at, b.deleted_at
      FROM branches b
-     WHERE b.id = $1 ${clientId ? "AND b.client_id = $2" : ""} AND b.is_active = TRUE`,
+     WHERE b.id = $1 AND b.deleted_at IS NULL
+     ${clientId ? "AND b.client_id = $2" : ""}`,
     clientId ? [id, clientId] : [id]
   );
   return rows[0] ?? null;
@@ -65,8 +68,8 @@ export async function create({ code, name, address, phone, client_id }) {
   } catch (err) {
     if (err.code === "23505") {
       const msg = /name/i.test(err.detail ?? "") ? "Nombre duplicado"
-                : /code/i.test(err.detail ?? "") ? "Código duplicado"
-                : "Dato duplicado en sucursal";
+        : /code/i.test(err.detail ?? "") ? "Código duplicado"
+          : "Dato duplicado en sucursal";
       throw Object.assign(new Error(msg), { status: 409 });
     }
     throw err;
@@ -91,10 +94,37 @@ export async function update(id, clientId, data) {
   return rows[0] ?? null;
 }
 
+// deactivate — ahora también guarda deactivated_at
 export async function deactivate(id) {
   const { rows } = await pool.query(
-    `UPDATE branches SET is_active=FALSE, updated_at=NOW()
-     WHERE id=$1 RETURNING *`,
+    `UPDATE branches 
+     SET is_active = FALSE, deactivated_at = NOW(), updated_at = NOW()
+     WHERE id = $1 AND is_active = TRUE AND deleted_at IS NULL
+     RETURNING *`,
+    [id]
+  );
+  return rows[0] ?? null;
+}
+
+// activate — nuevo
+export async function activate(id) {
+  const { rows } = await pool.query(
+    `UPDATE branches
+     SET is_active = TRUE, deactivated_at = NULL, updated_at = NOW()
+     WHERE id = $1 AND is_active = FALSE AND deleted_at IS NULL
+     RETURNING *`,
+    [id]
+  );
+  return rows[0] ?? null;
+}
+
+// softDelete — nuevo
+export async function softDelete(id) {
+  const { rows } = await pool.query(
+    `UPDATE branches
+     SET is_active = FALSE, deleted_at = NOW(), updated_at = NOW()
+     WHERE id = $1 AND deleted_at IS NULL
+     RETURNING *`,
     [id]
   );
   return rows[0] ?? null;

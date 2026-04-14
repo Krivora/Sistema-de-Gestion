@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DataTablePagination } from "@/components/shared/table/data-table-pagination"
+import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 import { UsersTable } from "@/features/users/components/users-table"
 import { UserDialog } from "@/features/users/components/user-dialog"
 import { useUsers } from "@/features/users/hooks/use-users"
@@ -20,8 +21,16 @@ export default function UsersPage() {
         search, setSearch,
         filterStatus, setFilterStatus,
         page, setPage, pageSize, setPageSize, totalPages,
-        handleDeactivate, handleDelete, reload,
+        handleActivate, openConfirm, handleConfirm,
+        reload, confirmDialog, setConfirmDialog,
     } = useUsers()
+
+    const statusLabels = {
+        all: "Todos los estados",
+        active: "Activos",
+        inactive: "Inactivos",
+        deleted: "Eliminados",
+    } as const
 
     return (
         <div className="space-y-6">
@@ -38,7 +47,7 @@ export default function UsersPage() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-                <div className="relative flex-1 min-w-[200px] max-w-sm">
+                <div className="relative flex-1 min-w-50 max-w-sm">
                     <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <Input
                         placeholder="Buscar por nombre, email o rol..."
@@ -47,13 +56,15 @@ export default function UsersPage() {
                         className="pl-9"
                     />
                 </div>
-                <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as typeof filterStatus)}>
-                    <SelectTrigger className="w-[160px]"><SelectValue placeholder="Estado" /></SelectTrigger>
+                <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as keyof typeof statusLabels)}>
+                    <SelectTrigger className="w-40">
+                        <SelectValue>{statusLabels[filterStatus]}</SelectValue>
+                    </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">Todos los estados</SelectItem>
-                        <SelectItem value="active">Activos</SelectItem>
-                        <SelectItem value="inactive">Inactivos</SelectItem>
-                        <SelectItem value="deleted">Eliminados</SelectItem>
+                        <SelectItem value="all">{statusLabels.all}</SelectItem>
+                        <SelectItem value="active">{statusLabels.active}</SelectItem>
+                        <SelectItem value="inactive">{statusLabels.inactive}</SelectItem>
+                        <SelectItem value="deleted">{statusLabels.deleted}</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -63,8 +74,8 @@ export default function UsersPage() {
                 loading={loading}
                 hasActiveFilters={hasActiveFilters}
                 onEdit={(u) => { setSelected(u); setDialogOpen(true) }}
-                onDeactivate={handleDeactivate}
-                onDelete={handleDelete}
+                onActivate={handleActivate}
+                onConfirm={openConfirm}
             />
 
             {!loading && filtered.length > 0 && (
@@ -74,6 +85,18 @@ export default function UsersPage() {
                     entityLabel="usuario" onPageChange={setPage} onPageSizeChange={setPageSize}
                 />
             )}
+
+            <ConfirmDialog
+                open={confirmDialog.open}
+                onOpenChange={(open) => setConfirmDialog((d) => ({ ...d, open }))}
+                title={confirmDialog.type === "delete" ? "¿Eliminar usuario?" : "¿Desactivar usuario?"}
+                description={confirmDialog.type === "delete"
+                    ? `"${confirmDialog.user?.name}" será eliminado permanentemente. Esta acción no se puede deshacer.`
+                    : `"${confirmDialog.user?.name}" quedará inactivo hasta que lo actives de nuevo.`}
+                confirmLabel={confirmDialog.type === "delete" ? "Eliminar" : "Desactivar"}
+                variant="destructive"
+                onConfirm={handleConfirm}
+            />
 
             <UserDialog
                 open={dialogOpen}

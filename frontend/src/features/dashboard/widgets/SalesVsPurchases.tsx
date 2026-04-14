@@ -83,78 +83,42 @@ export function SalesVsPurchases({ sales30, purchases30, loading }: Props) {
             </div>
 
             {loading ? (
-                <div className="skeleton-line" style={{ height: 200 }} />
+                <div className="skeleton-line" style={{ height: 180 }} />
             ) : data.length === 0 ? (
                 <div className="db-empty">
                     <Activity size={32} />
                     <p>Sin datos</p>
                 </div>
             ) : (
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer width="100%" height={180}>
                     <BarChart
                         data={data}
-                        margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+                        margin={{ top: 4, right: 0, left: -24, bottom: 0 }}
                     >
-                        <CartesianGrid
-                            strokeDasharray="3 3"
-                            stroke="var(--border)"
-                            vertical={false}
-                        />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                         <XAxis
                             dataKey="date"
                             tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
-                            axisLine={false}
-                            tickLine={false}
+                            axisLine={false} tickLine={false}
                             interval={xAxisInterval}
                         />
                         <YAxis
                             tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
-                            axisLine={false}
-                            tickLine={false}
-                            tickFormatter={(v) =>
-                                v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`
-                            }
+                            axisLine={false} tickLine={false}
+                            tickFormatter={(v) => v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`}
+                            width={40}
                         />
                         <Tooltip content={<ChartTooltip />} />
-                        <Bar
-                            dataKey="Ventas"
-                            fill={ACCENT}
-                            radius={[3, 3, 0, 0]}
-                            maxBarSize={14}
-                        />
-                        <Bar
-                            dataKey="Compras"
-                            fill={BLUE}
-                            radius={[3, 3, 0, 0]}
-                            maxBarSize={14}
-                        />
+                        <Bar dataKey="Ventas" fill={ACCENT} radius={[3, 3, 0, 0]} maxBarSize={14} />
+                        <Bar dataKey="Compras" fill={BLUE} radius={[3, 3, 0, 0]} maxBarSize={14} />
                     </BarChart>
                 </ResponsiveContainer>
             )}
 
-            <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
-                {[
-                    { label: "Ventas", color: ACCENT },
-                    { label: "Compras", color: BLUE },
-                ].map(({ label, color }) => (
-                    <div
-                        key={label}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 5,
-                            fontSize: 11,
-                            color: "var(--muted-foreground)",
-                        }}
-                    >
-                        <div
-                            style={{
-                                width: 8,
-                                height: 8,
-                                borderRadius: 2,
-                                background: color,
-                            }}
-                        />
+            <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 4 }}>
+                {[{ label: "Ventas", color: ACCENT }, { label: "Compras", color: BLUE }].map(({ label, color }) => (
+                    <div key={label} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--muted-foreground)" }}>
+                        <div style={{ width: 8, height: 8, borderRadius: 2, background: color, flexShrink: 0 }} />
                         {label}
                     </div>
                 ))}

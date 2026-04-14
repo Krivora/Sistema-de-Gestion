@@ -8,9 +8,9 @@ router.get("/",                   allow("read",   "users"), UserController.getAl
 router.get("/:id",                allow("read",   "users"), UserController.getById);
 router.post("/",                  allow("create", "users"), UserController.create);
 router.put("/:id",                allow("update", "users"), UserController.update);
+router.patch("/:id/activate", allow("update", "users"), UserController.activateUser);
 router.patch("/:id/deactivate",   allow("delete", "users"), UserController.deactivateUser);
 router.patch("/:id/delete",       allow("delete", "users"), UserController.deleteUser);
-// dark-mode: no requiere permiso CASL pero sí authRequired (viene de index.js)
 router.patch("/:id/dark-mode",    UserController.updateDarkMode);
 
 export default router;

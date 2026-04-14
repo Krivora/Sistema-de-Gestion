@@ -27,8 +27,20 @@ export async function update(req, res, next) {
   } catch (err) { next(err); }
 }
 
+export async function activateBranch(req, res, next) {
+  try {
+    res.json(await BranchService.activateBranch(req.params.id, req.user, extractRequestMeta(req)));
+  } catch (err) { next(err); }
+}
+
 export async function deactivateBranch(req, res, next) {
   try {
     res.json(await BranchService.deactivateBranch(req.params.id, req.user, extractRequestMeta(req)));
+  } catch (err) { next(err); }
+}
+
+export async function deleteBranch(req, res, next) {
+  try {
+    res.json(await BranchService.deleteBranch(req.params.id, req.user, extractRequestMeta(req)));
   } catch (err) { next(err); }
 }

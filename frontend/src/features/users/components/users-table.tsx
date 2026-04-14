@@ -11,6 +11,7 @@ import {
 import { Users, MoreHorizontal } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import type { User } from "@/lib/api/users"
+import type { UserConfirmType } from "@/features/users/hooks/use-users"
 
 const STATUS_LABEL: Record<User["status"], string> = {
   active: "Activo", inactive: "Inactivo", deleted: "Eliminado",
@@ -24,14 +25,14 @@ interface UsersTableProps {
   loading: boolean
   hasActiveFilters: boolean
   onEdit: (u: User) => void
-  onDeactivate: (u: User) => void
-  onDelete: (u: User) => void
+  onActivate: (u: User) => void
+  onConfirm: (type: UserConfirmType, u: User) => void
 }
 
 const columns = (
   onEdit: (u: User) => void,
-  onDeactivate: (u: User) => void,
-  onDelete: (u: User) => void,
+  onActivate: (u: User) => void,
+  onConfirm: (type: UserConfirmType, u: User) => void,
 ): ColumnDef<User>[] => [
   {
     key: "name", header: "Usuario", width: "25%",
@@ -55,30 +56,43 @@ const columns = (
   },
   {
     key: "actions", header: "", width: 48,
-    cell: (u) => (
-      <DropdownMenu>
-        <DropdownMenuTrigger className={buttonVariants({ variant: "ghost", size: "icon" }) + " h-8 w-8"}>
-          <MoreHorizontal size={16} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onEdit(u)}>Editar</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          {u.status === "active" && (
-            <DropdownMenuItem onClick={() => onDeactivate(u)}>Desactivar</DropdownMenuItem>
-          )}
-          {u.status === "inactive" && (
-            <DropdownMenuItem onClick={() => onDelete(u)} variant="destructive">Eliminar</DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
+    cell: (u) => {
+      const isActive = u.status === "active"
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger className={buttonVariants({ variant: "ghost", size: "icon" }) + " h-8 w-8"}>
+            <MoreHorizontal size={16} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {isActive && (
+              <>
+                <DropdownMenuItem onClick={() => onEdit(u)}>Editar</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onConfirm("deactivate", u)} variant="destructive">
+                  Desactivar
+                </DropdownMenuItem>
+              </>
+            )}
+            {!isActive && (
+              <>
+                <DropdownMenuItem onClick={() => onActivate(u)}>Activar</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onConfirm("delete", u)} variant="destructive">
+                  Eliminar
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )
+    },
   },
 ]
 
-export function UsersTable({ users, loading, hasActiveFilters, onEdit, onDeactivate, onDelete }: UsersTableProps) {
+export function UsersTable({ users, loading, hasActiveFilters, onEdit, onActivate, onConfirm }: UsersTableProps) {
   return (
     <DataTable
-      columns={columns(onEdit, onDeactivate, onDelete)}
+      columns={columns(onEdit, onActivate, onConfirm)}
       data={users}
       loading={loading}
       rowKey={(u) => u.id}

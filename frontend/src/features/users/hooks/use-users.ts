@@ -5,9 +5,15 @@ import { getApiError } from "@/lib/input-helpers"
 import { useEntity } from "@/store/entity.store"
 import { useTableFilters } from "@/hooks/use-table-filters"
 
+export type UserConfirmType = "deactivate" | "delete"
+
 export function useUsers() {
   const users = useEntity<User>("users")
   const [filterStatus, setFilterStatus] = useState<"all" | User["status"]>("all")
+
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean; type: UserConfirmType; user: User | null
+  }>({ open: false, type: "deactivate", user: null })
 
   useEffect(() => {
     users.load(() => usersApi.list())
@@ -25,34 +31,48 @@ export function useUsers() {
         const matchStatus = filterStatus === "all" || u.status === filterStatus
         return matchSearch && matchStatus
       },
+      extraDeps: [filterStatus],
     })
-
-  useEffect(() => { setPage(1) }, [filterStatus])
 
   const activeCount = users.data.filter((u) => u.status === "active").length
   const hasActiveFilters = !!(search || filterStatus !== "all")
 
-  async function handleDeactivate(user: User) {
-    users.optimisticUpdate(user.id, { status: "inactive" })
+  async function handleActivate(user: User) {
+    users.optimisticUpdate(user.id, { status: "active" })
     try {
-      await usersApi.deactivate(user.id)
-      sileo.success({ title: `"${user.name}" desactivado` })
+      await usersApi.activate(user.id)
+      sileo.success({ title: `"${user.name}" activado` })
       users.load(usersApi.list, true)
     } catch (err) {
       users.load(usersApi.list, true)
-      sileo.error({ title: getApiError(err, "Error al desactivar usuario") })
+      sileo.error({ title: getApiError(err, "Error al activar usuario") })
     }
   }
 
-  async function handleDelete(user: User) {
-    users.optimisticRemove(user.id)
+  function openConfirm(type: UserConfirmType, user: User) {
+    setConfirmDialog({ open: true, type, user })
+  }
+
+  async function handleConfirm() {
+    const { type, user } = confirmDialog
+    if (!user) return
+    setConfirmDialog((d) => ({ ...d, open: false }))
+
+    if (type === "deactivate") users.optimisticUpdate(user.id, { status: "inactive" })
+    else                       users.optimisticRemove(user.id)
+
     try {
-      await usersApi.delete(user.id)
-      sileo.success({ title: `"${user.name}" eliminado` })
+      if (type === "deactivate") {
+        await usersApi.deactivate(user.id)
+        sileo.success({ title: `"${user.name}" desactivado` })
+      } else {
+        await usersApi.delete(user.id)
+        sileo.success({ title: `"${user.name}" eliminado` })
+      }
       users.load(usersApi.list, true)
     } catch (err) {
       users.load(usersApi.list, true)
-      sileo.error({ title: getApiError(err, "Error al eliminar usuario") })
+      sileo.error({ title: getApiError(err, type === "deactivate" ? "Error al desactivar" : "Error al eliminar") })
     }
   }
 
@@ -63,7 +83,8 @@ export function useUsers() {
     search, setSearch,
     filterStatus, setFilterStatus,
     page, setPage, pageSize, setPageSize, totalPages,
-    handleDeactivate, handleDelete,
+    handleActivate, openConfirm, handleConfirm,
     reload: () => users.load(usersApi.list, true),
+    confirmDialog, setConfirmDialog,
   }
 }

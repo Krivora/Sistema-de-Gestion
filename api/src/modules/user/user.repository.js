@@ -9,32 +9,33 @@ const BASE_SELECT = `
   LEFT JOIN roles r ON r.id = u.role_id
 `;
 
-export async function findAllGlobal(status = "active") {
+export async function findAllGlobal(status = null) {
   const params = [];
-  const where  = VALID_STATUSES.includes(status)
+  const where = status && VALID_STATUSES.includes(status)
     ? (params.push(status), "WHERE u.status = $1")
-    : "WHERE u.status = 'active'";
+    : "WHERE u.status != 'deleted'";
 
   const { rows } = await pool.query(
-    `${BASE_SELECT}
-     LEFT JOIN clients c ON c.id = u.client_id
+    `${BASE_SELECT} LEFT JOIN clients c ON c.id = u.client_id
      ${where} ORDER BY u.id ASC`,
     params
   );
   return rows;
 }
 
-export async function findAll(clientId, status = "active") {
+export async function findAll(clientId, status = null) {
   const params = [clientId];
   let where = "WHERE u.client_id = $1";
 
-  if (VALID_STATUSES.includes(status)) {
+  if (status && VALID_STATUSES.includes(status)) {
     params.push(status);
     where += ` AND u.status = $${params.length}`;
+  } else {
+    where += " AND u.status != 'deleted'";
   }
 
   const { rows } = await pool.query(
-   `${BASE_SELECT} ${where} ORDER BY u.id ASC`,
+    `${BASE_SELECT} ${where} ORDER BY u.id ASC`,
     params
   );
   return rows;
@@ -73,6 +74,15 @@ export async function update(id, clientId, { name, email, role_id, branch_id }) 
      WHERE id=$5 AND client_id=$6
      RETURNING id, name, email, role_id, branch_id, dark_mode, status`,
     [name, email, role_id, branch_id ?? null, id, clientId]
+  );
+  return rows[0] ?? null;
+}
+
+export async function activate(id) {
+  const { rows } = await pool.query(
+    `UPDATE users SET status='active', updated_at=NOW()
+     WHERE id=$1 RETURNING id, name, email, status`,
+    [id]
   );
   return rows[0] ?? null;
 }
