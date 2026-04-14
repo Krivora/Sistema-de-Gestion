@@ -30,23 +30,41 @@ export default function SalesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Ventas</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {postedCount} venta{postedCount !== 1 ? "s" : ""} registrada{postedCount !== 1 ? "s" : ""}
-          </p>
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-semibold">Ventas</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {postedCount} venta{postedCount !== 1 ? "s" : ""} registrada
+              {postedCount !== 1 ? "s" : ""}
+            </p>
+          </div>
+
+          <Link
+            href="/dashboard/sales/new"
+            className={buttonVariants({ size: "sm" }) + " w-full sm:w-auto"}
+          >
+            <Plus size={16} className="sm:mr-2" />
+            <span className="sm:inline">Nueva venta</span>
+          </Link>
         </div>
-        <Link href="/dashboard/sales/new" className={buttonVariants({ size: "sm" })}>
-          <Plus size={16} className="mr-2" />Nueva venta
-        </Link>
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-50 max-w-sm">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Buscar por folio, cliente, sucursal..." value={search}
-            onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3">
+          <div className="relative w-full sm:flex-1 sm:min-w-[220px] sm:max-w-sm">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              placeholder="Buscar por folio, cliente, sucursal..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </div>
 
         <Select value={filterStatus} onValueChange={(v) => setFilterStatus((v ?? "all") as typeof filterStatus)}>
