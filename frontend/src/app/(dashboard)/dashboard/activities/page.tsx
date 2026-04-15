@@ -37,7 +37,7 @@ export default function ActivitiesPage() {
 
       {/* Filtros */}
       <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
+        <div className="relative flex-1 min-w-50 max-w-sm">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar descripción, usuario..."
@@ -47,8 +47,8 @@ export default function ActivitiesPage() {
           />
         </div>
 
-        <Select value={filterAction} onValueChange={setFilterAction}>
-          <SelectTrigger className="w-[180px]">
+        <Select value={filterAction} onValueChange={(v) => v && setFilterAction(v)}>
+          <SelectTrigger className="w-45">
             <SelectValue placeholder="Acción">
               {filterAction === "all" ? "Todas las acciones" : (ACTION_LABELS[filterAction] ?? filterAction)}
             </SelectValue>
@@ -61,8 +61,8 @@ export default function ActivitiesPage() {
           </SelectContent>
         </Select>
 
-        <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-[180px]">
+        <Select value={filterCategory} onValueChange={(v) => v && setFilterCategory(v)}>
+          <SelectTrigger className="w-45">
             <SelectValue placeholder="Categoría">
               {filterCategory === "all" ? "Todas las categorías" : (CATEGORY_LABELS[filterCategory] ?? filterCategory)}
             </SelectValue>
@@ -75,8 +75,8 @@ export default function ActivitiesPage() {
           </SelectContent>
         </Select>
 
-        <Select value={filterSeverity} onValueChange={setFilterSeverity}>
-          <SelectTrigger className="w-[150px]">
+        <Select value={filterSeverity} onValueChange={(v) => v && setFilterSeverity(v)}>
+          <SelectTrigger className="w-37.5">
             <SelectValue placeholder="Nivel">
               {filterSeverity === "all" ? "Todos los niveles" : (SEVERITY_LABELS[filterSeverity] ?? filterSeverity)}
             </SelectValue>
@@ -89,8 +89,8 @@ export default function ActivitiesPage() {
           </SelectContent>
         </Select>
 
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[150px]">
+        <Select value={filterStatus} onValueChange={(v) => v && setFilterStatus(v)}>
+          <SelectTrigger className="w-37.5">
             <SelectValue placeholder="Estado">
               {filterStatus === "all" ? "Todos los estados" : filterStatus}
             </SelectValue>

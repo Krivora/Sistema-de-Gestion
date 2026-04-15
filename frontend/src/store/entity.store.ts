@@ -68,9 +68,10 @@ export const useEntityStore = create<EntityStoreState>((set, get) => ({
         ...s.entities,
         [key]: {
           ...s.entities[key],
-          data: (s.entities[key]?.data ?? []).map((item) =>
-            (item as { id: number }).id === id ? { ...item, ...patch } : item
-          ),
+          data: (s.entities[key]?.data ?? []).map((item) => {
+            const obj = item as Record<string, unknown>
+            return obj.id === id ? { ...obj, ...patch } : item
+          }),
         },
       },
     })),

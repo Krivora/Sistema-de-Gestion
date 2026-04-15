@@ -6,6 +6,7 @@ import { useEntity } from "@/store/entity.store"
 import { useTableFilters } from "@/hooks/use-table-filters"
 import { useAuthStore } from "@/store/auth.store"
 import { generateSaleReceipt } from "@/lib/pdf/sale-receipt"
+import { getApiError } from "@/lib/input-helpers"
 
 export function useSales() {
   const user = useAuthStore((s) => s.user)
@@ -39,7 +40,7 @@ export function useSales() {
         const matchTo = !dateTo || s.created_at <= dateTo + "T23:59:59"
         return matchSearch && matchStatus && matchBranch && matchPayment && matchFrom && matchTo
       },
-        extraDeps: [filterStatus, filterBranch, filterPayment, dateFrom, dateTo],
+      extraDeps: [filterStatus, filterBranch, filterPayment, dateFrom, dateTo],
     })
 
   const hasActiveFilters = !!(search || filterStatus !== "all" || filterBranch !== "all" || filterPayment !== "all" || dateFrom || dateTo)
@@ -54,6 +55,15 @@ export function useSales() {
     setDateTo("")
   }
 
+  async function handlePost(id: number) {
+    try {
+      await salesApi.post(id)  // ajusta el nombre del método según tu API
+      sileo.success({ title: "Venta publicada correctamente" })
+      entity.load(salesApi.list, true)  // recarga la lista
+    } catch (err) {
+      sileo.error({ title: getApiError(err, "Error al publicar venta") })
+    }
+  }
   async function handleDownloadPdf(sale: Sale) {
     const opts = {
       businessName: user?.business_name ?? sale.branch_name,
@@ -87,6 +97,7 @@ export function useSales() {
     clearFilters,
     page, setPage, pageSize, setPageSize,
     filtered, paginated, totalPages,
+    handlePost,
     handleDownloadPdf,
     reload: () => entity.load(salesApi.list, true),
   }

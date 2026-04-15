@@ -40,7 +40,7 @@ export function BranchProductsFilters({
       </div>
 
       {showBranchFilter && (
-        <Select value={filterBranch} onValueChange={onBranchChange}>
+        <Select value={filterBranch} onValueChange={(v) => v !== null && onBranchChange(v)}>
           <SelectTrigger className="w-45">
             <SelectValue placeholder="Sucursal">
               {filterBranch === "all" || !filterBranch

@@ -81,8 +81,8 @@ export function useDashboardData(
         lowStock:
           stockRes.status === "fulfilled"
             ? stockRes.value.data
-                .filter((s) => s.stock <= LOW_STOCK_THRESHOLD)
-                .sort((a, b) => a.stock - b.stock)
+                .filter((s: { stock: number }) => s.stock <= LOW_STOCK_THRESHOLD)
+                .sort((a: { stock: number }, b: { stock: number }) => a.stock - b.stock)
                 .slice(0, 8)
             : [],
       })

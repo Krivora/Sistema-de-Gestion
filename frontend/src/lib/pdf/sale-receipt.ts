@@ -229,7 +229,7 @@ export async function generateSaleReceipt(
         margin: { left: M, right: M },
         tableWidth: W - M * 2,
         head: [["Producto", "Cant.", "Precio", "Importe"]],
-        body: sale.items.map((item) => [
+        body: (sale.items ?? []).map((item) => [
             item.product_name,
             Math.floor(item.qty),
             fmt(item.unit_price),
@@ -320,7 +320,7 @@ export async function generateSaleReceipt(
         (sum, i) => sum + Number(i.qty),
         0
     );
-    const formattedUnits = Math.floor(totalUnits);
+    const formattedUnits = Math.floor(totalUnits ?? 0);
 
     doc.setFont("helvetica", "normal")
     doc.setFontSize(8)

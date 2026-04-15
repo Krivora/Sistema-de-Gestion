@@ -13,6 +13,14 @@ export default function NewSalePage() {
     const user = useAuthStore((s) => s.user)
     const sale = useNewSale()
 
+    const handleBranchChange = (v: string | null) => {
+        if (v) {
+            sale.setBranchId(v)
+            if (sale.cart.length) {
+                sale.cart.forEach(c => sale.removeFromCart(c.product_id))
+            }
+        }
+    }
 
     return (
         <div className="space-y-6">
@@ -32,8 +40,8 @@ export default function NewSalePage() {
                         paymentMethod={sale.paymentMethod}
                         docNo={sale.docNo}
                         disableBranch={!!user?.branch_id}
-                        onBranchChange={(v) => { sale.setBranchId(v); sale.cart.length && sale.cart.forEach(c => sale.removeFromCart(c.product_id)) }}
-                        onPaymentChange={sale.setPaymentMethod}
+                        onBranchChange={handleBranchChange}
+                        onPaymentChange={(v) => v && sale.setPaymentMethod(v)}
                         onDocNoChange={sale.setDocNo}
                     />
                     <SaleCustomerPanel

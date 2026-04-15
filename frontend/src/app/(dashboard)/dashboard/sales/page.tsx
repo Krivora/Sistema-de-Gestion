@@ -25,6 +25,7 @@ export default function SalesPage() {
     clearFilters,
     page, setPage, pageSize, setPageSize,
     filtered, paginated, totalPages,
+    handlePost,
     handleDownloadPdf,
   } = useSales()
 
@@ -128,6 +129,7 @@ export default function SalesPage() {
         hasActiveFilters={hasActiveFilters}
         onDetail={setDetailId}
         onDownloadPdf={handleDownloadPdf}
+        onPost={handlePost}
       />
 
       {!loading && filtered.length > 0 && (

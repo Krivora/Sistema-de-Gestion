@@ -54,9 +54,9 @@ function BranchProductForm({
     progress: number
     filledRequired: number
     margin: string | null
-    onBranchChange: (v: string) => void
-    onProductChange: (v: string) => void
-    onCurrencyChange: (v: string) => void
+    onBranchChange: (v: string | null) => void
+    onProductChange: (v: string | null) => void
+    onCurrencyChange: (v: string | null) => void
     onNumericChange: (field: keyof CreateBranchProductDto, value: string, decimals?: boolean) => void
     onToggleOptional: () => void
     onSubmit: () => void
@@ -335,9 +335,9 @@ export function BranchProductDialog({ open, onClose, branchProduct, onSuccess }:
     const formProps = {
         form, branchProduct, loading, errors, optionalOpen, branches, products,
         selectedBranch, selectedProduct, progress, filledRequired, margin,
-        onBranchChange: (v: string) => { setForm((p) => ({ ...p, branch_id: Number(v) })); setErrors((p) => ({ ...p, branch_id: undefined })) },
-        onProductChange: (v: string) => { setForm((p) => ({ ...p, product_id: Number(v) })); setErrors((p) => ({ ...p, product_id: undefined })) },
-        onCurrencyChange: (v: string) => setForm((p) => ({ ...p, currency: v })),
+        onBranchChange: (v: string | null) => { if (v) { setForm((p) => ({ ...p, branch_id: Number(v) })); setErrors((p) => ({ ...p, branch_id: undefined })) } },
+        onProductChange: (v: string | null) => { if (v) { setForm((p) => ({ ...p, product_id: Number(v) })); setErrors((p) => ({ ...p, product_id: undefined })) } },
+        onCurrencyChange: (v: string | null) => { if (v) setForm((p) => ({ ...p, currency: v })) },
         onNumericChange: handleNumericChange,
         onToggleOptional: () => setOptionalOpen((p) => !p),
         onSubmit: handleSubmit,

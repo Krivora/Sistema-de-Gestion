@@ -168,7 +168,6 @@ export function ActivitiesTable({ items, loading, hasActiveFilters }: {
       data={items}
       loading={loading}
       rowKey={(a) => a.id}
-      expandedRow={(a) => expanded.has(a.id) ? <ActivityDetail activity={a} /> : null}
       emptyIcon={<ActivityIcon size={32} className="text-muted-foreground/40" />}
       emptyText="No hay actividad registrada"
       emptyFilterText="Sin resultados para los filtros aplicados"

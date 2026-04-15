@@ -1,7 +1,7 @@
 import { DataTable, type ColumnDef } from "@/components/shared/table/data-table"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
-import { ShoppingBag, Eye, FileDown, CheckCircle, MoreHorizontal } from "lucide-react"
+import { ShoppingBag, MoreHorizontal } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { PAYMENT_METHODS, type Sale } from "@/lib/api/sales"
 import {

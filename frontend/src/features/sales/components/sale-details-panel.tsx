@@ -17,8 +17,8 @@ interface Props {
     paymentMethod: string
     docNo: string
     disableBranch: boolean
-    onBranchChange: (v: string) => void
-    onPaymentChange: (v: string) => void
+    onBranchChange: (v: string | null) => void
+    onPaymentChange: (v: string | null) => void
     onDocNoChange: (v: string) => void
 }
 
