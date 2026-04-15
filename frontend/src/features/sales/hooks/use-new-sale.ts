@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { sileo } from "sileo"
-import { salesApi, type SaleItemDto, PAYMENT_METHODS } from "@/lib/api/sales"
+import { salesApi, type SaleItemDto } from "@/lib/api/sales"
 import { branchesApi, type Branch } from "@/lib/api/branches"
 import { customersApi, type Customer } from "@/lib/api/customers"
 import { branchProductsApi, type BranchProduct } from "@/lib/api/branch-products"
@@ -39,7 +39,7 @@ export function useNewSale() {
     const [customerSearchOpen, setCustomerSearchOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [loadingProducts, setLoadingProducts] = useState(false)
-
+    const [postSale, setPostSale] = useState(false)
     const searchRef = useRef<HTMLDivElement>(null)
     const customerSearchRef = useRef<HTMLDivElement>(null)
 
@@ -131,7 +131,7 @@ export function useNewSale() {
     const stockWarnings = cart.filter((c) => Number(c.qty) > c.current_stock)
     const canSubmit = branchId && cart.length > 0 && cart.every((c) => Number(c.qty) > 0 && Number(c.unit_price) >= 0)
 
-    async function handleSubmit() {
+    async function handleSubmit(post: boolean) {
         if (!canSubmit) return
         setLoading(true)
         try {
@@ -148,8 +148,9 @@ export function useNewSale() {
                 payment_method: paymentMethod,
                 doc_no: docNo || undefined,
                 items,
+                post,
             })
-            sileo.success({ title: "Venta registrada correctamente" })
+            sileo.success({ title: post ? "Venta registrada y publicada" : "Venta guardada como abierta" })
             router.push("/dashboard/sales")
         } catch (err) {
             sileo.error({ title: getApiError(err, "Error al registrar venta") })
@@ -159,15 +160,18 @@ export function useNewSale() {
     }
 
     return {
+        handleSubmitOpen:  () => handleSubmit(false),
+        handleSubmitPost:  () => handleSubmit(true),
         // state
         branches, customers, branchId, customerId, customerName, customerPhone,
         paymentMethod, docNo, cart, productSearch, searchOpen, customerSearch,
         customerSearchOpen, loading, loadingProducts, subtotal, stockWarnings, canSubmit,
         filteredProducts, filteredCustomers,
+        postSale, setPostSale,
         // refs
         searchRef, customerSearchRef,
         setCustomerName,
-        setCustomerPhone,  
+        setCustomerPhone,
         // setters
         setBranchId, setPaymentMethod, setDocNo, setProductSearch, setSearchOpen,
         setCustomerSearch, setCustomerSearchOpen,

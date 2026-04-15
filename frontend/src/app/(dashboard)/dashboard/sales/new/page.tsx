@@ -12,7 +12,7 @@ import { SaleCartPanel } from "@/features/sales/components/sale-cart-panel"
 export default function NewSalePage() {
     const user = useAuthStore((s) => s.user)
     const sale = useNewSale()
-    
+
 
     return (
         <div className="space-y-6">
@@ -59,7 +59,8 @@ export default function NewSalePage() {
                         canSubmit={sale.canSubmit}
                         loading={sale.loading}
                         branchId={sale.branchId}
-                        onSubmit={sale.handleSubmit}
+                        onSubmitOpen={sale.handleSubmitOpen}
+                        onSubmitPost={sale.handleSubmitPost}
                     />
                 </div>
                 <div className="lg:col-span-2">

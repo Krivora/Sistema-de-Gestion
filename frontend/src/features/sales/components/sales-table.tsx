@@ -1,10 +1,13 @@
 import { DataTable, type ColumnDef } from "@/components/shared/table/data-table"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
-import { ShoppingBag, Eye, FileDown } from "lucide-react"
+import { ShoppingBag, Eye, FileDown, CheckCircle, MoreHorizontal } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { PAYMENT_METHODS, type Sale } from "@/lib/api/sales"
-
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 const STATUS_LABEL: Record<Sale["status"], string> = {
   open: "Abierta",
   posted: "Publicada",
@@ -33,19 +36,17 @@ interface SalesTableProps {
   hasActiveFilters: boolean
   onDetail: (id: number) => void
   onDownloadPdf: (sale: Sale) => void
+  onPost: (id: number) => void          // <-- agrega
 }
 
 /* ────────────────────────────────
    Card móvil
 ──────────────────────────────── */
-function SaleCard({
-  sale,
-  onDetail,
-  onDownloadPdf,
-}: {
+function SaleCard({ sale, onDetail, onDownloadPdf, onPost }: {
   sale: Sale
   onDetail: (id: number) => void
   onDownloadPdf: (sale: Sale) => void
+  onPost: (id: number) => void
 }) {
   return (
     <div className="bg-card border rounded-xl p-4 space-y-3">
@@ -90,28 +91,27 @@ function SaleCard({
           </p>
           <p className="font-semibold">{formatCurrency(sale.total)}</p>
         </div>
-        <div className="flex gap-1">
-          <button
-            aria-label="Ver detalle"
-            onClick={() => onDetail(sale.id)}
-            className={buttonVariants({
-              variant: "ghost",
-              size: "icon",
-            })}
-          >
-            <Eye size={16} />
-          </button>
-          <button
-            aria-label="Descargar PDF"
-            onClick={() => onDownloadPdf(sale)}
-            className={buttonVariants({
-              variant: "ghost",
-              size: "icon",
-            })}
-          >
-            <FileDown size={16} />
-          </button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger className={buttonVariants({ variant: "ghost", size: "icon" })}>
+            <MoreHorizontal size={16} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onDetail(sale.id)}>
+              Ver detalle
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onDownloadPdf(sale)}>
+              Descargar PDF
+            </DropdownMenuItem>
+            {sale.status === "open" && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onPost(sale.id)}>
+                  Publicar venta
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   )
@@ -144,126 +144,120 @@ function SkeletonCard() {
 ──────────────────────────────── */
 const columns = (
   onDetail: (id: number) => void,
-  onDownloadPdf: (sale: Sale) => void
+  onDownloadPdf: (sale: Sale) => void,
+  onPost: (id: number) => void,         // <-- agrega
 ): ColumnDef<Sale>[] => [
-  {
-    key: "doc_no",
-    header: "Folio",
-    width: 110,
-    cell: (s) => (
-      <span className="font-mono font-medium">{s.doc_no}</span>
-    ),
-  },
-  {
-    key: "customer",
-    header: "Cliente",
-    width: "22%",
-    cell: (s) =>
-      s.customer_name ? (
+    {
+      key: "doc_no",
+      header: "Folio",
+      width: 110,
+      cell: (s) => (
+        <span className="font-mono font-medium">{s.doc_no}</span>
+      ),
+    },
+    {
+      key: "customer",
+      header: "Cliente",
+      width: "22%",
+      cell: (s) =>
+        s.customer_name ? (
+          <span className="text-muted-foreground truncate block">
+            {s.customer_name}
+          </span>
+        ) : (
+          <span className="italic opacity-50 text-muted-foreground">
+            Sin cliente
+          </span>
+        ),
+    },
+    {
+      key: "branch",
+      header: "Sucursal",
+      width: "18%",
+      cell: (s) => (
         <span className="text-muted-foreground truncate block">
-          {s.customer_name}
-        </span>
-      ) : (
-        <span className="italic opacity-50 text-muted-foreground">
-          Sin cliente
+          {s.branch_name}
         </span>
       ),
-  },
-  {
-    key: "branch",
-    header: "Sucursal",
-    width: "18%",
-    cell: (s) => (
-      <span className="text-muted-foreground truncate block">
-        {s.branch_name}
-      </span>
-    ),
-  },
-  {
-    key: "payment",
-    header: "Pago",
-    width: 130,
-    cell: (s) => (
-      <span className="text-muted-foreground">
-        {
-          PAYMENT_METHODS.find(
-            (m) => m.value === s.payment_method
-          )?.label
-        }
-      </span>
-    ),
-  },
-  {
-    key: "total",
-    header: "Total",
-    width: 110,
-    cell: (s) => (
-      <span className="font-semibold">
-        {formatCurrency(s.total)}
-      </span>
-    ),
-  },
-  {
-    key: "status",
-    header: "Estado",
-    width: 100,
-    cell: (s) => (
-      <Badge variant={STATUS_VARIANT[s.status]}>
-        {STATUS_LABEL[s.status]}
-      </Badge>
-    ),
-  },
-  {
-    key: "created_at",
-    header: "Fecha",
-    width: 120,
-    cell: (s) => (
-      <span className="text-muted-foreground whitespace-nowrap">
-        {formatDate(s.created_at)}
-      </span>
-    ),
-  },
-  {
-    key: "actions",
-    header: "",
-    width: 72,
-    cell: (s) => (
-      <div className="flex items-center gap-1">
-        <button
-          aria-label="Ver detalle"
-          onClick={() => onDetail(s.id)}
-          className={buttonVariants({
-            variant: "ghost",
-            size: "icon",
-          })}
-        >
-          <Eye size={15} />
-        </button>
-        <button
-          aria-label="Descargar PDF"
-          onClick={() => onDownloadPdf(s)}
-          className={buttonVariants({
-            variant: "ghost",
-            size: "icon",
-          })}
-        >
-          <FileDown size={15} />
-        </button>
-      </div>
-    ),
-  },
-]
+    },
+    {
+      key: "payment",
+      header: "Pago",
+      width: 130,
+      cell: (s) => (
+        <span className="text-muted-foreground">
+          {
+            PAYMENT_METHODS.find(
+              (m) => m.value === s.payment_method
+            )?.label
+          }
+        </span>
+      ),
+    },
+    {
+      key: "total",
+      header: "Total",
+      width: 110,
+      cell: (s) => (
+        <span className="font-semibold">
+          {formatCurrency(s.total)}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Estado",
+      width: 100,
+      cell: (s) => (
+        <Badge variant={STATUS_VARIANT[s.status]}>
+          {STATUS_LABEL[s.status]}
+        </Badge>
+      ),
+    },
+    {
+      key: "created_at",
+      header: "Fecha",
+      width: 120,
+      cell: (s) => (
+        <span className="text-muted-foreground whitespace-nowrap">
+          {formatDate(s.created_at)}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "",
+      width: 48,
+      cell: (s) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger className={buttonVariants({ variant: "ghost", size: "icon" }) + " h-8 w-8"}>
+            <MoreHorizontal size={16} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onDetail(s.id)}>
+              Ver detalle
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onDownloadPdf(s)}>
+              Descargar PDF
+            </DropdownMenuItem>
+            {s.status === "open" && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onPost(s.id)}>
+                  Publicar venta
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ]
 
 /* ────────────────────────────────
    Componente principal
 ──────────────────────────────── */
-export function SalesTable({
-  sales,
-  loading,
-  hasActiveFilters,
-  onDetail,
-  onDownloadPdf,
-}: SalesTableProps) {
+export function SalesTable({ sales, loading, hasActiveFilters, onDetail, onDownloadPdf, onPost }: SalesTableProps) {
   return (
     <>
       {/* Mobile */}
@@ -284,12 +278,7 @@ export function SalesTable({
           </div>
         ) : (
           sales.map((sale) => (
-            <SaleCard
-              key={sale.id}
-              sale={sale}
-              onDetail={onDetail}
-              onDownloadPdf={onDownloadPdf}
-            />
+            <SaleCard key={sale.id} sale={sale} onDetail={onDetail} onDownloadPdf={onDownloadPdf} onPost={onPost} />
           ))
         )}
       </div>
@@ -297,7 +286,7 @@ export function SalesTable({
       {/* Desktop */}
       <div className="hidden sm:block w-full overflow-x-auto">
         <DataTable
-          columns={columns(onDetail, onDownloadPdf)}
+          columns={columns(onDetail, onDownloadPdf, onPost)}
           data={sales}
           loading={loading}
           rowKey={(s) => s.id}

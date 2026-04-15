@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { ShoppingBag, AlertCircle, AlertTriangle } from "lucide-react"
+import { ShoppingBag, AlertCircle, AlertTriangle, Save } from "lucide-react"
 import { PAYMENT_METHODS } from "@/lib/api/sales"
 import type { CartItem } from "../hooks/use-new-sale"
 
@@ -16,10 +16,11 @@ interface Props {
     canSubmit: boolean | string
     loading: boolean
     branchId: string
-    onSubmit: () => void
+    onSubmitOpen: () => void
+    onSubmitPost: () => void
 }
 
-export function SaleSummaryPanel({ cart, subtotal, paymentMethod, stockWarnings, canSubmit, loading, branchId, onSubmit }: Props) {
+export function SaleSummaryPanel({ cart, subtotal, paymentMethod, stockWarnings, canSubmit, loading, branchId, onSubmitOpen, onSubmitPost }: Props) {
     return (
         <div className="border rounded-lg p-5 space-y-4">
             <h2 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Resumen</h2>
@@ -39,16 +40,34 @@ export function SaleSummaryPanel({ cart, subtotal, paymentMethod, stockWarnings,
                     <span>Total</span><span>{formatCurrency(subtotal)}</span>
                 </div>
             </div>
+
             {stockWarnings.length > 0 && (
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 text-xs">
                     <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                     <span>{stockWarnings.map((w) => w.product_name).join(", ")} supera el stock disponible</span>
                 </div>
             )}
-            <Button className="w-full" onClick={onSubmit} disabled={!canSubmit || loading}>
-                <ShoppingBag size={16} className="mr-2" />
-                {loading ? "Registrando..." : "Registrar venta"}
-            </Button>
+
+            <div className="flex flex-col gap-2">
+                <Button
+                    className="w-full"
+                    onClick={onSubmitPost}
+                    disabled={!canSubmit || loading}
+                >
+                    <ShoppingBag size={16} className="mr-2" />
+                    {loading ? "Registrando..." : "Registrar y publicar"}
+                </Button>
+                <Button
+                    className="w-full"
+                    variant="outline"
+                    onClick={onSubmitOpen}
+                    disabled={!canSubmit || loading}
+                >
+                    <Save size={16} className="mr-2" />
+                    {loading ? "Guardando..." : "Guardar abierta"}
+                </Button>
+            </div>
+
             {!branchId && (
                 <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
                     <AlertCircle size={12} />

@@ -33,15 +33,6 @@ export interface SaleItemDto {
     unit_price: number
 }
 
-export interface CreateSaleDto {
-    branch_id: number | ""
-    customer_id?: number | null
-    customer_name?: string
-    customer_phone?: string
-    payment_method?: string
-    doc_no?: string
-    items: SaleItemDto[]
-}
 
 export const PAYMENT_METHODS = [
     { value: "EFECTIVO", label: "Efectivo" },
@@ -50,9 +41,22 @@ export const PAYMENT_METHODS = [
     { value: "OTRO", label: "Otro" },
 ]
 
+export interface CreateSaleDto {
+    branch_id: number | ""
+    customer_id?: number | null
+    customer_name?: string
+    customer_phone?: string
+    payment_method?: string
+    doc_no?: string
+    items: SaleItemDto[]
+    post?: boolean          // false = open, true = posted
+}
+
 export const salesApi = {
     list: (params?: { status?: string; branch_id?: number; date_from?: string; date_to?: string }) =>
         apiClient.get<Sale[]>("/sales", { params }).then((r) => r.data),
     get: (id: number) => apiClient.get<Sale>(`/sales/${id}`).then((r) => r.data),
     create: (data: CreateSaleDto) => apiClient.post<Sale>("/sales", data).then((r) => r.data),
+    post: (id: number) => apiClient.patch<Sale>(`/sales/${id}/post`).then((r) => r.data),
+    reopen: (id: number) => apiClient.patch<Sale>(`/sales/${id}/reopen`).then((r) => r.data),
 }

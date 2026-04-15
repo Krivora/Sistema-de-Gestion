@@ -163,9 +163,9 @@ export function AdjustmentDialog({ open, onClose, onSuccess }: Props) {
             </div>
 
             {/* Body */}
-            <div className="px-6 py-5 space-y-5 flex-1 overflow-y-auto">
+            <div className="px-6 py-5 space-y-5 max-h-[65vh] overflow-y-auto">
                 {/* Sucursal + Tipo */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
                     {/* Sucursal */}
                     <div className="space-y-1.5">
                         <Label className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">
@@ -181,13 +181,17 @@ export function AdjustmentDialog({ open, onClose, onSuccess }: Props) {
                                 }))
                             }
                         >
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Selecciona sucursal" />
+                            <SelectTrigger className={SELECT_WIDTH}>
+                                <SelectValue placeholder="Selecciona sucursal">
+                                    {form.branch_id
+                                        ? selectedBranch?.name
+                                        : "Selecciona sucursal"}
+                                </SelectValue>
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="md:w-70">
                                 {branches.map((b) => (
                                     <SelectItem key={b.id} value={String(b.id)}>
-                                        {b.name}
+                                        <span className="block truncate">{b.name}</span>
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -205,14 +209,19 @@ export function AdjustmentDialog({ open, onClose, onSuccess }: Props) {
                                 setForm((p) => ({
                                     ...p,
                                     type: v as "ADJUSTMENT_IN" | "ADJUSTMENT_OUT",
-                                    note: "",
                                 }))
                             }
                         >
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Selecciona el tipo de ajuste" />
+                            <SelectTrigger className={SELECT_WIDTH}>
+                                <SelectValue placeholder="Selecciona el tipo de ajuste">
+                                    {!form.type && "Selecciona el tipo de ajuste"}
+                                    {form.type === "ADJUSTMENT_IN" &&
+                                        "↑ Entrada — aumenta stock"}
+                                    {form.type === "ADJUSTMENT_OUT" &&
+                                        "↓ Salida — disminuye stock"}
+                                </SelectValue>
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="md:w-70">
                                 <SelectItem value="ADJUSTMENT_IN">
                                     ↑ Entrada — aumenta stock
                                 </SelectItem>
@@ -242,103 +251,137 @@ export function AdjustmentDialog({ open, onClose, onSuccess }: Props) {
                         </Button>
                     </div>
 
-                    {form.items.map((item, i) => {
-                        const bp = branchProducts.find(
-                            (p) => p.product_id === item.product_id
-                        )
-                        const overStock =
-                            form.type === "ADJUSTMENT_OUT" &&
-                            bp &&
-                            item.qty > bp.current_stock
+                    {form.items.length === 0 ? (
+                        <div className="border border-dashed rounded-lg py-6 text-center">
+                            <p className="text-sm text-muted-foreground">
+                                {form.branch_id
+                                    ? "Agrega los productos a ajustar"
+                                    : "Selecciona la sucursal primero"}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {form.items.map((item, i) => {
+                                const bp = branchProducts.find(
+                                    (p) => p.product_id === item.product_id
+                                )
+                                const selectedProduct = bp
+                                const overStock =
+                                    form.type === "ADJUSTMENT_OUT" &&
+                                    bp &&
+                                    item.qty > bp.current_stock
 
-                        return (
-                            <div
-                                key={i}
-                                className="grid grid-cols-1 sm:grid-cols-[7fr_2fr_auto] gap-3 items-start p-3 rounded-lg border bg-muted/20"
-                            >
-                                {/* Producto */}
-                                <Select
-                                    value={String(item.product_id || "")}
-                                    onValueChange={(v) =>
-                                        updateItem(i, "product_id", Number(v))
-                                    }
-                                >
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Selecciona producto" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {branchProducts
-                                            .filter((bp) => bp.is_active)
-                                            .map((bp) => (
-                                                <SelectItem
-                                                    key={bp.product_id}
-                                                    value={String(bp.product_id)}
-                                                >
-                                                    {bp.product_name} ({bp.current_stock} disp.)
-                                                </SelectItem>
-                                            ))}
-                                    </SelectContent>
-                                </Select>
+                                return (
+                                    <div
+                                        key={i}
+                                        className="grid grid-cols-1 md:grid-cols-[7fr_2fr_auto] gap-3 items-start p-3 rounded-lg border bg-muted/20"
+                                    >
+                                        {/* Producto */}
+                                        <div className="space-y-1">
+                                            <Select
+                                                value={String(item.product_id || "")}
+                                                onValueChange={(v) =>
+                                                    updateItem(i, "product_id", Number(v))
+                                                }
+                                            >
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Selecciona producto">
+                                                        {selectedProduct ? (
+                                                            <span className="flex items-center justify-between gap-2 w-full">
+                                                                <span className="truncate">
+                                                                    {selectedProduct.product_name}
+                                                                </span>
+                                                                <span className="text-xs text-muted-foreground font-mono shrink-0">
+                                                                    {selectedProduct.sku}
+                                                                </span>
+                                                            </span>
+                                                        ) : (
+                                                            "Selecciona producto"
+                                                        )}
+                                                    </SelectValue>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {branchProducts
+                                                        .filter((bp) => bp.is_active)
+                                                        .map((bp) => (
+                                                            <SelectItem
+                                                                key={bp.product_id}
+                                                                value={String(bp.product_id)}
+                                                            >
+                                                                <div className="flex justify-between w-full gap-2">
+                                                                    <span className="truncate">
+                                                                        {bp.product_name}
+                                                                    </span>
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        ({bp.current_stock} disp.)
+                                                                    </span>
+                                                                </div>
+                                                            </SelectItem>
+                                                        ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
 
-                                {/* Cantidad */}
-                                <div className="space-y-1">
-                                    <Input
-                                        type="number"
-                                        min={1}
-                                        value={item.qty}
-                                        onChange={(e) =>
-                                            updateItem(i, "qty", Number(e.target.value))
-                                        }
-                                        className={cn(
-                                            "text-center w-full",
-                                            overStock &&
-                                            "border-destructive focus-visible:ring-destructive"
-                                        )}
-                                    />
-                                    {overStock && (
-                                        <p className="text-[10px] text-destructive">
-                                            Stock disponible: {Math.floor(bp?.current_stock ?? 0)}
-                                        </p>
-                                    )}
-                                </div>
+                                        {/* Cantidad */}
+                                        <div className="space-y-1">
+                                            <Input
+                                                type="number"
+                                                min={1}
+                                                value={item.qty === 0 ? "" : item.qty}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    updateItem(
+                                                        i,
+                                                        "qty",
+                                                        value === "" ? "" : Number(value)
+                                                    );
+                                                }}
+                                                className={cn(
+                                                    "text-center w-full",
+                                                    overStock &&
+                                                    "border-destructive focus-visible:ring-destructive"
+                                                )}
+                                            />
+                                            {overStock && (
+                                                <p className="text-[10px] text-destructive">
+                                                    Stock disponible: {Math.floor(bp?.current_stock ?? 0)}
+                                                </p>
+                                            )}
+                                        </div>
 
-                                {/* Eliminar */}
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                    onClick={() => removeItem(i)}
-                                >
-                                    <Trash2 size={13} />
-                                </Button>
-                            </div>
-                        )
-                    })}
+                                        {/* Eliminar */}
+                                        <div className="flex items-center justify-center pt-1">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                onClick={() => removeItem(i)}
+                                            >
+                                                <Trash2 size={13} />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
                 </div>
 
-                {/* Motivo */}
+                {/* Nota general */}
                 <div className="space-y-1.5">
-                    <Label className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">
-                        Motivo
-                    </Label>
+                    <Label className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground">Motivo</Label>
                     <Select
                         value={form.note || ""}
-                        onValueChange={(v) =>
-                            setForm((p) => ({ ...p, note: v }))
-                        }
+                        onValueChange={(v) => setForm((p) => ({ ...p, note: v || "" }))}
                         disabled={!form.type}
                     >
                         <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Selecciona el motivo" />
+                            <SelectValue placeholder={form.type ? "Selecciona el motivo" : "Selecciona el tipo primero"} />
                         </SelectTrigger>
                         <SelectContent>
-                            {(NOTE_OPTIONS[
-                                form.type as keyof typeof NOTE_OPTIONS
-                            ] ?? []).map((opt) => (
-                                <SelectItem key={opt} value={opt}>
-                                    {opt}
-                                </SelectItem>
+                            {(NOTE_OPTIONS[form.type as keyof typeof NOTE_OPTIONS] ?? []).map((opt) => (
+                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>

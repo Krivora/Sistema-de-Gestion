@@ -172,8 +172,6 @@ export function SaleDetailDialog({ saleId, onClose }: Props) {
                         <div className="flex justify-between items-center">
                             <span className="text-sm text-muted-foreground">
                                 {sale.items?.length} producto{sale.items?.length !== 1 ? "s" : ""}
-                                {" · "}
-                                {sale.items?.reduce((a, i) => a + i.qty, 0)} unidades
                             </span>
                             <div className="text-right">
                                 <p className="text-xs text-muted-foreground">Total</p>
