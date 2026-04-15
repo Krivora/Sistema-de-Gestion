@@ -118,6 +118,14 @@ export async function updateTotals(trx, saleId, clientId) {
   );
   return rows[0] ?? null;
 }
+export async function setOpen(trx, saleId, clientId) {
+  const { rows } = await trx.query(
+    `UPDATE sales SET status='open', posted_at=NULL, updated_at=NOW()
+     WHERE id=$1 AND client_id=$2 AND status='posted' RETURNING *`,
+    [saleId, clientId]
+  );
+  return rows[0] ?? null;
+}
 
 export async function setPosted(trx, saleId, clientId) {
   const { rows } = await trx.query(

@@ -16,16 +16,28 @@ export async function getById(req, res, next) {
   } catch (err) { next(err); }
 }
 
-export async function createAndPost(req, res, next) {
+export async function create(req, res, next) {
   try {
-    const { branch_id, items, customer_id, customer_name, customer_phone, payment_method, doc_no } = req.body;
+    const { branch_id, items, customer_id, customer_name, customer_phone, payment_method, doc_no, post = false } = req.body;
     if (!branch_id || !items) return res.status(400).json({ error: "branch_id e items son requeridos" });
     res.status(201).json(
-      await SaleService.createAndPostSale(
-        { branch_id, items, customer_id, customer_name, customer_phone, payment_method, doc_no },
+      await SaleService.createSale(
+        { branch_id, items, customer_id, customer_name, customer_phone, payment_method, doc_no, post },
         req.user,
         extractRequestMeta(req)
       )
     );
+  } catch (err) { next(err); }
+}
+
+export async function post(req, res, next) {
+  try {
+    res.json(await SaleService.postExistingSale(+req.params.id, req.user, extractRequestMeta(req)));
+  } catch (err) { next(err); }
+}
+
+export async function reopen(req, res, next) {
+  try {
+    res.json(await SaleService.reopenSale(+req.params.id, req.user, extractRequestMeta(req)));
   } catch (err) { next(err); }
 }
