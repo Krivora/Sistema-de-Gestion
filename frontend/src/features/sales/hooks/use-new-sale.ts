@@ -34,6 +34,8 @@ export function useNewSale() {
     const [docNo, setDocNo] = useState("")
     const [cart, setCart] = useState<CartItem[]>([])
     const [productSearch, setProductSearch] = useState("")
+    const [barcode, setBarcode] = useState("")
+    const scannerRef = useRef<HTMLInputElement>(null)
     const [searchOpen, setSearchOpen] = useState(false)
     const [customerSearch, setCustomerSearch] = useState("")
     const [customerSearchOpen, setCustomerSearchOpen] = useState(false)
@@ -93,17 +95,41 @@ export function useNewSale() {
     }, [customers, customerSearch])
 
     function addToCart(bp: BranchProduct) {
-        setCart((prev) => [...prev, {
-            product_id: bp.product_id,
-            product_name: bp.product_name,
-            sku: bp.sku,
-            qty: "1",
-            unit_price: String(bp.price),
-            current_stock: bp.current_stock,
-            min_stock: bp.min_stock,
-        }])
+
+        setCart((prev) => {
+            const existing = prev.find(
+                (c) => c.product_id === bp.product_id
+            )
+            if (existing) {
+                return prev.map((c) =>
+                    c.product_id === bp.product_id
+                        ? {
+                            ...c,
+                            qty: String(Number(c.qty) + 1)
+                        }
+                        : c
+                )
+            }
+            return [
+                ...prev,
+                {
+                    product_id: bp.product_id,
+                    product_name: bp.product_name,
+                    sku: bp.sku,
+                    qty: "1",
+                    unit_price: String(bp.price),
+                    current_stock: bp.current_stock,
+                    min_stock: bp.min_stock,
+                }
+            ]
+        })
+
         setProductSearch("")
         setSearchOpen(false)
+
+        setTimeout(() => {
+            scannerRef.current?.focus()
+        }, 50)
     }
 
     function removeFromCart(productId: number) {
@@ -159,12 +185,35 @@ export function useNewSale() {
         }
     }
 
+    function handleBarcodeScan(value: string) {
+
+    const sku = value.trim()
+
+    if (!sku) return
+
+
+    const product = branchProducts.find(
+        (p) => p.sku === sku
+    )
+    
+    if (!product) {
+            sileo.error({
+                title: `Producto no encontrado: ${sku}`
+            })
+            setBarcode("")
+            return
+        }
+        addToCart(product)
+        setBarcode("")
+
+    }
+
     return {
         handleSubmitOpen:  () => handleSubmit(false),
         handleSubmitPost:  () => handleSubmit(true),
         // state
         branches, customers, branchId, customerId, customerName, customerPhone,
-        paymentMethod, docNo, cart, productSearch, searchOpen, customerSearch,
+        paymentMethod, docNo, cart, productSearch, searchOpen, customerSearch, barcode, scannerRef,
         customerSearchOpen, loading, loadingProducts, subtotal, stockWarnings, canSubmit,
         filteredProducts, filteredCustomers,
         postSale, setPostSale,
@@ -176,6 +225,7 @@ export function useNewSale() {
         setBranchId, setPaymentMethod, setDocNo, setProductSearch, setSearchOpen,
         setCustomerSearch, setCustomerSearchOpen,
         // actions
-        addToCart, removeFromCart, updateCart, selectCustomer, clearCustomer, handleSubmit,
+        addToCart, removeFromCart, updateCart, selectCustomer,
+        clearCustomer, handleSubmit, handleBarcodeScan, setBarcode
     }
 }

@@ -48,6 +48,11 @@ export async function uploadLogo(req, res, next) {
 
     const url = `/uploads/clients/${req.params.id}/${req.file.filename}`;
     const updated = await ClientService.updateClient(req.params.id, { logo_url: url });
+
     res.json({ url, client: updated });
-  } catch (err) { next(err); }
+
+  } catch (err) { 
+    console.error("🔥 ERROR SUBIENDO LOGO:", err);
+    next(err); 
+  }
 }

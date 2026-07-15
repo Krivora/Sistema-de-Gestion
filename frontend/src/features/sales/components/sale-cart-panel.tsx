@@ -24,12 +24,20 @@ interface Props {
     onAddToCart: (bp: BranchProduct) => void
     onUpdateCart: (id: number, field: "qty" | "unit_price", v: string) => void
     onRemoveFromCart: (id: number) => void
+    barcode: string
+    scannerRef: React.RefObject<HTMLInputElement | null>
+    onBarcodeChange: (v:string)=>void
+    onBarcodeScan: (v:string)=>void
 }
 
 export function SaleCartPanel({
     searchRef, branchId, loadingProducts, productSearch, searchOpen,
     filteredProducts, cart, subtotal,
     onSearchChange, onSearchOpen, onAddToCart, onUpdateCart, onRemoveFromCart,
+    barcode,
+    scannerRef,
+    onBarcodeChange,
+    onBarcodeScan,
 }: Props) {
     return (
         <div className="border rounded-lg p-5 space-y-4">
@@ -37,6 +45,16 @@ export function SaleCartPanel({
             <div ref={searchRef} className="relative">
                 <div className="relative">
                     <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                        ref={scannerRef}
+                        value={barcode} onChange={(e)=>onBarcodeChange(e.target.value)}onKeyDown={(e)=>{
+                            if(e.key === "Enter"){
+                                onBarcodeScan(barcode)
+                            }
+
+                        }}
+                        className="absolute opacity-0 pointer-events-none"    autoFocus
+                    />
                     <Input
                         placeholder={!branchId ? "Selecciona una sucursal primero..." : loadingProducts ? "Cargando productos..." : "Buscar producto por nombre o SKU..."}
                         value={productSearch}

@@ -23,4 +23,4 @@ export const uploadLogo = multer({
       cb(null, fileName);
     },
   }),
-}).single("file");
+}).single("logo");

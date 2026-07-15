@@ -70,7 +70,10 @@ app.get("/api/health", (_req, res) => {
 });
 
 // Handler global de errores
+// Handler global de errores
 app.use((err, _req, res, _next) => {
+  console.error("🔥 ERROR GLOBAL:", err);
+
   const status = err.status || 500;
   const message =
     process.env.NODE_ENV === "production"

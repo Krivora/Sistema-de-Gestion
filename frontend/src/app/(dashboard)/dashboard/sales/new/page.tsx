@@ -86,6 +86,10 @@ export default function NewSalePage() {
                         onAddToCart={sale.addToCart}
                         onUpdateCart={sale.updateCart}
                         onRemoveFromCart={sale.removeFromCart}
+                        barcode={sale.barcode}
+                        scannerRef={sale.scannerRef}
+                        onBarcodeChange={sale.setBarcode}
+                        onBarcodeScan={sale.handleBarcodeScan}
                     />
                 </div>
             </div>
