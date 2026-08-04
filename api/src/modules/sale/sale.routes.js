@@ -7,6 +7,7 @@ const router = Router();
 router.get("/",              allow("read",   "sales"), SaleController.list);
 router.get("/:id",           allow("read",   "sales"), SaleController.getById);
 router.post("/",             allow("create", "sales"), SaleController.create);
+router.put("/:id",           allow("update", "sales"), SaleController.update);
 router.patch("/:id/post",    allow("update", "sales"), SaleController.post);
 router.patch("/:id/reopen",  allow("update", "sales"), SaleController.reopen);
 

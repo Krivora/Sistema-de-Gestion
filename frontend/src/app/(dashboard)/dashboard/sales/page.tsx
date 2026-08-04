@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Plus, Search } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,6 +14,7 @@ import Link from "next/link"
 
 export default function SalesPage() {
   const [detailId, setDetailId] = useState<number | null>(null)
+  const router = useRouter()
 
   const {
     sales, branches, loading, postedCount, hasActiveFilters,
@@ -130,6 +132,7 @@ export default function SalesPage() {
         onDetail={setDetailId}
         onDownloadPdf={handleDownloadPdf}
         onPost={handlePost}
+        onEdit={(id) => router.push(`/dashboard/sales/${id}/edit`)}
       />
 
       {!loading && filtered.length > 0 && (

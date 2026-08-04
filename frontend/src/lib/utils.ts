@@ -29,6 +29,15 @@ export function toNumber(value: unknown): number {
 }
 
 /**
+ * Formatea cantidades que vienen de PostgreSQL (numeric) sin ceros de relleno.
+ * "30.0000" -> "30", "1.5000" -> "1.5"
+ */
+export function formatQty(value: unknown): string {
+  const n = toNumber(value)
+  return Number.isFinite(n) ? String(n) : "0"
+}
+
+/**
  * Normaliza cualquier valor de fecha a un objeto Date válido.
  */
 export function parseDate(value: string | Date): Date | null {

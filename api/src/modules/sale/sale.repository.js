@@ -26,7 +26,7 @@ export async function findAll(clientId, { status, branch_id, date_from, date_to 
 
   const { rows } = await pool.query(
     `SELECT s.id, s.doc_no, s.status, s.payment_method,
-            s.subtotal, s.total, s.posted_at, s.created_at,
+            s.subtotal, s.total, s.posted_at, s.created_at, s.branch_id,
             b.name AS branch_name, u.name AS user_name,
             COALESCE(c.name, s.customer_name) AS customer_name,
             COALESCE(c.phone, s.customer_phone) AS customer_phone,
@@ -46,7 +46,7 @@ export async function findAll(clientId, { status, branch_id, date_from, date_to 
 export async function findById(id, clientId) {
   const { rows } = await pool.query(
     `SELECT s.id, s.doc_no, s.status, s.payment_method, s.subtotal, s.total,
-            s.customer_id, s.customer_name, s.customer_phone,
+            s.branch_id, s.customer_id, s.customer_name, s.customer_phone,
             s.posted_at, s.created_at,
             b.name AS branch_name, b.code AS branch_code,
             u.name AS user_name, c.name AS customer_name_full
@@ -62,7 +62,7 @@ export async function findById(id, clientId) {
 
 export async function findItems(saleId, clientId) {
   const { rows } = await pool.query(
-    `SELECT si.id, si.qty, si.unit_price, p.name AS product_name, p.sku
+    `SELECT si.id, si.product_id, si.qty, si.unit_price, p.name AS product_name, p.sku
      FROM sale_items si
      JOIN products p ON p.id = si.product_id
      WHERE si.sale_id=$1 AND si.client_id=$2
@@ -89,6 +89,42 @@ export async function createHeader(trx, payload) {
       payload.customer_phone ?? null, payment]
   );
   return rows[0];
+}
+
+export async function updateHeader(trx, saleId, clientId, payload) {
+  const payment = VALID_PAYMENT_METHODS.includes(payload.payment_method)
+    ? payload.payment_method : "EFECTIVO";
+
+  let rows;
+  try {
+    ({ rows } = await trx.query(
+    `UPDATE sales
+     SET branch_id      = $3,
+         customer_id    = $4,
+         customer_name  = $5,
+         customer_phone = $6,
+         payment_method = $7,
+         doc_no         = COALESCE(NULLIF($8::text, ''), doc_no),
+         updated_at     = NOW()
+     WHERE id=$1 AND client_id=$2 AND status='open'
+     RETURNING *`,
+    [saleId, clientId, payload.branch_id,
+      payload.customer_id ?? null, payload.customer_name ?? null,
+      payload.customer_phone ?? null, payment, payload.doc_no ?? null]
+    ));
+  } catch (err) {
+    if (err.code === "23505")
+      throw Object.assign(new Error("Ya existe una venta con ese número de documento"), { status: 409 });
+    throw err;
+  }
+  return rows[0] ?? null;
+}
+
+export async function deleteItems(trx, saleId, clientId) {
+  await trx.query(
+    `DELETE FROM sale_items WHERE sale_id=$1 AND client_id=$2`,
+    [saleId, clientId]
+  );
 }
 
 export async function addItem(trx, { sale_id, product_id, qty, unit_price, client_id }) {

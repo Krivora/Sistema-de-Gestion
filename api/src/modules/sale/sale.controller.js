@@ -30,6 +30,21 @@ export async function create(req, res, next) {
   } catch (err) { next(err); }
 }
 
+export async function update(req, res, next) {
+  try {
+    const { branch_id, items, customer_id, customer_name, customer_phone, payment_method, doc_no } = req.body;
+    if (!branch_id || !items) return res.status(400).json({ error: "branch_id e items son requeridos" });
+    res.json(
+      await SaleService.updateSale(
+        +req.params.id,
+        { branch_id, items, customer_id, customer_name, customer_phone, payment_method, doc_no },
+        req.user,
+        extractRequestMeta(req)
+      )
+    );
+  } catch (err) { next(err); }
+}
+
 export async function post(req, res, next) {
   try {
     res.json(await SaleService.postExistingSale(+req.params.id, req.user, extractRequestMeta(req)));

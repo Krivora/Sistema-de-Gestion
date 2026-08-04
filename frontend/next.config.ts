@@ -9,7 +9,9 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  allowedDevOrigins: ['192.168.45.222'],
+  // Solo aplica en desarrollo. Comodín por subnet para que un cambio de IP
+  // por DHCP no tumbe el WebSocket de HMR.
+  allowedDevOrigins: ['192.168.45.*'],
 };
 
 export default nextConfig;

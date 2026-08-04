@@ -1,8 +1,9 @@
 import { Input } from "@/components/ui/input"
+import { MoneyInput } from "@/components/ui/money-input"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Search, Plus, Trash2, Package, ShoppingBag } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatQty, toNumber } from "@/lib/utils"
 import type { BranchProduct } from "@/lib/api/branch-products"
 import type { CartItem } from "../hooks/use-new-sale"
 
@@ -82,8 +83,8 @@ export function SaleCartPanel({
                                     </div>
                                     <div className="text-right shrink-0">
                                         <p className="text-xs text-muted-foreground">Stock</p>
-                                        <p className={cn("text-sm font-semibold", bp.current_stock <= bp.min_stock && "text-amber-600 dark:text-amber-400")}>
-                                            {bp.current_stock}
+                                        <p className={cn("text-sm font-semibold", toNumber(bp.current_stock) <= toNumber(bp.min_stock) && "text-amber-600 dark:text-amber-400")}>
+                                            {formatQty(bp.current_stock)}
                                         </p>
                                     </div>
                                     <Plus size={16} className="text-muted-foreground shrink-0" />
@@ -110,7 +111,7 @@ export function SaleCartPanel({
                         <span>Producto</span><span className="text-center">Cantidad</span><span className="text-center">Precio unit.</span><span />
                     </div>
                     {cart.map((item) => {
-                        const overStock = Number(item.qty) > item.current_stock
+                        const overStock = toNumber(item.qty) > toNumber(item.current_stock)
                         return (
                             <div key={item.product_id} className={cn("grid grid-cols-[1fr_100px_120px_36px] gap-3 items-center px-3 py-2 rounded-lg transition-colors", overStock ? "bg-amber-50/50 dark:bg-amber-950/20" : "hover:bg-muted/40")}>
                                 <div className="flex items-center gap-2.5 min-w-0">
@@ -122,13 +123,13 @@ export function SaleCartPanel({
                                         <div className="flex items-center gap-2">
                                             <span className="text-xs text-muted-foreground font-mono">{item.sku}</span>
                                             <Badge variant={overStock ? "destructive" : "secondary"} className="text-[10px] px-1 py-0 h-4">
-                                                Stock: {item.current_stock}
+                                                Stock: {formatQty(item.current_stock)}
                                             </Badge>
                                         </div>
                                     </div>
                                 </div>
                                 <Input value={item.qty} onChange={(e) => onUpdateCart(item.product_id, "qty", e.target.value)} inputMode="numeric" className={cn("h-8 text-center text-sm", (!item.qty || Number(item.qty) <= 0 || overStock) && "border-destructive")} />
-                                <Input value={item.unit_price} onChange={(e) => onUpdateCart(item.product_id, "unit_price", e.target.value)} inputMode="decimal" className={cn("h-8 text-right text-sm", item.unit_price === "" && "border-destructive")} />
+                                <MoneyInput value={item.unit_price} onValueChange={(v) => onUpdateCart(item.product_id, "unit_price", v)} className={cn("h-8 text-right text-sm", item.unit_price === "" && "border-destructive")} />
                                 <button onClick={() => onRemoveFromCart(item.product_id)} className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
                                     <Trash2 size={14} />
                                 </button>

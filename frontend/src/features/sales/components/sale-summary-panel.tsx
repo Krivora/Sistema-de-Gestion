@@ -16,11 +16,12 @@ interface Props {
     canSubmit: boolean | string
     loading: boolean
     branchId: string
+    isEdit?: boolean
     onSubmitOpen: () => void
     onSubmitPost: () => void
 }
 
-export function SaleSummaryPanel({ cart, subtotal, paymentMethod, stockWarnings, canSubmit, loading, branchId, onSubmitOpen, onSubmitPost }: Props) {
+export function SaleSummaryPanel({ cart, subtotal, paymentMethod, stockWarnings, canSubmit, loading, branchId, isEdit = false, onSubmitOpen, onSubmitPost }: Props) {
     return (
         <div className="border rounded-lg p-5 space-y-4">
             <h2 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Resumen</h2>
@@ -55,7 +56,9 @@ export function SaleSummaryPanel({ cart, subtotal, paymentMethod, stockWarnings,
                     disabled={!canSubmit || loading}
                 >
                     <ShoppingBag size={16} className="mr-2" />
-                    {loading ? "Registrando..." : "Registrar y publicar"}
+                    {loading
+                        ? (isEdit ? "Publicando..." : "Registrando...")
+                        : (isEdit ? "Guardar y publicar" : "Registrar y publicar")}
                 </Button>
                 <Button
                     className="w-full"
@@ -64,7 +67,7 @@ export function SaleSummaryPanel({ cart, subtotal, paymentMethod, stockWarnings,
                     disabled={!canSubmit || loading}
                 >
                     <Save size={16} className="mr-2" />
-                    {loading ? "Guardando..." : "Guardar abierta"}
+                    {loading ? "Guardando..." : (isEdit ? "Guardar cambios" : "Guardar abierta")}
                 </Button>
             </div>
 

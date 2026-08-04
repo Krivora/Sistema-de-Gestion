@@ -2,6 +2,7 @@ import { apiClient } from "./client"
 
 export interface SaleItem {
     id: number
+    product_id: number
     qty: number
     unit_price: number
     product_name: string
@@ -20,6 +21,7 @@ export interface Sale {
     branch_id: number
     customer_id: number | null
     customer_name: string | null
+    customer_name_full?: string | null
     customer_phone: string | null
     branch_name: string
     branch_code: string
@@ -52,11 +54,14 @@ export interface CreateSaleDto {
     post?: boolean          // false = open, true = posted
 }
 
+export type UpdateSaleDto = Omit<CreateSaleDto, "post">
+
 export const salesApi = {
     list: (params?: { status?: string; branch_id?: number; date_from?: string; date_to?: string }) =>
         apiClient.get<Sale[]>("/sales", { params }).then((r) => r.data),
     get: (id: number) => apiClient.get<Sale>(`/sales/${id}`).then((r) => r.data),
     create: (data: CreateSaleDto) => apiClient.post<Sale>("/sales", data).then((r) => r.data),
+    update: (id: number, data: UpdateSaleDto) => apiClient.put<Sale>(`/sales/${id}`, data).then((r) => r.data),
     post: (id: number) => apiClient.patch<Sale>(`/sales/${id}/post`).then((r) => r.data),
     reopen: (id: number) => apiClient.patch<Sale>(`/sales/${id}/reopen`).then((r) => r.data),
 }

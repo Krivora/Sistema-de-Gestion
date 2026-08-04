@@ -37,16 +37,18 @@ interface SalesTableProps {
   onDetail: (id: number) => void
   onDownloadPdf: (sale: Sale) => void
   onPost: (id: number) => void          // <-- agrega
+  onEdit: (id: number) => void
 }
 
 /* ────────────────────────────────
    Card móvil
 ──────────────────────────────── */
-function SaleCard({ sale, onDetail, onDownloadPdf, onPost }: {
+function SaleCard({ sale, onDetail, onDownloadPdf, onPost, onEdit }: {
   sale: Sale
   onDetail: (id: number) => void
   onDownloadPdf: (sale: Sale) => void
   onPost: (id: number) => void
+  onEdit: (id: number) => void
 }) {
   return (
     <div className="bg-card border rounded-xl p-4 space-y-3">
@@ -105,6 +107,9 @@ function SaleCard({ sale, onDetail, onDownloadPdf, onPost }: {
             {sale.status === "open" && (
               <>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onEdit(sale.id)}>
+                  Editar venta
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onPost(sale.id)}>
                   Publicar venta
                 </DropdownMenuItem>
@@ -146,6 +151,7 @@ const columns = (
   onDetail: (id: number) => void,
   onDownloadPdf: (sale: Sale) => void,
   onPost: (id: number) => void,         // <-- agrega
+  onEdit: (id: number) => void,
 ): ColumnDef<Sale>[] => [
     {
       key: "doc_no",
@@ -243,6 +249,9 @@ const columns = (
             {s.status === "open" && (
               <>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onEdit(s.id)}>
+                  Editar venta
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onPost(s.id)}>
                   Publicar venta
                 </DropdownMenuItem>
@@ -257,7 +266,7 @@ const columns = (
 /* ────────────────────────────────
    Componente principal
 ──────────────────────────────── */
-export function SalesTable({ sales, loading, hasActiveFilters, onDetail, onDownloadPdf, onPost }: SalesTableProps) {
+export function SalesTable({ sales, loading, hasActiveFilters, onDetail, onDownloadPdf, onPost, onEdit }: SalesTableProps) {
   return (
     <>
       {/* Mobile */}
@@ -278,7 +287,7 @@ export function SalesTable({ sales, loading, hasActiveFilters, onDetail, onDownl
           </div>
         ) : (
           sales.map((sale) => (
-            <SaleCard key={sale.id} sale={sale} onDetail={onDetail} onDownloadPdf={onDownloadPdf} onPost={onPost} />
+            <SaleCard key={sale.id} sale={sale} onDetail={onDetail} onDownloadPdf={onDownloadPdf} onPost={onPost} onEdit={onEdit} />
           ))
         )}
       </div>
@@ -286,7 +295,7 @@ export function SalesTable({ sales, loading, hasActiveFilters, onDetail, onDownl
       {/* Desktop */}
       <div className="hidden sm:block w-full overflow-x-auto">
         <DataTable
-          columns={columns(onDetail, onDownloadPdf, onPost)}
+          columns={columns(onDetail, onDownloadPdf, onPost, onEdit)}
           data={sales}
           loading={loading}
           rowKey={(s) => s.id}

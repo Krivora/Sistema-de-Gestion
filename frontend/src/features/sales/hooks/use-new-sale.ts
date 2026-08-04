@@ -6,7 +6,7 @@ import { salesApi, type SaleItemDto } from "@/lib/api/sales"
 import { branchesApi, type Branch } from "@/lib/api/branches"
 import { customersApi, type Customer } from "@/lib/api/customers"
 import { branchProductsApi, type BranchProduct } from "@/lib/api/branch-products"
-import { getApiError, onlyDecimals, onlyDigits } from "@/lib/input-helpers"
+import { getApiError, onlyDecimals, onlyDigits, toInputNumber } from "@/lib/input-helpers"
 import { useAuthStore } from "@/store/auth.store"
 
 export interface CartItem {
@@ -19,9 +19,10 @@ export interface CartItem {
     min_stock: number
 }
 
-export function useNewSale() {
+export function useNewSale(saleId?: number) {
     const user = useAuthStore((s) => s.user)
     const router = useRouter()
+    const isEdit = !!saleId
 
     const [branches, setBranches] = useState<Branch[]>([])
     const [customers, setCustomers] = useState<Customer[]>([])
@@ -40,6 +41,7 @@ export function useNewSale() {
     const [customerSearch, setCustomerSearch] = useState("")
     const [customerSearchOpen, setCustomerSearchOpen] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [loadingSale, setLoadingSale] = useState(isEdit)
     const [loadingProducts, setLoadingProducts] = useState(false)
     const [postSale, setPostSale] = useState(false)
     const searchRef = useRef<HTMLDivElement>(null)
@@ -53,13 +55,70 @@ export function useNewSale() {
         })
     }, [])
 
+    // Modo edición: carga la venta y precarga el formulario
     useEffect(() => {
-        if (!branchId) { setBranchProducts([]); return }
+        if (!saleId) return
+        setLoadingSale(true)
+        salesApi.get(saleId)
+            .then((sale) => {
+                if (sale.status !== "open") {
+                    sileo.error({ title: "Solo las ventas abiertas pueden editarse" })
+                    router.replace("/dashboard/sales")
+                    return
+                }
+                setBranchId(String(sale.branch_id))
+                setPaymentMethod(sale.payment_method || "EFECTIVO")
+                setDocNo(sale.doc_no ?? "")
+
+                const name = sale.customer_name_full ?? sale.customer_name ?? ""
+                setCustomerId(sale.customer_id ? String(sale.customer_id) : "")
+                setCustomerName(name)
+                setCustomerPhone(sale.customer_phone ?? "")
+                setCustomerSearch(sale.customer_id ? name : "")
+
+                setCart(
+                    (sale.items ?? []).map((it) => ({
+                        product_id: it.product_id,
+                        product_name: it.product_name,
+                        sku: it.sku,
+                        qty: toInputNumber(it.qty),
+                        unit_price: toInputNumber(it.unit_price),
+                        current_stock: 0,
+                        min_stock: 0,
+                    }))
+                )
+            })
+            .catch((err) => {
+                sileo.error({ title: getApiError(err, "Error al cargar la venta") })
+                router.replace("/dashboard/sales")
+            })
+            .finally(() => setLoadingSale(false))
+    }, [saleId])
+
+    useEffect(() => {
+        if (!branchId || !Number.isFinite(Number(branchId))) { setBranchProducts([]); return }
         setLoadingProducts(true)
         branchProductsApi.listByBranch(Number(branchId))
             .then((data) => setBranchProducts(data.filter((p) => p.is_active)))
             .finally(() => setLoadingProducts(false))
     }, [branchId])
+
+    // Completa stock/mínimos del carrito precargado. Depende también de `cart` porque
+    // los productos de la sucursal pueden llegar antes que la venta en modo edición.
+    useEffect(() => {
+        if (!branchProducts.length) return
+        setCart((prev) => {
+            let changed = false
+            const next = prev.map((c) => {
+                const bp = branchProducts.find((p) => p.product_id === c.product_id)
+                if (!bp) return c
+                if (c.current_stock === bp.current_stock && c.min_stock === bp.min_stock) return c
+                changed = true
+                return { ...c, current_stock: bp.current_stock, min_stock: bp.min_stock }
+            })
+            return changed ? next : prev   // misma referencia => React no re-renderiza
+        })
+    }, [branchProducts, cart])
 
     useEffect(() => {
         function handleClick(e: MouseEvent) {
@@ -117,7 +176,7 @@ export function useNewSale() {
                     product_name: bp.product_name,
                     sku: bp.sku,
                     qty: "1",
-                    unit_price: String(bp.price),
+                    unit_price: toInputNumber(bp.price),
                     current_stock: bp.current_stock,
                     min_stock: bp.min_stock,
                 }
@@ -154,7 +213,10 @@ export function useNewSale() {
     }
 
     const subtotal = cart.reduce((acc, c) => acc + (Number(c.qty) || 0) * (Number(c.unit_price) || 0), 0)
-    const stockWarnings = cart.filter((c) => Number(c.qty) > c.current_stock)
+    // Sin los productos de la sucursal no se conoce el stock: no adviertas de más
+    const stockWarnings = loadingProducts || loadingSale
+        ? []
+        : cart.filter((c) => Number(c.qty) > Number(c.current_stock))
     const canSubmit = branchId && cart.length > 0 && cart.every((c) => Number(c.qty) > 0 && Number(c.unit_price) >= 0)
 
     async function handleSubmit(post: boolean) {
@@ -166,7 +228,7 @@ export function useNewSale() {
                 qty: Number(c.qty),
                 unit_price: Number(c.unit_price),
             }))
-            await salesApi.create({
+            const payload = {
                 branch_id: Number(branchId),
                 customer_id: customerId ? Number(customerId) : null,
                 customer_name: !customerId && customerName ? customerName : undefined,
@@ -174,12 +236,19 @@ export function useNewSale() {
                 payment_method: paymentMethod,
                 doc_no: docNo || undefined,
                 items,
-                post,
-            })
-            sileo.success({ title: post ? "Venta registrada y publicada" : "Venta guardada como abierta" })
+            }
+
+            if (isEdit) {
+                await salesApi.update(saleId!, payload)
+                if (post) await salesApi.post(saleId!)
+                sileo.success({ title: post ? "Venta actualizada y publicada" : "Cambios guardados" })
+            } else {
+                await salesApi.create({ ...payload, post })
+                sileo.success({ title: post ? "Venta registrada y publicada" : "Venta guardada como abierta" })
+            }
             router.push("/dashboard/sales")
         } catch (err) {
-            sileo.error({ title: getApiError(err, "Error al registrar venta") })
+            sileo.error({ title: getApiError(err, isEdit ? "Error al actualizar venta" : "Error al registrar venta") })
         } finally {
             setLoading(false)
         }
@@ -214,7 +283,8 @@ export function useNewSale() {
         // state
         branches, customers, branchId, customerId, customerName, customerPhone,
         paymentMethod, docNo, cart, productSearch, searchOpen, customerSearch, barcode, scannerRef,
-        customerSearchOpen, loading, loadingProducts, subtotal, stockWarnings, canSubmit,
+        customerSearchOpen, loading, loadingSale, loadingProducts, subtotal, stockWarnings, canSubmit,
+        isEdit,
         filteredProducts, filteredCustomers,
         postSale, setPostSale,
         // refs

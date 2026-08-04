@@ -15,10 +15,7 @@ export async function getSaleById(id, clientId) {
   return { ...header, items };
 }
 
-export async function createSale(payload, user, meta = {}) {
-  const { branch_id, items, customer_id, customer_name, customer_phone, payment_method, doc_no, post = false } = payload;
-  const { client_id, id: user_id } = user;
-
+function validateSalePayload({ branch_id, items }) {
   if (!branch_id) throw Object.assign(new Error("branch_id requerido"), { status: 400 });
   if (!Array.isArray(items) || !items.length) throw Object.assign(new Error("Se requiere al menos un producto"), { status: 400 });
 
@@ -29,6 +26,13 @@ export async function createSale(payload, user, meta = {}) {
     if (!Number.isFinite(qty)   || qty   <= 0) throw Object.assign(new Error(`Cantidad inválida en producto ${item.product_id}`), { status: 400 });
     if (!Number.isFinite(price) || price <  0) throw Object.assign(new Error(`Precio inválido en producto ${item.product_id}`),   { status: 400 });
   }
+}
+
+export async function createSale(payload, user, meta = {}) {
+  const { branch_id, items, customer_id, customer_name, customer_phone, payment_method, doc_no, post = false } = payload;
+  const { client_id, id: user_id } = user;
+
+  validateSalePayload({ branch_id, items });
 
   const trx = await pool.connect();
   try {
@@ -78,6 +82,57 @@ export async function createSale(payload, user, meta = {}) {
     });
 
     return { ...final, items: itemsResp };
+  } catch (err) {
+    await trx.query("ROLLBACK");
+    throw err;
+  } finally {
+    trx.release();
+  }
+}
+
+export async function updateSale(id, payload, user, meta = {}) {
+  const { branch_id, items, customer_id, customer_name, customer_phone, payment_method, doc_no } = payload;
+  const { client_id, id: user_id } = user;
+
+  const existing = await getSaleById(id, client_id);
+  if (!existing) throw Object.assign(new Error("Venta no encontrada"), { status: 404 });
+  if (existing.status !== "open")
+    throw Object.assign(new Error("Solo las ventas abiertas pueden editarse"), { status: 400 });
+
+  validateSalePayload({ branch_id, items });
+
+  const trx = await pool.connect();
+  try {
+    await trx.query("BEGIN");
+
+    const header = await SaleRepo.updateHeader(trx, id, client_id, {
+      branch_id, customer_id, customer_name, customer_phone, payment_method, doc_no,
+    });
+    if (!header) throw Object.assign(new Error("Solo las ventas abiertas pueden editarse"), { status: 400 });
+
+    await SaleRepo.deleteItems(trx, id, client_id);
+
+    for (const item of items) {
+      await SaleRepo.addItem(trx, {
+        sale_id: id, product_id: item.product_id,
+        qty: Number(item.qty), unit_price: Number(item.unit_price), client_id,
+      });
+    }
+
+    await SaleRepo.updateTotals(trx, id, client_id);
+    await trx.query("COMMIT");
+
+    const updated = await getSaleById(id, client_id);
+
+    await logAction({
+      ...meta, client_id, user_id,
+      action: "UPDATE_SALE",
+      description: `Venta ${updated.doc_no} editada (${items.length} producto(s))`,
+      ref_table: "sales", ref_id: updated.id,
+      old_data: existing, new_data: updated,
+    });
+
+    return updated;
   } catch (err) {
     await trx.query("ROLLBACK");
     throw err;
