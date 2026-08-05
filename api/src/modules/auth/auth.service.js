@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import * as AuthRepo from "./auth.repository.js";
 import * as UserRepo from "../user/user.repository.js";
 import * as PermRepo from "../permission/permission.repository.js";
+import * as ClientRepo from "../client/client.repository.js";
 import pool from "../../config/db.js";
 import { logAction } from "../../core/utils/audit.js";
 
@@ -33,10 +34,10 @@ export async function register(data, clientContext = null, meta = {}) {
   const { email, password, role_id, branch_id, client_id, name } = data;
   const finalClientId = clientContext || client_id;
 
-  if (!finalClientId) throw new Error("client_id requerido");
+  if (!finalClientId) throw Object.assign(new Error("client_id requerido"), { status: 400 });
 
   const existing = await AuthRepo.findByEmail(email);
-  if (existing) throw new Error("El correo ya está registrado");
+  if (existing) throw Object.assign(new Error("El correo ya está registrado"), { status: 409 });
 
   const hashed = await bcrypt.hash(password, SALT_ROUNDS);
   const user = await UserRepo.create({ name, email, password: hashed, role_id, branch_id, client_id: finalClientId });
@@ -63,12 +64,57 @@ export async function login({ email, password }, meta = {}) {
   const INVALID_MSG = "Credenciales inválidas";
 
   const user = await AuthRepo.findByEmail(email);
-  if (!user) throw new Error(INVALID_MSG);
+  if (!user) throw Object.assign(new Error(INVALID_MSG), { status: 401 });
 
   const match = await bcrypt.compare(password, user.password);
-  if (!match) throw new Error(INVALID_MSG);
+  if (!match) throw Object.assign(new Error(INVALID_MSG), { status: 401 });
 
-  if (user.status !== "active") throw new Error("Cuenta inactiva. Contacte al administrador.");
+  // Ojo: es el estado de ESTA persona, distinto de la suspensión por cobranza
+  // de toda la empresa que se evalúa más abajo.
+  if (user.status !== "active")
+    throw Object.assign(
+      new Error("Tu usuario está desactivado. Contacta al administrador de tu empresa."),
+      { status: 403 }
+    );
+
+  // Cobranza: el usuario SÍ entra, pero se le devuelve el estado para que la
+  // app le muestre el aviso de pago. El bloqueo real de datos lo aplica
+  // blockSuspendedClient en cada petición; aquí solo se informa.
+  //
+  // El superadmin no pertenece a ningún cliente (client_id null): se salta esta
+  // verificación a propósito, para que un corte por falta de pago nunca pueda
+  // dejarlo fuera de su propio sistema.
+  let billing = null;
+
+  if (user.client_id && user.role_name !== "superadmin") {
+    const status = await ClientRepo.findBillingStatus(user.client_id);
+
+    // Vencido y sin prórroga: se suspende en el momento en que intenta entrar.
+    // No hay tareas programadas en el proyecto, así que este es uno de los dos
+    // puntos donde el corte se vuelve real.
+    if (status?.is_active && status.is_delinquent && !status.has_grace) {
+      await ClientRepo.suspendDelinquentClients();
+      status.is_active = false;
+      status.suspended_for_payment = true;
+
+      await logAction({
+        ...meta, client_id: user.client_id, user_id: user.id,
+        action: "SUSPEND_CLIENT_NONPAYMENT",
+        description: `Cliente ${status.name} suspendido automáticamente por corte vencido`,
+        ref_table: "clients", ref_id: user.client_id,
+      });
+    }
+
+    if (status) {
+      billing = {
+        suspended: !status.is_active,
+        for_nonpayment: status.suspended_for_payment,
+        pending_cycles: status.pending_cycles,
+        oldest_unpaid_due: status.oldest_unpaid_due,
+        grace_until: status.grace_until,
+      };
+    }
+  }
 
   const permissions = await PermRepo.findKeysByRoleId(user.role_id);
   const token = signToken({ id: user.id, client_id: user.client_id, role_id: user.role_id, role_name: user.role_name });
@@ -80,7 +126,7 @@ export async function login({ email, password }, meta = {}) {
     ref_table: "users", ref_id: user.id,
   });
 
-  return { user: { ...buildUserPayload(user), permissions }, token };
+  return { user: { ...buildUserPayload(user), permissions }, token, billing };
 }
 
 export async function getProfile(userId, clientId) {
@@ -88,7 +134,7 @@ export async function getProfile(userId, clientId) {
     ? await UserRepo.findById(userId, clientId)
     : await UserRepo.findByIdNoClient(userId);
 
-  if (!user) throw new Error("Usuario no encontrado");
+  if (!user) throw Object.assign(new Error("Usuario no encontrado"), { status: 404 });
 
   const permissions = await PermRepo.findKeysByRoleId(user.role_id);
   return { ...user, permissions };

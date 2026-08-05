@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authRequired } from "../core/middleware/auth.middleware.js";
 import { attachPermissions } from "../core/middleware/permissions.middleware.js";
+import { blockSuspendedClient } from "../core/middleware/billing.middleware.js";
 
 import activityRoutes from "../modules/activity/activity.routes.js";
 import adjustmentRoutes from "../modules/adjustment/adjustment.routes.js";
@@ -23,7 +24,7 @@ import roleRoutes from "../modules/role/role.routes.js";
 import permissionRoutes from "../modules/permission/permission.routes.js";
 
 const router = Router();
-const guard = [authRequired, attachPermissions];
+const guard = [authRequired, attachPermissions, blockSuspendedClient];
 
 
 router.use("/auth", authRoutes);

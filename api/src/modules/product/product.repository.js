@@ -68,7 +68,8 @@ export async function update(id, clientId, data) {
     Object.entries(data).filter(([k]) => ALLOWED_UPDATE_FIELDS.includes(k))
   );
 
-  if (Object.keys(filtered).length === 0) throw new Error("Sin campos válidos para actualizar");
+  if (Object.keys(filtered).length === 0)
+    throw Object.assign(new Error("Sin campos válidos para actualizar"), { status: 400 });
 
   const fields = Object.keys(filtered).map((k, i) => `${k} = $${i + 1}`);
   const values = Object.values(filtered);

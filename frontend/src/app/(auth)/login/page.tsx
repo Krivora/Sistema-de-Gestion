@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Loader2, XCircle, AlertCircle } from "lucide-react"
 import { useAuthStore } from "@/store/auth.store"
 import { apiClient } from "@/lib/api/client"
+import type { AxiosError } from "axios"
 import type { LoginResponse } from "@/types/api.types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -120,8 +121,27 @@ export default function LoginPage() {
             attemptsRef.current = 0
             setAttemptsLeft(MAX_ATTEMPTS)
             setAuth(data.user, data.token, data.ability)
-            router.push("/dashboard")
-        } catch {
+
+            // Entra igual, pero si la cuenta está suspendida va directo al aviso
+            // de pago: el API le va a negar cualquier dato de todas formas.
+            if (data.billing?.suspended) {
+                sessionStorage.setItem("billing_block", JSON.stringify(data.billing))
+                router.push("/suspended")
+            } else {
+                router.push("/dashboard")
+            }
+        } catch (err) {
+            const status = (err as AxiosError)?.response?.status
+            const serverMsg = (err as AxiosError<{ error?: string }>)?.response?.data?.error
+
+            // Solo las credenciales malas cuentan para el bloqueo por intentos.
+            // Un usuario desactivado puede reintentar mil veces sin que cambie
+            // nada, y castigarlo por eso solo esconde el motivo real.
+            if (status !== 401 && serverMsg) {
+                setApiError(serverMsg)
+                return
+            }
+
             attemptsRef.current += 1
             const remaining = MAX_ATTEMPTS - attemptsRef.current
 

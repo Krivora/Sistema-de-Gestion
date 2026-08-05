@@ -32,6 +32,7 @@ export function useNewSale(saleId?: number) {
     const [customerName, setCustomerName] = useState("")
     const [customerPhone, setCustomerPhone] = useState("")
     const [paymentMethod, setPaymentMethod] = useState("EFECTIVO")
+    const [paymentType, setPaymentType] = useState<"contado" | "credito">("contado")
     const [docNo, setDocNo] = useState("")
     const [cart, setCart] = useState<CartItem[]>([])
     const [productSearch, setProductSearch] = useState("")
@@ -68,6 +69,7 @@ export function useNewSale(saleId?: number) {
                 }
                 setBranchId(String(sale.branch_id))
                 setPaymentMethod(sale.payment_method || "EFECTIVO")
+                setPaymentType(sale.payment_type === "credito" ? "credito" : "contado")
                 setDocNo(sale.doc_no ?? "")
 
                 const name = sale.customer_name_full ?? sale.customer_name ?? ""
@@ -238,6 +240,18 @@ export function useNewSale(saleId?: number) {
                 items,
             }
 
+            // Una venta a abonos nace abierta por definición: se salda con
+            // abonos y se publica después, desde el diálogo de abonos.
+            if (!isEdit && paymentType === "credito") {
+                const created = await salesApi.create({ ...payload, payment_type: "credito", post: false })
+                sileo.success({
+                    title: "Venta a abonos registrada",
+                    description: `Registra los abonos de ${created.doc_no} para poder publicarla`,
+                })
+                router.push("/dashboard/sales")
+                return
+            }
+
             if (isEdit) {
                 await salesApi.update(saleId!, payload)
                 if (post) await salesApi.post(saleId!)
@@ -284,7 +298,7 @@ export function useNewSale(saleId?: number) {
         branches, customers, branchId, customerId, customerName, customerPhone,
         paymentMethod, docNo, cart, productSearch, searchOpen, customerSearch, barcode, scannerRef,
         customerSearchOpen, loading, loadingSale, loadingProducts, subtotal, stockWarnings, canSubmit,
-        isEdit,
+        isEdit, paymentType, setPaymentType,
         filteredProducts, filteredCustomers,
         postSale, setPostSale,
         // refs

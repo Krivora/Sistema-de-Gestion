@@ -45,7 +45,8 @@ export async function findAll(clientId, filters = {}) {
 }
 
 export async function create(trx, data) {
-  if (!VALID_TYPES.includes(data.type)) throw new Error(`Tipo de transacción inválido: ${data.type}`);
+  if (!VALID_TYPES.includes(data.type))
+    throw Object.assign(new Error(`Tipo de transacción inválido: ${data.type}`), { status: 400 });
 
   const { rows } = await trx.query(
     `INSERT INTO inventory_transactions
@@ -101,7 +102,7 @@ export async function applyStockChange(trx, branchId, productId, qty, type, clie
     );
     newStock -= Number(qty);
   } else {
-    throw new Error(`Tipo de transacción inválido: ${type}`);
+    throw Object.assign(new Error(`Tipo de transacción inválido: ${type}`), { status: 400 });
   }
 
   await updateBranchStock(trx, branchId, productId, newStock, clientId);

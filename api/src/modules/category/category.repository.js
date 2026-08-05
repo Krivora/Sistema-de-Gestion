@@ -81,7 +81,7 @@ export async function update(id, clientId, { name, description }) {
 
 async function updateStatusCascade(id, clientId, status) {
   const VALID = ["active", "inactive", "deleted"];
-  if (!VALID.includes(status)) throw new Error("Status inválido");
+  if (!VALID.includes(status)) throw Object.assign(new Error("Status inválido"), { status: 400 });
 
   const client = await pool.connect();
   try {

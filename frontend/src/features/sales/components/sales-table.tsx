@@ -38,18 +38,30 @@ interface SalesTableProps {
   onDownloadPdf: (sale: Sale) => void
   onPost: (id: number) => void          // <-- agrega
   onEdit: (id: number) => void
+  onPayments: (id: number) => void
+  onReturn: (id: number) => void
+  onCancel: (sale: Sale) => void
+}
+
+/** Una venta a abonos con saldo pendiente no se puede publicar. */
+function pendingBalance(s: Sale) {
+  return s.payment_type === "credito" && s.balance > 0.009 ? s.balance : 0
 }
 
 /* ────────────────────────────────
    Card móvil
 ──────────────────────────────── */
-function SaleCard({ sale, onDetail, onDownloadPdf, onPost, onEdit }: {
+function SaleCard({ sale, onDetail, onDownloadPdf, onPost, onEdit, onPayments, onReturn, onCancel }: {
   sale: Sale
   onDetail: (id: number) => void
   onDownloadPdf: (sale: Sale) => void
   onPost: (id: number) => void
   onEdit: (id: number) => void
+  onPayments: (id: number) => void
+  onReturn: (id: number) => void
+  onCancel: (sale: Sale) => void
 }) {
+  const owed = pendingBalance(sale)
   return (
     <div className="bg-card border rounded-xl p-4 space-y-3">
       <div className="flex items-start justify-between gap-2">
@@ -92,6 +104,11 @@ function SaleCard({ sale, onDetail, onDownloadPdf, onPost, onEdit }: {
             {formatDate(sale.created_at)}
           </p>
           <p className="font-semibold">{formatCurrency(sale.total)}</p>
+          {owed > 0 && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              Debe {formatCurrency(owed)}
+            </p>
+          )}
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger className={buttonVariants({ variant: "ghost", size: "icon" })}>
@@ -104,14 +121,38 @@ function SaleCard({ sale, onDetail, onDownloadPdf, onPost, onEdit }: {
             <DropdownMenuItem onClick={() => onDownloadPdf(sale)}>
               Descargar PDF
             </DropdownMenuItem>
+            {sale.payment_type === "credito" && (
+              <DropdownMenuItem onClick={() => onPayments(sale.id)}>
+                Abonos{owed > 0 ? ` — debe ${formatCurrency(owed)}` : ""}
+              </DropdownMenuItem>
+            )}
             {sale.status === "open" && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onEdit(sale.id)}>
                   Editar venta
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onPost(sale.id)}>
-                  Publicar venta
+                <DropdownMenuItem
+                  onClick={() => owed === 0 && onPost(sale.id)}
+                  disabled={owed > 0}
+                >
+                  {owed > 0 ? "Publicar (falta saldar)" : "Publicar venta"}
+                </DropdownMenuItem>
+              </>
+            )}
+            {sale.status === "posted" && (
+              <DropdownMenuItem onClick={() => onReturn(sale.id)}>
+                Registrar devolución
+              </DropdownMenuItem>
+            )}
+            {sale.status !== "cancelled" && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onCancel(sale)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  Cancelar venta
                 </DropdownMenuItem>
               </>
             )}
@@ -152,6 +193,9 @@ const columns = (
   onDownloadPdf: (sale: Sale) => void,
   onPost: (id: number) => void,         // <-- agrega
   onEdit: (id: number) => void,
+  onPayments: (id: number) => void,
+  onReturn: (id: number) => void,
+  onCancel: (sale: Sale) => void,
 ): ColumnDef<Sale>[] => [
     {
       key: "doc_no",
@@ -203,21 +247,34 @@ const columns = (
     {
       key: "total",
       header: "Total",
-      width: 110,
-      cell: (s) => (
-        <span className="font-semibold">
-          {formatCurrency(s.total)}
-        </span>
-      ),
+      width: 130,
+      cell: (s) => {
+        const owed = pendingBalance(s)
+        return (
+          <div>
+            <span className="font-semibold">{formatCurrency(s.total)}</span>
+            {owed > 0 && (
+              <span className="block text-xs text-amber-600 dark:text-amber-400 whitespace-nowrap">
+                debe {formatCurrency(owed)}
+              </span>
+            )}
+          </div>
+        )
+      },
     },
     {
       key: "status",
       header: "Estado",
-      width: 100,
+      width: 110,
       cell: (s) => (
-        <Badge variant={STATUS_VARIANT[s.status]}>
-          {STATUS_LABEL[s.status]}
-        </Badge>
+        <div className="flex flex-col gap-1 items-start">
+          <Badge variant={STATUS_VARIANT[s.status]}>
+            {STATUS_LABEL[s.status]}
+          </Badge>
+          {s.payment_type === "credito" && (
+            <span className="text-[10px] text-muted-foreground">a abonos</span>
+          )}
+        </div>
       ),
     },
     {
@@ -234,7 +291,9 @@ const columns = (
       key: "actions",
       header: "",
       width: 48,
-      cell: (s) => (
+      cell: (s) => {
+        const owed = pendingBalance(s)
+        return (
         <DropdownMenu>
           <DropdownMenuTrigger className={buttonVariants({ variant: "ghost", size: "icon" }) + " h-8 w-8"}>
             <MoreHorizontal size={16} />
@@ -246,27 +305,52 @@ const columns = (
             <DropdownMenuItem onClick={() => onDownloadPdf(s)}>
               Descargar PDF
             </DropdownMenuItem>
+            {s.payment_type === "credito" && (
+              <DropdownMenuItem onClick={() => onPayments(s.id)}>
+                Abonos{owed > 0 ? ` — debe ${formatCurrency(owed)}` : ""}
+              </DropdownMenuItem>
+            )}
             {s.status === "open" && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onEdit(s.id)}>
                   Editar venta
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onPost(s.id)}>
-                  Publicar venta
+                <DropdownMenuItem
+                  onClick={() => owed === 0 && onPost(s.id)}
+                  disabled={owed > 0}
+                >
+                  {owed > 0 ? "Publicar (falta saldar)" : "Publicar venta"}
+                </DropdownMenuItem>
+              </>
+            )}
+            {s.status === "posted" && (
+              <DropdownMenuItem onClick={() => onReturn(s.id)}>
+                Registrar devolución
+              </DropdownMenuItem>
+            )}
+            {s.status !== "cancelled" && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onCancel(s)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  Cancelar venta
                 </DropdownMenuItem>
               </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-      ),
+        )
+      },
     },
   ]
 
 /* ────────────────────────────────
    Componente principal
 ──────────────────────────────── */
-export function SalesTable({ sales, loading, hasActiveFilters, onDetail, onDownloadPdf, onPost, onEdit }: SalesTableProps) {
+export function SalesTable({ sales, loading, hasActiveFilters, onDetail, onDownloadPdf, onPost, onEdit, onPayments, onReturn, onCancel }: SalesTableProps) {
   return (
     <>
       {/* Mobile */}
@@ -287,7 +371,7 @@ export function SalesTable({ sales, loading, hasActiveFilters, onDetail, onDownl
           </div>
         ) : (
           sales.map((sale) => (
-            <SaleCard key={sale.id} sale={sale} onDetail={onDetail} onDownloadPdf={onDownloadPdf} onPost={onPost} onEdit={onEdit} />
+            <SaleCard key={sale.id} sale={sale} onDetail={onDetail} onDownloadPdf={onDownloadPdf} onPost={onPost} onEdit={onEdit} onPayments={onPayments} onReturn={onReturn} onCancel={onCancel} />
           ))
         )}
       </div>
@@ -295,7 +379,7 @@ export function SalesTable({ sales, loading, hasActiveFilters, onDetail, onDownl
       {/* Desktop */}
       <div className="hidden sm:block w-full overflow-x-auto">
         <DataTable
-          columns={columns(onDetail, onDownloadPdf, onPost, onEdit)}
+          columns={columns(onDetail, onDownloadPdf, onPost, onEdit, onPayments, onReturn, onCancel)}
           data={sales}
           loading={loading}
           rowKey={(s) => s.id}

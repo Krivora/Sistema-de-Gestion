@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation"
 import {
     LayoutDashboard, Package, ShoppingCart, LogOut,
     ChevronLeft, ChevronRight, Users, Building2, Truck, ArrowLeftRight,
-    SlidersHorizontal, Tag, UserCircle, ClipboardList, X
+    SlidersHorizontal, Tag, UserCircle, ClipboardList, X, HandCoins
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/auth.store"
@@ -51,6 +51,7 @@ const NAV_GROUPS: NavGroup[] = [
         roles: ["admin", "user"],
         items: [
             { href: "/dashboard/sales", label: "Ventas", icon: ShoppingCart, permission: "sales.read" },
+            { href: "/dashboard/receivables", label: "Por Cobrar", icon: HandCoins, permission: "sales.read" },
             { href: "/dashboard/purchases", label: "Compras", icon: Truck, permission: "purchases.read" },
             { href: "/dashboard/adjustments", label: "Ajustes", icon: SlidersHorizontal, permission: "adjustments.read" },
             { href: "/dashboard/transfers", label: "Transferencias", icon: ArrowLeftRight, permission: "transfers.read" },

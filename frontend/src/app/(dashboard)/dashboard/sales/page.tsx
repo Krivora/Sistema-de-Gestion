@@ -8,16 +8,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DataTablePagination } from "@/components/shared/table/data-table-pagination"
 import { SalesTable } from "@/features/sales/components/sales-table"
 import { SaleDetailDialog } from "@/features/sales/components/sale-detail-dialog"
+import { SalePaymentsDialog } from "@/features/sales/components/sale-payments-dialog"
+import { SaleReturnDialog } from "@/features/sales/components/sale-return-dialog"
+import { ConfirmDialog } from "@/components/shared/confirm-dialog"
+import { formatCurrency } from "@/lib/utils"
+import type { Sale } from "@/lib/api/sales"
 import { useSales } from "@/features/sales/hooks/use-sales"
 import { PAYMENT_METHODS } from "@/lib/api/sales"
 import Link from "next/link"
 
 export default function SalesPage() {
   const [detailId, setDetailId] = useState<number | null>(null)
+  const [paymentsId, setPaymentsId] = useState<number | null>(null)
+  const [returnId, setReturnId] = useState<number | null>(null)
+  const [cancelTarget, setCancelTarget] = useState<Sale | null>(null)
   const router = useRouter()
 
   const {
-    sales, branches, loading, postedCount, hasActiveFilters,
+    sales, branches, loading, total, hasActiveFilters,
     search, setSearch,
     filterStatus, setFilterStatus,
     filterBranch, setFilterBranch,
@@ -26,9 +34,11 @@ export default function SalesPage() {
     dateTo, setDateTo,
     clearFilters,
     page, setPage, pageSize, setPageSize,
-    filtered, paginated, totalPages,
+    paginated, totalPages,
     handlePost,
+    handleCancel,
     handleDownloadPdf,
+    reload,
   } = useSales()
 
   return (
@@ -39,8 +49,8 @@ export default function SalesPage() {
           <div>
             <h1 className="text-xl sm:text-2xl font-semibold">Ventas</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {postedCount} venta{postedCount !== 1 ? "s" : ""} registrada
-              {postedCount !== 1 ? "s" : ""}
+              {total} venta{total !== 1 ? "s" : ""}
+              {hasActiveFilters ? " con los filtros aplicados" : " en total"}
             </p>
           </div>
 
@@ -133,17 +143,50 @@ export default function SalesPage() {
         onDownloadPdf={handleDownloadPdf}
         onPost={handlePost}
         onEdit={(id) => router.push(`/dashboard/sales/${id}/edit`)}
+        onPayments={setPaymentsId}
+        onReturn={setReturnId}
+        onCancel={setCancelTarget}
       />
 
-      {!loading && filtered.length > 0 && (
+      {!loading && total > 0 && (
         <DataTablePagination
           page={page} totalPages={totalPages} pageSize={pageSize}
-          filteredCount={filtered.length} totalCount={sales.length}
+          filteredCount={total} totalCount={total}
           entityLabel="venta" onPageChange={setPage} onPageSizeChange={setPageSize}
         />
       )}
 
       <SaleDetailDialog saleId={detailId} onClose={() => setDetailId(null)} />
+      <SalePaymentsDialog
+        saleId={paymentsId}
+        onClose={() => setPaymentsId(null)}
+        onChange={reload}
+      />
+      <SaleReturnDialog
+        saleId={returnId}
+        onClose={() => setReturnId(null)}
+        onChange={reload}
+      />
+      <ConfirmDialog
+        open={!!cancelTarget}
+        onOpenChange={(o) => !o && setCancelTarget(null)}
+        title="Cancelar la venta"
+        description={
+          cancelTarget
+            ? `${cancelTarget.doc_no} quedará anulada.`
+              + (cancelTarget.status === "posted" ? " La mercancía regresa al inventario." : "")
+              + (cancelTarget.paid_amount > 0
+                ? ` Hay ${formatCurrency(cancelTarget.paid_amount)} abonados que tendrás que regresarle al cliente.`
+                : "")
+            : ""
+        }
+        confirmLabel="Cancelar venta"
+        variant="destructive"
+        onConfirm={() => {
+          if (cancelTarget) handleCancel(cancelTarget.id)
+          setCancelTarget(null)
+        }}
+      />
     </div>
   )
 }

@@ -9,14 +9,16 @@ export async function createAndPostAdjustment(payload, user, meta = {}) {
   const { branch_id, note, items, type } = payload;
   const { client_id, id: user_id } = user;
 
-  if (!branch_id) throw new Error("branch_id requerido");
-  if (!VALID_TYPES.includes(type)) throw new Error("Tipo de ajuste inválido");
-  if (!Array.isArray(items) || items.length === 0) throw new Error("El ajuste requiere al menos un producto");
+  if (!branch_id) throw Object.assign(new Error("branch_id requerido"), { status: 400 });
+  if (!VALID_TYPES.includes(type)) throw Object.assign(new Error("Tipo de ajuste inválido"), { status: 400 });
+  if (!Array.isArray(items) || items.length === 0)
+    throw Object.assign(new Error("El ajuste requiere al menos un producto"), { status: 400 });
 
   for (const item of items) {
-    if (!item.product_id) throw new Error("product_id requerido en cada item");
+    if (!item.product_id)
+      throw Object.assign(new Error("product_id requerido en cada item"), { status: 400 });
     if (!Number.isFinite(Number(item.qty)) || Number(item.qty) <= 0)
-      throw new Error(`Cantidad inválida para producto ${item.product_id}`);
+      throw Object.assign(new Error(`Cantidad inválida para producto ${item.product_id}`), { status: 400 });
   }
 
   const client = await pool.connect();
@@ -73,7 +75,7 @@ export async function createAndPostAdjustment(payload, user, meta = {}) {
 }
 
 export async function listAdjustments(clientId, filters) {
-  if (!clientId) throw new Error("client_id requerido");
+  if (!clientId) throw Object.assign(new Error("client_id requerido"), { status: 400 });
   return AdjustmentRepo.findAll(clientId, filters);
 }
 

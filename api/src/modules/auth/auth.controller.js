@@ -23,9 +23,9 @@ export async function login(req, res, next) {
     if (!email || !password) {
       return res.status(400).json({ error: "Email y contraseña requeridos" });
     }
-    const { user, token } = await AuthService.login({ email, password }, extractRequestMeta(req));
+    const { user, token, billing } = await AuthService.login({ email, password }, extractRequestMeta(req));
     const ability = buildAbility(user.permissions);
-    res.json({ user, token, ability: ability.rules });
+    res.json({ user, token, ability: ability.rules, billing });
   } catch (err) { next(err); }
 }
 

@@ -17,6 +17,9 @@ interface Props {
     paymentMethod: string
     docNo: string
     disableBranch: boolean
+    paymentType?: "contado" | "credito"
+    /** Ausente en modo edición: el tipo no se cambia después de creada */
+    onPaymentTypeChange?: (v: "contado" | "credito") => void
     onBranchChange: (v: string | null) => void
     onPaymentChange: (v: string | null) => void
     onDocNoChange: (v: string) => void
@@ -28,6 +31,8 @@ export function SaleDetailsPanel({
     paymentMethod,
     docNo,
     disableBranch,
+    paymentType = "contado",
+    onPaymentTypeChange,
     onBranchChange,
     onPaymentChange,
     onDocNoChange,
@@ -106,6 +111,41 @@ export function SaleDetailsPanel({
                     </Select>
                 </div>
             </div>
+
+            {/* Tipo de venta — solo al crear */}
+            {onPaymentTypeChange && (
+                <div className="space-y-1.5">
+                    <Label>Tipo de venta</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                        {([
+                            { value: "contado", label: "Contado", hint: "Se paga completa" },
+                            { value: "credito", label: "A abonos", hint: "Paga en partes" },
+                        ] as const).map((opt) => (
+                            <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => onPaymentTypeChange(opt.value)}
+                                aria-pressed={paymentType === opt.value}
+                                className={
+                                    "rounded-lg border px-3 py-2 text-left transition-colors " +
+                                    (paymentType === opt.value
+                                        ? "border-primary bg-primary/5"
+                                        : "hover:bg-muted/50")
+                                }
+                            >
+                                <span className="block text-sm font-medium">{opt.label}</span>
+                                <span className="block text-[11px] text-muted-foreground">{opt.hint}</span>
+                            </button>
+                        ))}
+                    </div>
+                    {paymentType === "credito" && (
+                        <p className="text-[11px] text-muted-foreground">
+                            El inventario se descuenta al registrar la venta. No podrás
+                            publicarla hasta que quede saldada.
+                        </p>
+                    )}
+                </div>
+            )}
 
             {/* No. de Documento */}
             <div className="space-y-1.5">

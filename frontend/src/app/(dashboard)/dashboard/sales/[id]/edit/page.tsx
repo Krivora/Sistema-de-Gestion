@@ -90,6 +90,7 @@ export default function EditSalePage({ params }: { params: Promise<{ id: string 
                         loading={sale.loading}
                         branchId={sale.branchId}
                         isEdit
+                        paymentType={sale.paymentType}
                         onSubmitOpen={sale.handleSubmitOpen}
                         onSubmitPost={sale.handleSubmitPost}
                     />

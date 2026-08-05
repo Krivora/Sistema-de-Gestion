@@ -22,6 +22,14 @@ export interface LoginResponse {
     user: User
     token: string
     ability: AbilityRule[]
+    /** Estado de cobranza del cliente. null para el superadmin. */
+    billing: {
+        suspended: boolean
+        for_nonpayment: boolean
+        pending_cycles: number
+        oldest_unpaid_due: string | null
+        grace_until: string | null
+    } | null
 }
 
 export interface ApiError {

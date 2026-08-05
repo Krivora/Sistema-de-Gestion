@@ -137,6 +137,166 @@ export async function getTopSellingProducts(limit, clientId, roleName) {
   return rows;
 }
 
+/**
+ * Panorama por cliente para el tablero de superadmin.
+ * Sin filtro por client_id: la autorización la resuelve requireRole("superadmin").
+ *
+ * Ciclo de cobro: un mes a partir del alta. Alta el 27-ene => cortes el 27-feb,
+ * 27-mar, etc. El `+ INTERVAL 'n months'` de Postgres ajusta solo los meses
+ * cortos (alta el 31-ene corta el 28-feb), que es justo lo que se espera.
+ *
+ * - cycles_due:  cuántos cortes ya llegaron (0 = cliente de menos de un mes)
+ * - current_due: el corte más reciente que ya venció (null si aún no hay)
+ * - next_due:    el siguiente corte por venir
+ */
+export async function getSuperadminOverview({ startDate, endDate }) {
+  const { start, end } = parseDateRange(startDate, endDate);
+
+  const { rows } = await pool.query(
+    `SELECT
+       c.id, c.code, c.name, c.business_name, c.logo_url,
+       c.is_active, c.created_at, c.max_users, c.max_branches,
+       c.suspended_for_payment,
+       TO_CHAR(c.grace_until, 'YYYY-MM-DD') AS grace_until,
+       (c.grace_until IS NOT NULL AND c.grace_until >= CURRENT_DATE) AS has_grace,
+       u.total  AS users_count,
+       b.total  AS branches_count,
+       s.sales_count,
+       s.revenue,
+       ls.last_sale_at,
+       la.last_activity_at,
+       cyc.cycles_due,
+       due.current_due,
+       due.next_due,
+       pay.paid_cycles,
+       pend.pending_cycles,
+       pend.oldest_unpaid_due,
+       cdp.current_due_paid,
+       lp.last_payment_amount,
+       lp.last_payment_at,
+       cm.collected_month
+     FROM clients c
+     LEFT JOIN LATERAL (
+       SELECT COUNT(*)::int AS total FROM users x
+       WHERE x.client_id = c.id AND x.deleted_at IS NULL AND x.is_active IS NOT FALSE
+     ) u ON TRUE
+     LEFT JOIN LATERAL (
+       SELECT COUNT(*)::int AS total FROM branches x
+       WHERE x.client_id = c.id AND x.deleted_at IS NULL AND x.is_active IS NOT FALSE
+     ) b ON TRUE
+     LEFT JOIN LATERAL (
+       SELECT COUNT(*)::int AS sales_count,
+              COALESCE(SUM(x.total), 0)::float8 AS revenue
+       FROM sales x
+       WHERE x.client_id = c.id AND x.status = 'posted'
+         AND x.created_at >= $1 AND x.created_at < ($2::date + INTERVAL '1 day')
+     ) s ON TRUE
+     LEFT JOIN LATERAL (
+       SELECT MAX(x.created_at) AS last_sale_at FROM sales x
+       WHERE x.client_id = c.id AND x.status = 'posted'
+     ) ls ON TRUE
+     LEFT JOIN LATERAL (
+       SELECT MAX(x.created_at) AS last_activity_at FROM activity_logs x
+       WHERE x.client_id = c.id
+     ) la ON TRUE
+     LEFT JOIN LATERAL (
+       SELECT (DATE_PART('year',  AGE(CURRENT_DATE, c.created_at::date)) * 12
+             + DATE_PART('month', AGE(CURRENT_DATE, c.created_at::date)))::int AS cycles_due
+     ) cyc ON TRUE
+     LEFT JOIN LATERAL (
+       -- Como texto YYYY-MM-DD: un DATE viaja a JSON vía toISOString() y se
+       -- correría un día si el server corriera en una zona al este de UTC.
+       SELECT
+         CASE WHEN cyc.cycles_due > 0
+           THEN TO_CHAR((c.created_at::date + (cyc.cycles_due || ' months')::interval)::date, 'YYYY-MM-DD')
+         END AS current_due,
+         TO_CHAR((c.created_at::date + ((cyc.cycles_due + 1) || ' months')::interval)::date, 'YYYY-MM-DD') AS next_due
+     ) due ON TRUE
+     LEFT JOIN LATERAL (
+       SELECT COUNT(*)::int AS paid_cycles FROM client_payments p
+       WHERE p.client_id = c.id
+     ) pay ON TRUE
+     LEFT JOIN LATERAL (
+       -- Recorre los cortes ya vencidos y se queda con los que no tienen pago.
+       -- Postgres ajusta los meses cortos al sumar intervalos, cosa que el
+       -- setMonth() de JavaScript no hace bien en fin de mes.
+       SELECT COUNT(*)::int AS pending_cycles,
+              TO_CHAR(MIN(d.due), 'YYYY-MM-DD') AS oldest_unpaid_due
+       FROM generate_series(1, GREATEST(cyc.cycles_due, 0)) k
+       CROSS JOIN LATERAL (
+         SELECT (c.created_at::date + (k || ' months')::interval)::date AS due
+       ) d
+       WHERE NOT EXISTS (
+         SELECT 1 FROM client_payments p
+         WHERE p.client_id = c.id AND p.due_date = d.due
+       )
+     ) pend ON TRUE
+     LEFT JOIN LATERAL (
+       SELECT EXISTS (
+         SELECT 1 FROM client_payments p
+         WHERE p.client_id = c.id AND p.due_date = due.current_due::date
+       ) AS current_due_paid
+     ) cdp ON TRUE
+     LEFT JOIN LATERAL (
+       SELECT p.amount::float8 AS last_payment_amount, p.paid_at AS last_payment_at
+       FROM client_payments p
+       WHERE p.client_id = c.id AND p.amount IS NOT NULL
+       ORDER BY p.due_date DESC LIMIT 1
+     ) lp ON TRUE
+     LEFT JOIN LATERAL (
+       SELECT COALESCE(SUM(p.amount), 0)::float8 AS collected_month
+       FROM client_payments p
+       WHERE p.client_id = c.id
+         AND p.paid_at >= DATE_TRUNC('month', CURRENT_DATE)
+         AND p.paid_at <  DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
+     ) cm ON TRUE
+     ORDER BY due.current_due IS NULL, cdp.current_due_paid, due.current_due ASC, c.name ASC`,
+    [start, end]
+  );
+
+  return rows;
+}
+
+/** Historial de pagos de un cliente, más reciente primero. */
+export async function findPaymentsByClient(clientId) {
+  const { rows } = await pool.query(
+    `SELECT p.id, p.client_id, p.due_date, p.amount::float8 AS amount,
+            p.paid_at, p.note, u.name AS registered_by
+     FROM client_payments p
+     LEFT JOIN users u ON u.id = p.user_id
+     WHERE p.client_id = $1
+     ORDER BY p.due_date DESC`,
+    [clientId]
+  );
+  return rows;
+}
+
+export async function createPayment({ client_id, due_date, amount, note, user_id }) {
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO client_payments (client_id, due_date, amount, note, user_id)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, client_id, due_date, amount::float8 AS amount, paid_at, note`,
+      [client_id, due_date, amount ?? null, note ?? null, user_id ?? null]
+    );
+    return rows[0];
+  } catch (err) {
+    if (err.code === "23505")
+      throw Object.assign(new Error("Ese corte ya está marcado como pagado"), { status: 409 });
+    if (err.code === "23503")
+      throw Object.assign(new Error("Cliente no encontrado"), { status: 404 });
+    throw err;
+  }
+}
+
+export async function deletePayment(id, clientId) {
+  const { rows } = await pool.query(
+    `DELETE FROM client_payments WHERE id=$1 AND client_id=$2 RETURNING *`,
+    [id, clientId]
+  );
+  return rows[0] ?? null;
+}
+
 export async function getDashboardSummary({ startDate, endDate, clientId, roleName }) {
   const { start, end } = parseDateRange(startDate, endDate);
   const params = [start, end];

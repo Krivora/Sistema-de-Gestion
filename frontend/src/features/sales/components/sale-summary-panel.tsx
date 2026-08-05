@@ -17,11 +17,13 @@ interface Props {
     loading: boolean
     branchId: string
     isEdit?: boolean
+    paymentType?: "contado" | "credito"
     onSubmitOpen: () => void
     onSubmitPost: () => void
 }
 
-export function SaleSummaryPanel({ cart, subtotal, paymentMethod, stockWarnings, canSubmit, loading, branchId, isEdit = false, onSubmitOpen, onSubmitPost }: Props) {
+export function SaleSummaryPanel({ cart, subtotal, paymentMethod, stockWarnings, canSubmit, loading, branchId, isEdit = false, paymentType = "contado", onSubmitOpen, onSubmitPost }: Props) {
+    const isCredit = paymentType === "credito"
     return (
         <div className="border rounded-lg p-5 space-y-4">
             <h2 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Resumen</h2>
@@ -50,26 +52,40 @@ export function SaleSummaryPanel({ cart, subtotal, paymentMethod, stockWarnings,
             )}
 
             <div className="flex flex-col gap-2">
+                {/* Una venta a abonos no puede publicarse al crearla: se publica
+                    desde el diálogo de abonos, cuando el saldo llega a cero. */}
+                {!isCredit && (
+                    <Button
+                        className="w-full"
+                        onClick={onSubmitPost}
+                        disabled={!canSubmit || loading}
+                    >
+                        <ShoppingBag size={16} className="mr-2" />
+                        {loading
+                            ? (isEdit ? "Publicando..." : "Registrando...")
+                            : (isEdit ? "Guardar y publicar" : "Registrar y publicar")}
+                    </Button>
+                )}
                 <Button
                     className="w-full"
-                    onClick={onSubmitPost}
-                    disabled={!canSubmit || loading}
-                >
-                    <ShoppingBag size={16} className="mr-2" />
-                    {loading
-                        ? (isEdit ? "Publicando..." : "Registrando...")
-                        : (isEdit ? "Guardar y publicar" : "Registrar y publicar")}
-                </Button>
-                <Button
-                    className="w-full"
-                    variant="outline"
+                    variant={isCredit ? "default" : "outline"}
                     onClick={onSubmitOpen}
                     disabled={!canSubmit || loading}
                 >
                     <Save size={16} className="mr-2" />
-                    {loading ? "Guardando..." : (isEdit ? "Guardar cambios" : "Guardar abierta")}
+                    {loading
+                        ? "Guardando..."
+                        : isCredit
+                            ? "Registrar venta a abonos"
+                            : isEdit ? "Guardar cambios" : "Guardar abierta"}
                 </Button>
             </div>
+
+            {isCredit && (
+                <p className="text-xs text-muted-foreground text-center">
+                    Después registra los abonos desde la lista de ventas
+                </p>
+            )}
 
             {!branchId && (
                 <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">

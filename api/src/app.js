@@ -70,15 +70,25 @@ app.get("/api/health", (_req, res) => {
 });
 
 // Handler global de errores
-// Handler global de errores
-app.use((err, _req, res, _next) => {
-  console.error("🔥 ERROR GLOBAL:", err);
-
+app.use((err, req, res, _next) => {
   const status = err.status || 500;
+  const isClientError = status >= 400 && status < 500;
+
+  if (isClientError) {
+    // Errores de negocio: son esperados, no fallas. Una línea basta y evita
+    // llenar el log de stack traces por un stock insuficiente.
+    console.warn(`⚠️  ${status} ${req.method} ${req.originalUrl} — ${err.message}`);
+  } else {
+    console.error("🔥 ERROR GLOBAL:", err);
+  }
+
+  // Los 4xx llevan mensajes escritos para el usuario ("Faltan $200.00 por
+  // abonar", "Stock insuficiente") y tienen que llegarle tal cual. Solo se
+  // enmascaran los 5xx, que sí pueden filtrar detalles internos.
   const message =
-    process.env.NODE_ENV === "production"
-      ? "Error interno"
-      : err.message;
+    isClientError || process.env.NODE_ENV !== "production"
+      ? err.message
+      : "Error interno";
 
   res.status(status).json({ error: message });
 });

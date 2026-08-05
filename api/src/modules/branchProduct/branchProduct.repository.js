@@ -140,7 +140,8 @@ export async function upsertStock(branch_id, product_id, qty, unit_cost, client_
       console.warn(`[branchProduct] Stock de product_id=${product_id} branch_id=${branch_id} truncado a 0 (delta=${delta})`);
     }
   } else {
-    if (!client_id) throw new Error("client_id requerido para crear branch_product");
+    if (!client_id)
+      throw Object.assign(new Error("client_id requerido para crear branch_product"), { status: 400 });
     await pool.query(
       `INSERT INTO branch_products (branch_id, product_id, stock, cost, price, min_stock, reorder_point, currency, is_active, client_id)
        VALUES ($1,$2,$3,$4,0,0,0,'MXN',true,$5)`,

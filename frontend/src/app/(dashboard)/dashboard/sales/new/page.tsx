@@ -40,6 +40,8 @@ export default function NewSalePage() {
                         paymentMethod={sale.paymentMethod}
                         docNo={sale.docNo}
                         disableBranch={!!user?.branch_id}
+                        paymentType={sale.paymentType}
+                        onPaymentTypeChange={sale.setPaymentType}
                         onBranchChange={handleBranchChange}
                         onPaymentChange={(v) => v && sale.setPaymentMethod(v)}
                         onDocNoChange={sale.setDocNo}
@@ -67,6 +69,7 @@ export default function NewSalePage() {
                         canSubmit={sale.canSubmit}
                         loading={sale.loading}
                         branchId={sale.branchId}
+                        paymentType={sale.paymentType}
                         onSubmitOpen={sale.handleSubmitOpen}
                         onSubmitPost={sale.handleSubmitPost}
                     />
