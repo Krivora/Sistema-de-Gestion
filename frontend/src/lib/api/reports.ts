@@ -8,6 +8,8 @@ export interface StockReport {
     category_name: string
     price: number
     stock: number
+    /** Mínimo configurado del producto en esa sucursal */
+    min_stock: number
 }
 
 export interface SalesReport {

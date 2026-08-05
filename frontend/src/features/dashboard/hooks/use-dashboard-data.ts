@@ -81,7 +81,11 @@ export function useDashboardData(
         lowStock:
           stockRes.status === "fulfilled"
             ? stockRes.value.data
-                .filter((s: { stock: number }) => s.stock <= LOW_STOCK_THRESHOLD)
+                // El mínimo de cada producto; el umbral fijo solo aplica a los
+                // que no tienen uno configurado. Antes usaba siempre 5, así que
+                // el tablero y Stock por Sucursal se contradecían.
+                .filter((s: { stock: number; min_stock?: number }) =>
+                  s.stock <= (s.min_stock ?? LOW_STOCK_THRESHOLD))
                 .sort((a: { stock: number }, b: { stock: number }) => a.stock - b.stock)
                 .slice(0, 8)
             : [],

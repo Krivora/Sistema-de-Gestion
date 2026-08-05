@@ -50,6 +50,7 @@ export async function getCurrentStockByBranch(branchId, categoryId, clientId, ro
     `SELECT b.name AS branch_name,
             p.id AS product_id, p.name AS product_name, p.sku,
             c.name AS category_name, bp.price,
+            bp.min_stock,
             COALESCE(SUM(CASE
               WHEN t.type IN ('PURCHASE','ADJUSTMENT_IN','TRANSFER_IN') THEN t.qty
               WHEN t.type IN ('SALE','ADJUSTMENT_OUT','TRANSFER_OUT')   THEN -t.qty
@@ -62,7 +63,7 @@ export async function getCurrentStockByBranch(branchId, categoryId, clientId, ro
      LEFT JOIN inventory_transactions t
        ON t.product_id = p.id AND t.branch_id = bp.branch_id
      ${where}
-     GROUP BY b.name, p.id, p.name, p.sku, c.name, bp.price
+     GROUP BY b.name, p.id, p.name, p.sku, c.name, bp.price, bp.min_stock
      ORDER BY b.name, p.name`,
     params
   );

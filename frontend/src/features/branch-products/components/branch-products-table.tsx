@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { AlertTriangle, MoreHorizontal, Package } from "lucide-react"
 import { DataTable, type ColumnDef } from "@/components/shared/table/data-table"
+import { toNumber } from "@/lib/utils"
 import type { BranchProduct } from "@/lib/api/branch-products"
 import type { ConfirmType } from "../hooks/use-branch-products"
 
@@ -45,9 +46,11 @@ function BranchProductCard({
   onEdit: (p: BranchProduct) => void
   onConfirm: (t: ConfirmType, p: BranchProduct) => void
 }) {
-  const profit = item.price - item.cost
+  const profit = toNumber(item.price) - toNumber(item.cost)
+  // Postgres entrega los numeric como texto: sin toNumber esto compara cadenas
+  // y "17.0000" <= "5.0000" resulta verdadero.
   const isLowStock =
-    item.is_active && item.current_stock <= item.min_stock
+    item.is_active && toNumber(item.current_stock) <= toNumber(item.min_stock)
 
   return (
     <div className="bg-card border rounded-xl p-4 space-y-3">
@@ -235,7 +238,7 @@ const columns = (
     header: "Utilidad",
     width: 110,
     cell: (i) => {
-      const profit = i.price - i.cost
+      const profit = toNumber(i.price) - toNumber(i.cost)
       return (
         <span
           className={`font-medium ${
@@ -255,7 +258,7 @@ const columns = (
     width: 90,
     cell: (i) => {
       const isLow =
-        i.is_active && i.current_stock <= i.min_stock
+        i.is_active && toNumber(i.current_stock) <= toNumber(i.min_stock)
       return (
         <span
           className={`flex items-center gap-1.5 font-semibold ${

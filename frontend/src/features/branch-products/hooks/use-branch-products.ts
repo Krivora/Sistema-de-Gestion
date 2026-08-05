@@ -3,6 +3,7 @@ import { sileo } from "sileo"
 import { branchProductsApi, type BranchProduct } from "@/lib/api/branch-products"
 import { branchesApi, type Branch } from "@/lib/api/branches"
 import { getApiError } from "@/lib/input-helpers"
+import { toNumber } from "@/lib/utils"
 import { useEntity } from "@/store/entity.store"
 import { useTableFilters } from "@/hooks/use-table-filters"
 import { useAuthStore } from "@/store/auth.store"
@@ -41,7 +42,8 @@ export function useBranchProducts() {
           i.branch_name.toLowerCase().includes(s.toLowerCase())
         const matchBranch = filterBranch === "all" || String(i.branch_id) === filterBranch
         const matchStatus = filterStatus === "all" || (filterStatus === "active" ? i.is_active : !i.is_active)
-        const matchStock = filterStock === "all" || (filterStock === "low" && i.current_stock <= i.min_stock)
+        const matchStock = filterStock === "all"
+          || (filterStock === "low" && toNumber(i.current_stock) <= toNumber(i.min_stock))
         return matchSearch && matchBranch && matchStatus && matchStock
       },
       extraDeps: [filterBranch, filterStatus, filterStock],
@@ -49,7 +51,11 @@ export function useBranchProducts() {
 
 
   const hasActiveFilters = !!(search || filterBranch !== "all" || filterStatus !== "all" || filterStock !== "all")
-  const lowStockCount = entity.data.filter((i) => i.is_active && i.current_stock <= i.min_stock).length
+  // Postgres devuelve los numeric como texto: comparar sin convertir da
+  // "17.0000" <= "5.0000" = true y marca en bajo un producto bien surtido.
+  const lowStockCount = entity.data.filter(
+    (i) => i.is_active && toNumber(i.current_stock) <= toNumber(i.min_stock)
+  ).length
 
   function clearFilters() {
     setSearch("")

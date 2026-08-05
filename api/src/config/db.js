@@ -5,6 +5,17 @@ import dotenv from "dotenv";
 dotenv.config();
 const { Pool } = pg;
 
+// node-pg entrega los NUMERIC como texto para no perder precisión. Eso hacía
+// que "17.0000" <= "5.0000" fuera verdadero (compara cadena contra cadena) y
+// marcaba en stock bajo productos bien surtidos, además de mostrar "1.0000" o
+// "18000.00" en los inputs.
+//
+// El código y los tipos de TypeScript ya asumen números en todas partes, así
+// que se alinea el driver con el código. El límite es la precisión del double
+// (~15 dígitos significativos), muy por encima de cualquier importe o cantidad
+// de inventario que maneje el sistema.
+pg.types.setTypeParser(pg.types.builtins.NUMERIC, (v) => (v === null ? null : parseFloat(v)));
+
 // Configuración SSL (DigitalOcean requiere sslmode=require)
 const ssl =
   process.env.PG_SSL && ["1", "true", "TRUE", "require"].includes(process.env.PG_SSL)
