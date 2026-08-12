@@ -8,19 +8,11 @@ import { SaleDetailsPanel } from "@/features/sales/components/sale-details-panel
 import { SaleCustomerPanel } from "@/features/sales/components/sale-customer-panel"
 import { SaleSummaryPanel } from "@/features/sales/components/sale-summary-panel"
 import { SaleCartPanel } from "@/features/sales/components/sale-cart-panel"
+import { SalePackagesPanel } from "@/features/sales/components/sale-packages-panel"
 
 export default function NewSalePage() {
     const user = useAuthStore((s) => s.user)
     const sale = useNewSale()
-
-    const handleBranchChange = (v: string | null) => {
-        if (v) {
-            sale.setBranchId(v)
-            if (sale.cart.length) {
-                sale.cart.forEach(c => sale.removeFromCart(c.product_id))
-            }
-        }
-    }
 
     return (
         <div className="space-y-6">
@@ -42,7 +34,7 @@ export default function NewSalePage() {
                         disableBranch={!!user?.branch_id}
                         paymentType={sale.paymentType}
                         onPaymentTypeChange={sale.setPaymentType}
-                        onBranchChange={handleBranchChange}
+                        onBranchChange={(v) => v && sale.changeBranch(v)}
                         onPaymentChange={(v) => v && sale.setPaymentMethod(v)}
                         onDocNoChange={sale.setDocNo}
                     />
@@ -63,7 +55,10 @@ export default function NewSalePage() {
                     />
                     <SaleSummaryPanel
                         cart={sale.cart}
+                        cartPackages={sale.cartPackages}
                         subtotal={sale.subtotal}
+                        totalUnits={sale.totalUnits}
+                        packagesSubtotal={sale.packagesSubtotal}
                         paymentMethod={sale.paymentMethod}
                         stockWarnings={sale.stockWarnings}
                         canSubmit={sale.canSubmit}
@@ -74,7 +69,26 @@ export default function NewSalePage() {
                         onSubmitPost={sale.handleSubmitPost}
                     />
                 </div>
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 space-y-6">
+                    <SalePackagesPanel
+                        searchRef={sale.packageSearchRef as React.RefObject<HTMLDivElement>}
+                        branchId={sale.branchId}
+                        search={sale.packageSearch}
+                        searchOpen={sale.packageSearchOpen}
+                        filteredPackages={sale.filteredPackages}
+                        cartPackages={sale.cartPackages}
+                        packagesSubtotal={sale.packagesSubtotal}
+                        branchProducts={sale.branchProducts}
+                        builder={sale.builder}
+                        onSearchChange={sale.setPackageSearch}
+                        onSearchOpen={sale.setPackageSearchOpen}
+                        onAddPackage={sale.addPackage}
+                        onRemovePackage={sale.removePackage}
+                        onUpdatePackageQty={sale.updatePackageQty}
+                        onEditPackage={sale.editPackage}
+                        onBuilderConfirm={sale.confirmBuilder}
+                        onBuilderCancel={sale.cancelBuilder}
+                    />
                     <SaleCartPanel
                         searchRef={sale.searchRef as React.RefObject<HTMLDivElement>}
                         branchId={sale.branchId}
@@ -83,7 +97,7 @@ export default function NewSalePage() {
                         searchOpen={sale.searchOpen}
                         filteredProducts={sale.filteredProducts}
                         cart={sale.cart}
-                        subtotal={sale.subtotal}
+                        subtotal={sale.itemsSubtotal}
                         onSearchChange={sale.setProductSearch}
                         onSearchOpen={sale.setSearchOpen}
                         onAddToCart={sale.addToCart}

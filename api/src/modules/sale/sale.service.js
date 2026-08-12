@@ -1,7 +1,13 @@
 import pool from "../../config/db.js";
 import * as SaleRepo from "./sale.repository.js";
 import * as InventoryRepo from "../inventory/inventory.repository.js";
+import * as PackageRepo from "../package/package.repository.js";
 import { logAction } from "../../core/utils/audit.js";
+
+const bad = (msg, status = 400) => Object.assign(new Error(msg), { status });
+
+const round2 = (n) => Math.round(n * 100) / 100;
+const round4 = (n) => Math.round(n * 10000) / 10000;
 
 export async function listSales(clientId, filters) {
   if (!clientId) throw Object.assign(new Error("client_id requerido"), { status: 400 });
@@ -11,15 +17,22 @@ export async function listSales(clientId, filters) {
 export async function getSaleById(id, clientId) {
   const header = await SaleRepo.findById(id, clientId);
   if (!header) return null;
-  const items = await SaleRepo.findItems(id, clientId);
-  return { ...header, items };
+  const [items, packages] = await Promise.all([
+    SaleRepo.findItems(id, clientId),
+    SaleRepo.findSalePackages(id, clientId),
+  ]);
+  return { ...header, items, packages };
 }
 
-function validateSalePayload({ branch_id, items }) {
+function validateSalePayload({ branch_id, items, packages }) {
   if (!branch_id) throw Object.assign(new Error("branch_id requerido"), { status: 400 });
-  if (!Array.isArray(items) || !items.length) throw Object.assign(new Error("Se requiere al menos un producto"), { status: 400 });
 
-  for (const item of items) {
+  const hasItems    = Array.isArray(items)    && items.length;
+  const hasPackages = Array.isArray(packages) && packages.length;
+  if (!hasItems && !hasPackages)
+    throw bad("Se requiere al menos un producto o paquete");
+
+  for (const item of items ?? []) {
     if (!item.product_id) throw Object.assign(new Error("product_id requerido en cada item"), { status: 400 });
     const qty   = Number(item.qty);
     const price = Number(item.unit_price);
@@ -28,12 +41,138 @@ function validateSalePayload({ branch_id, items }) {
   }
 }
 
+/* ── Paquetes ─────────────────────────────────────────────────── */
+
+/**
+ * Reparte el precio fijo del paquete entre sus productos, proporcional a lo que
+ * cada uno vale por separado (y por piezas si ninguno tiene precio de lista).
+ *
+ * Se prorratea en vez de guardar el paquete como un renglón aparte para que
+ * cada producto siga siendo una venta normal: el inventario, las devoluciones
+ * parciales y el total de la venta funcionan sin tratar al paquete como caso
+ * especial. El último renglón absorbe el redondeo, así la suma da exactamente
+ * el precio del paquete.
+ */
+function proratePackagePrice(total, lines) {
+  const weights = lines.map((l) => (l.weight > 0 ? l.weight : 0));
+  const totalWeight = weights.reduce((a, w) => a + w, 0);
+
+  const basis = totalWeight > 0 ? weights : lines.map((l) => l.qty);
+  const totalBasis = basis.reduce((a, b) => a + b, 0);
+
+  let assigned = 0;
+  return lines.map((line, i) => {
+    const lineTotal = i === lines.length - 1
+      ? round2(total - assigned)
+      : round2((total * basis[i]) / totalBasis);
+    assigned = round2(assigned + lineTotal);
+    return { product_id: line.product_id, qty: line.qty, unit_price: round4(lineTotal / line.qty) };
+  });
+}
+
+/**
+ * Qué lleva un paquete armable. Las piezas las elige el vendedor, pero el
+ * catálogo manda: ni más ni menos piezas de las pactadas, y solo productos que
+ * el paquete acepta. Validarlo aquí y no en el navegador evita que alguien
+ * arme un paquete de $200 con lo más caro de la bodega.
+ */
+async function resolveFlexibleItems(db, pkg, rawItems) {
+  if (!Array.isArray(rawItems) || !rawItems.length)
+    throw bad(`Selecciona los productos del paquete "${pkg.name}"`);
+
+  const allowed = await PackageRepo.findAllowedProductIds(db, pkg);
+  const merged = new Map();
+
+  for (const raw of rawItems) {
+    const product_id = Number(raw.product_id);
+    const qty = Number(raw.qty ?? 1);
+
+    if (!Number.isInteger(product_id)) throw bad(`Producto inválido en el paquete "${pkg.name}"`);
+    if (!Number.isFinite(qty) || qty <= 0)
+      throw bad(`Cantidad inválida en el paquete "${pkg.name}"`);
+    if (allowed && !allowed.has(product_id))
+      throw bad(`Un producto seleccionado no pertenece al paquete "${pkg.name}"`);
+
+    merged.set(product_id, (merged.get(product_id) ?? 0) + qty);
+  }
+
+  const picked = [...merged.values()].reduce((a, q) => a + q, 0);
+  const expected = Number(pkg.item_count);
+  if (Math.abs(picked - expected) > 0.0001)
+    throw bad(`El paquete "${pkg.name}" lleva ${expected} pieza(s) y seleccionaste ${picked}`);
+
+  return [...merged.entries()].map(([product_id, qty]) => ({ product_id, qty }));
+}
+
+/** Convierte los paquetes pedidos en renglones de venta listos para insertar. */
+async function resolvePackages(db, { packages, branch_id, client_id }) {
+  if (!Array.isArray(packages) || !packages.length) return [];
+
+  const resolved = [];
+
+  for (const raw of packages) {
+    const pkg = await PackageRepo.findById(Number(raw.package_id), client_id, db);
+    if (!pkg) throw bad("Uno de los paquetes ya no existe", 404);
+    if (pkg.status !== "active") throw bad(`El paquete "${pkg.name}" está inactivo`);
+
+    const qty = Number(raw.qty ?? 1);
+    if (!Number.isFinite(qty) || qty <= 0)
+      throw bad(`Cantidad inválida para el paquete "${pkg.name}"`);
+
+    const contents = pkg.kind === "fixed"
+      ? pkg.items.map((i) => ({ product_id: i.product_id, qty: Number(i.qty) }))
+      : await resolveFlexibleItems(db, pkg, raw.items);
+
+    if (!contents.length) throw bad(`El paquete "${pkg.name}" no tiene productos`);
+
+    const productIds = contents.map((c) => c.product_id);
+    const prices = await SaleRepo.findBranchPrices(db, branch_id, productIds, client_id);
+
+    const lines = proratePackagePrice(
+      round2(pkg.price * qty),
+      contents.map((c) => {
+        const lineQty = round4(c.qty * qty);
+        return { product_id: c.product_id, qty: lineQty, weight: (prices.get(c.product_id) ?? 0) * lineQty };
+      })
+    );
+
+    resolved.push({ package_id: pkg.id, name: pkg.name, qty, unit_price: pkg.price, lines });
+  }
+
+  return resolved;
+}
+
+/**
+ * Renglones a insertar: los productos sueltos más los que aportan los paquetes.
+ * Crea de paso la cabecera de cada paquete vendido.
+ */
+async function buildSaleLines(trx, { saleId, items, resolvedPackages, client_id }) {
+  const lines = items.map((item) => ({
+    product_id: item.product_id,
+    qty: Number(item.qty),
+    unit_price: Number(item.unit_price),
+    sale_package_id: null,
+  }));
+
+  for (const group of resolvedPackages) {
+    const sp = await SaleRepo.createSalePackage(trx, {
+      sale_id: saleId, package_id: group.package_id, client_id,
+      name: group.name, qty: group.qty, unit_price: group.unit_price,
+    });
+    lines.push(...group.lines.map((l) => ({ ...l, sale_package_id: sp.id })));
+  }
+
+  return lines;
+}
+
 export async function createSale(payload, user, meta = {}) {
-  const { branch_id, items, customer_id, customer_name, customer_phone, payment_method, doc_no, post = false } = payload;
+  const { branch_id, customer_id, customer_name, customer_phone, payment_method, doc_no, post = false } = payload;
+  const items    = Array.isArray(payload.items)    ? payload.items    : [];
+  const packages = Array.isArray(payload.packages) ? payload.packages : [];
   const payment_type = payload.payment_type === "credito" ? "credito" : "contado";
   const { client_id, id: user_id } = user;
 
-  validateSalePayload({ branch_id, items });
+  validateSalePayload({ branch_id, items, packages });
 
   // Venta a abonos = fiado: el cliente se lleva la mercancía hoy y paga después,
   // así que el inventario sale al registrarla aunque la venta siga abierta.
@@ -44,24 +183,24 @@ export async function createSale(payload, user, meta = {}) {
   try {
     await trx.query("BEGIN");
 
+    const resolvedPackages = await resolvePackages(trx, { packages, branch_id, client_id });
+
     const sale = await SaleRepo.createHeader(trx, {
       doc_no, branch_id, client_id, user_id,
       customer_id, customer_name, customer_phone, payment_method, payment_type,
     });
 
-    for (const item of items) {
-      const qty   = Number(item.qty);
-      const price = Number(item.unit_price);
+    const lines = await buildSaleLines(trx, {
+      saleId: sale.id, items, resolvedPackages, client_id,
+    });
 
-      await SaleRepo.addItem(trx, {
-        sale_id: sale.id, product_id: item.product_id,
-        qty, unit_price: price, client_id,
-      });
+    for (const line of lines) {
+      await SaleRepo.addItem(trx, { sale_id: sale.id, client_id, ...line });
 
       if (applyInventory) {
         await InventoryRepo.createAndApply(trx, {
-          branch_id, product_id: item.product_id,
-          qty, type: "SALE", unit_cost: price,
+          branch_id, product_id: line.product_id,
+          qty: line.qty, type: "SALE", unit_cost: line.unit_price,
           note: `Venta ${sale.doc_no}`,
           ref_type: "sales", ref_id: sale.id,
         }, client_id, user_id);
@@ -79,17 +218,22 @@ export async function createSale(payload, user, meta = {}) {
     if (!final) throw new Error("Error al procesar la venta");
     await trx.query("COMMIT");
 
-    const itemsResp = await SaleRepo.findItems(final.id, client_id);
+    const created = await getSaleById(final.id, client_id);
+
+    const detail = [
+      items.length ? `${items.length} producto(s)` : null,
+      resolvedPackages.length ? `${resolvedPackages.length} paquete(s)` : null,
+    ].filter(Boolean).join(" y ");
 
     await logAction({
       ...meta, client_id, user_id,
       action: post ? "CREATE_SALE" : "CREATE_SALE_OPEN",
-      description: `Venta ${final.doc_no} creada (${post ? "posted" : "open"}) con ${items.length} producto(s)`,
+      description: `Venta ${final.doc_no} creada (${post ? "posted" : "open"}) con ${detail}`,
       ref_table: "sales", ref_id: final.id,
-      new_data: { ...final, items: itemsResp },
+      new_data: created,
     });
 
-    return { ...final, items: itemsResp };
+    return created;
   } catch (err) {
     await trx.query("ROLLBACK");
     throw err;
@@ -99,7 +243,9 @@ export async function createSale(payload, user, meta = {}) {
 }
 
 export async function updateSale(id, payload, user, meta = {}) {
-  const { branch_id, items, customer_id, customer_name, customer_phone, payment_method, doc_no } = payload;
+  const { branch_id, customer_id, customer_name, customer_phone, payment_method, doc_no } = payload;
+  const items    = Array.isArray(payload.items)    ? payload.items    : [];
+  const packages = Array.isArray(payload.packages) ? payload.packages : [];
   const { client_id, id: user_id } = user;
 
   const existing = await getSaleById(id, client_id);
@@ -107,7 +253,7 @@ export async function updateSale(id, payload, user, meta = {}) {
   if (existing.status !== "open")
     throw Object.assign(new Error("Solo las ventas abiertas pueden editarse"), { status: 400 });
 
-  validateSalePayload({ branch_id, items });
+  validateSalePayload({ branch_id, items, packages });
 
   const trx = await pool.connect();
   try {
@@ -132,18 +278,25 @@ export async function updateSale(id, payload, user, meta = {}) {
       }
     }
 
-    await SaleRepo.deleteItems(trx, id, client_id);
+    const resolvedPackages = await resolvePackages(trx, { packages, branch_id, client_id });
 
-    for (const item of items) {
-      await SaleRepo.addItem(trx, {
-        sale_id: id, product_id: item.product_id,
-        qty: Number(item.qty), unit_price: Number(item.unit_price), client_id,
-      });
+    // Los renglones de un paquete cuelgan de sale_packages con ON DELETE
+    // CASCADE: borrar primero los items y luego los paquetes deja la venta
+    // limpia para volver a armarla.
+    await SaleRepo.deleteItems(trx, id, client_id);
+    await SaleRepo.deleteSalePackages(trx, id, client_id);
+
+    const lines = await buildSaleLines(trx, {
+      saleId: id, items, resolvedPackages, client_id,
+    });
+
+    for (const line of lines) {
+      await SaleRepo.addItem(trx, { sale_id: id, client_id, ...line });
 
       if (existing.inventory_applied) {
         await InventoryRepo.createAndApply(trx, {
-          branch_id, product_id: item.product_id,
-          qty: Number(item.qty), type: "SALE", unit_cost: Number(item.unit_price),
+          branch_id, product_id: line.product_id,
+          qty: line.qty, type: "SALE", unit_cost: line.unit_price,
           note: `Venta ${existing.doc_no} (editada)`,
           ref_type: "sales", ref_id: id,
         }, client_id, user_id);
@@ -155,10 +308,15 @@ export async function updateSale(id, payload, user, meta = {}) {
 
     const updated = await getSaleById(id, client_id);
 
+    const detail = [
+      items.length ? `${items.length} producto(s)` : null,
+      resolvedPackages.length ? `${resolvedPackages.length} paquete(s)` : null,
+    ].filter(Boolean).join(" y ");
+
     await logAction({
       ...meta, client_id, user_id,
       action: "UPDATE_SALE",
-      description: `Venta ${updated.doc_no} editada (${items.length} producto(s))`,
+      description: `Venta ${updated.doc_no} editada (${detail})`,
       ref_table: "sales", ref_id: updated.id,
       old_data: existing, new_data: updated,
     });

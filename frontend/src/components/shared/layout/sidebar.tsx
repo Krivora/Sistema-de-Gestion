@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation"
 import {
     LayoutDashboard, Package, ShoppingCart, LogOut,
     ChevronLeft, ChevronRight, Users, Building2, Truck, ArrowLeftRight,
-    SlidersHorizontal, Tag, UserCircle, ClipboardList, X, HandCoins
+    SlidersHorizontal, Tag, UserCircle, ClipboardList, X, HandCoins, Boxes
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/auth.store"
@@ -44,6 +44,7 @@ const NAV_GROUPS: NavGroup[] = [
             { href: "/dashboard/categories", label: "Categorías", icon: Tag, permission: "categories.read" },
             { href: "/dashboard/products", label: "Productos", icon: Package, permission: "products.read" },
             { href: "/dashboard/branch-products", label: "Stock por Sucursal", icon: Building2, permission: "products.read" },
+            { href: "/dashboard/packages", label: "Paquetes", icon: Boxes, permission: "packages.read" },
         ],
     },
     {

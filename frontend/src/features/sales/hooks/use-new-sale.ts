@@ -2,10 +2,11 @@
 import { useEffect, useState, useRef, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { sileo } from "sileo"
-import { salesApi, type SaleItemDto } from "@/lib/api/sales"
+import { salesApi, type SaleItemDto, type SalePackageDto } from "@/lib/api/sales"
 import { branchesApi, type Branch } from "@/lib/api/branches"
 import { customersApi, type Customer } from "@/lib/api/customers"
 import { branchProductsApi, type BranchProduct } from "@/lib/api/branch-products"
+import { packagesApi, type Package, type PackageKind } from "@/lib/api/packages"
 import { getApiError, onlyDecimals, onlyDigits, toInputNumber } from "@/lib/input-helpers"
 import { useAuthStore } from "@/store/auth.store"
 
@@ -19,6 +20,35 @@ export interface CartItem {
     min_stock: number
 }
 
+/** Un producto dentro de un paquete del carrito. `qty` es por paquete. */
+export interface CartPackageItem {
+    product_id: number
+    product_name: string
+    sku: string
+    qty: number
+}
+
+export interface CartPackage {
+    /** Identificador local: el mismo paquete puede ir dos veces con contenidos distintos */
+    uid: string
+    package_id: number
+    name: string
+    code: string
+    kind: PackageKind
+    /** Cuántos paquetes iguales */
+    qty: string
+    /** Precio de un paquete, tal como está en el catálogo */
+    unit_price: number
+    items: CartPackageItem[]
+}
+
+export interface StockWarning {
+    product_id: number
+    product_name: string
+    needed: number
+    available: number
+}
+
 export function useNewSale(saleId?: number) {
     const user = useAuthStore((s) => s.user)
     const router = useRouter()
@@ -27,6 +57,7 @@ export function useNewSale(saleId?: number) {
     const [branches, setBranches] = useState<Branch[]>([])
     const [customers, setCustomers] = useState<Customer[]>([])
     const [branchProducts, setBranchProducts] = useState<BranchProduct[]>([])
+    const [catalogPackages, setCatalogPackages] = useState<Package[]>([])
     const [branchId, setBranchId] = useState<string>(user?.branch_id ? String(user.branch_id) : "")
     const [customerId, setCustomerId] = useState<string>("")
     const [customerName, setCustomerName] = useState("")
@@ -35,10 +66,15 @@ export function useNewSale(saleId?: number) {
     const [paymentType, setPaymentType] = useState<"contado" | "credito">("contado")
     const [docNo, setDocNo] = useState("")
     const [cart, setCart] = useState<CartItem[]>([])
+    const [cartPackages, setCartPackages] = useState<CartPackage[]>([])
+    // Paquete armable que se está llenando. `uid` presente = se está editando uno ya agregado.
+    const [builder, setBuilder] = useState<{ pkg: Package; uid: string | null } | null>(null)
     const [productSearch, setProductSearch] = useState("")
+    const [packageSearch, setPackageSearch] = useState("")
     const [barcode, setBarcode] = useState("")
     const scannerRef = useRef<HTMLInputElement>(null)
     const [searchOpen, setSearchOpen] = useState(false)
+    const [packageSearchOpen, setPackageSearchOpen] = useState(false)
     const [customerSearch, setCustomerSearch] = useState("")
     const [customerSearchOpen, setCustomerSearchOpen] = useState(false)
     const [loading, setLoading] = useState(false)
@@ -46,6 +82,7 @@ export function useNewSale(saleId?: number) {
     const [loadingProducts, setLoadingProducts] = useState(false)
     const [postSale, setPostSale] = useState(false)
     const searchRef = useRef<HTMLDivElement>(null)
+    const packageSearchRef = useRef<HTMLDivElement>(null)
     const customerSearchRef = useRef<HTMLDivElement>(null)
 
 
@@ -54,6 +91,10 @@ export function useNewSale(saleId?: number) {
             setBranches(b.filter((br) => br.is_active))
             setCustomers(c.filter((cu) => cu.is_active))
         })
+        // Sin permiso de paquetes la venta sigue funcionando: solo no se ofrecen.
+        packagesApi.list()
+            .then((p) => setCatalogPackages(p.filter((x) => x.status === "active")))
+            .catch(() => setCatalogPackages([]))
     }, [])
 
     // Modo edición: carga la venta y precarga el formulario
@@ -78,17 +119,52 @@ export function useNewSale(saleId?: number) {
                 setCustomerPhone(sale.customer_phone ?? "")
                 setCustomerSearch(sale.customer_id ? name : "")
 
-                setCart(
-                    (sale.items ?? []).map((it) => ({
+                const salePackages = sale.packages ?? []
+                const groups = new Map<number, CartPackage>()
+                for (const sp of salePackages) {
+                    // Sin package_id el paquete ya no existe en el catálogo y no se
+                    // puede volver a mandar: sus productos se quedan como sueltos.
+                    if (!sp.package_id) continue
+                    groups.set(sp.id, {
+                        uid: `sp-${sp.id}`,
+                        package_id: sp.package_id,
+                        name: sp.name,
+                        code: sp.package_code ?? "",
+                        kind: sp.package_kind ?? "fixed",
+                        qty: toInputNumber(sp.qty) || "1",
+                        unit_price: sp.unit_price,
+                        items: [],
+                    })
+                }
+
+                const loose: CartItem[] = []
+                for (const it of sale.items ?? []) {
+                    const group = it.sale_package_id ? groups.get(it.sale_package_id) : undefined
+                    if (!group) {
+                        loose.push({
+                            product_id: it.product_id,
+                            product_name: it.product_name,
+                            sku: it.sku,
+                            qty: toInputNumber(it.qty),
+                            unit_price: toInputNumber(it.unit_price),
+                            current_stock: 0,
+                            min_stock: 0,
+                        })
+                        continue
+                    }
+                    // En la venta la cantidad ya viene multiplicada por el número
+                    // de paquetes; aquí se guarda por paquete.
+                    const perPackage = Number(group.qty) > 0 ? it.qty / Number(group.qty) : it.qty
+                    group.items.push({
                         product_id: it.product_id,
                         product_name: it.product_name,
                         sku: it.sku,
-                        qty: toInputNumber(it.qty),
-                        unit_price: toInputNumber(it.unit_price),
-                        current_stock: 0,
-                        min_stock: 0,
-                    }))
-                )
+                        qty: perPackage,
+                    })
+                }
+
+                setCart(loose)
+                setCartPackages([...groups.values()].filter((g) => g.items.length > 0))
             })
             .catch((err) => {
                 sileo.error({ title: getApiError(err, "Error al cargar la venta") })
@@ -126,6 +202,8 @@ export function useNewSale(saleId?: number) {
         function handleClick(e: MouseEvent) {
             if (searchRef.current && !searchRef.current.contains(e.target as Node))
                 setSearchOpen(false)
+            if (packageSearchRef.current && !packageSearchRef.current.contains(e.target as Node))
+                setPackageSearchOpen(false)
             if (customerSearchRef.current && !customerSearchRef.current.contains(e.target as Node))
                 setCustomerSearchOpen(false)
         }
@@ -154,6 +232,25 @@ export function useNewSale(saleId?: number) {
                 c.email?.toLowerCase().includes(q)
         ).slice(0, 8)
     }, [customers, customerSearch])
+
+    /**
+     * Paquetes ofrecibles en esta sucursal. Un paquete predefinido cuyo contenido
+     * no está dado de alta en la sucursal reventaría al guardar, así que se marca
+     * como no disponible en vez de dejar que el vendedor lo intente.
+     */
+    const filteredPackages = useMemo(() => {
+        const branchIds = new Set(branchProducts.map((p) => p.product_id))
+        const q = packageSearch.trim().toLowerCase()
+
+        return catalogPackages
+            .filter((p) => !q || p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q))
+            .map((pkg) => {
+                const missing = pkg.kind === "fixed"
+                    ? pkg.items.filter((i) => !branchIds.has(i.product_id)).length
+                    : 0
+                return { pkg, available: missing === 0 && branchProducts.length > 0 }
+            })
+    }, [catalogPackages, packageSearch, branchProducts])
 
     function addToCart(bp: BranchProduct) {
 
@@ -202,6 +299,16 @@ export function useNewSale(saleId?: number) {
         setCart((prev) => prev.map((c) => c.product_id === productId ? { ...c, [field]: cleaned } : c))
     }
 
+    /**
+     * Cambiar de sucursal vacía la venta: los precios, el stock y hasta qué
+     * paquetes se pueden surtir son distintos en cada una.
+     */
+    function changeBranch(value: string) {
+        setBranchId(value)
+        setCart([])
+        setCartPackages([])
+    }
+
     function selectCustomer(customer: Customer) {
         setCustomerId(String(customer.id))
         setCustomerName(customer.name)
@@ -214,12 +321,136 @@ export function useNewSale(saleId?: number) {
         setCustomerId(""); setCustomerName(""); setCustomerPhone(""); setCustomerSearch("")
     }
 
-    const subtotal = cart.reduce((acc, c) => acc + (Number(c.qty) || 0) * (Number(c.unit_price) || 0), 0)
-    // Sin los productos de la sucursal no se conoce el stock: no adviertas de más
-    const stockWarnings = loadingProducts || loadingSale
-        ? []
-        : cart.filter((c) => Number(c.qty) > Number(c.current_stock))
-    const canSubmit = branchId && cart.length > 0 && cart.every((c) => Number(c.qty) > 0 && Number(c.unit_price) >= 0)
+    /* ── Paquetes ─────────────────────────────────────────── */
+
+    function resolveItemNames(items: { product_id: number; qty: number }[]): CartPackageItem[] {
+        return items.map((i) => {
+            const bp = branchProducts.find((p) => p.product_id === i.product_id)
+            return {
+                product_id: i.product_id,
+                product_name: bp?.product_name ?? `Producto #${i.product_id}`,
+                sku: bp?.sku ?? "",
+                qty: i.qty,
+            }
+        })
+    }
+
+    /** Un predefinido entra directo; uno armable abre el armador. */
+    function addPackage(pkg: Package) {
+        setPackageSearch("")
+        setPackageSearchOpen(false)
+
+        if (pkg.kind === "flexible") {
+            setBuilder({ pkg, uid: null })
+            return
+        }
+
+        setCartPackages((prev) => [
+            ...prev,
+            {
+                uid: crypto.randomUUID(),
+                package_id: pkg.id,
+                name: pkg.name,
+                code: pkg.code,
+                kind: pkg.kind,
+                qty: "1",
+                unit_price: pkg.price,
+                items: resolveItemNames(pkg.items.map((i) => ({ product_id: i.product_id, qty: i.qty }))),
+            },
+        ])
+    }
+
+    function editPackage(uid: string) {
+        const group = cartPackages.find((g) => g.uid === uid)
+        if (!group) return
+        const pkg = catalogPackages.find((p) => p.id === group.package_id)
+        if (!pkg) {
+            sileo.error({ title: "Este paquete ya no está en el catálogo" })
+            return
+        }
+        setBuilder({ pkg, uid })
+    }
+
+    function confirmBuilder(items: { product_id: number; qty: number }[]) {
+        if (!builder) return
+        const { pkg, uid } = builder
+        const resolved = resolveItemNames(items)
+
+        setCartPackages((prev) => uid
+            ? prev.map((g) => (g.uid === uid ? { ...g, items: resolved } : g))
+            : [
+                ...prev,
+                {
+                    uid: crypto.randomUUID(),
+                    package_id: pkg.id,
+                    name: pkg.name,
+                    code: pkg.code,
+                    kind: pkg.kind,
+                    qty: "1",
+                    unit_price: pkg.price,
+                    items: resolved,
+                },
+            ]
+        )
+        setBuilder(null)
+    }
+
+    function removePackage(uid: string) {
+        setCartPackages((prev) => prev.filter((g) => g.uid !== uid))
+    }
+
+    function updatePackageQty(uid: string, value: string) {
+        const qty = onlyDigits(value)
+        setCartPackages((prev) => prev.map((g) => (g.uid === uid ? { ...g, qty } : g)))
+    }
+
+    /* ── Totales ──────────────────────────────────────────── */
+
+    const itemsSubtotal = cart.reduce((acc, c) => acc + (Number(c.qty) || 0) * (Number(c.unit_price) || 0), 0)
+    const packagesSubtotal = cartPackages.reduce((acc, g) => acc + (Number(g.qty) || 0) * g.unit_price, 0)
+    const subtotal = itemsSubtotal + packagesSubtotal
+
+    const totalUnits = cart.reduce((acc, c) => acc + (Number(c.qty) || 0), 0)
+        + cartPackages.reduce(
+            (acc, g) => acc + g.items.reduce((a, i) => a + i.qty, 0) * (Number(g.qty) || 0), 0
+        )
+
+    /**
+     * El stock se revisa por producto sumando lo suelto y lo que aportan los
+     * paquetes: dos renglones distintos del mismo producto se llevan el mismo
+     * inventario, y revisarlos por separado dejaría pasar el sobregiro.
+     */
+    const stockWarnings = useMemo<StockWarning[]>(() => {
+        if (loadingProducts || loadingSale || !branchProducts.length) return []
+
+        const needed = new Map<number, { name: string; qty: number }>()
+        const add = (product_id: number, name: string, qty: number) => {
+            const prev = needed.get(product_id)
+            needed.set(product_id, { name, qty: (prev?.qty ?? 0) + qty })
+        }
+
+        cart.forEach((c) => add(c.product_id, c.product_name, Number(c.qty) || 0))
+        cartPackages.forEach((g) => {
+            const packs = Number(g.qty) || 0
+            g.items.forEach((i) => add(i.product_id, i.product_name, i.qty * packs))
+        })
+
+        return [...needed.entries()]
+            .map(([product_id, { name, qty }]) => ({
+                product_id,
+                product_name: name,
+                needed: qty,
+                available: Number(
+                    branchProducts.find((p) => p.product_id === product_id)?.current_stock ?? 0
+                ),
+            }))
+            .filter((w) => w.needed > w.available)
+    }, [cart, cartPackages, branchProducts, loadingProducts, loadingSale])
+
+    const canSubmit = !!branchId
+        && (cart.length > 0 || cartPackages.length > 0)
+        && cart.every((c) => Number(c.qty) > 0 && Number(c.unit_price) >= 0)
+        && cartPackages.every((g) => Number(g.qty) > 0 && g.items.length > 0)
 
     async function handleSubmit(post: boolean) {
         if (!canSubmit) return
@@ -230,6 +461,15 @@ export function useNewSale(saleId?: number) {
                 qty: Number(c.qty),
                 unit_price: Number(c.unit_price),
             }))
+            // El contenido de un predefinido y el precio de cualquiera los resuelve
+            // el servidor desde el catálogo; aquí solo viaja lo que eligió el vendedor.
+            const packages: SalePackageDto[] = cartPackages.map((g) => ({
+                package_id: g.package_id,
+                qty: Number(g.qty),
+                ...(g.kind === "flexible"
+                    ? { items: g.items.map((i) => ({ product_id: i.product_id, qty: i.qty })) }
+                    : {}),
+            }))
             const payload = {
                 branch_id: Number(branchId),
                 customer_id: customerId ? Number(customerId) : null,
@@ -238,6 +478,7 @@ export function useNewSale(saleId?: number) {
                 payment_method: paymentMethod,
                 doc_no: docNo || undefined,
                 items,
+                packages,
             }
 
             // Una venta a abonos nace abierta por definición: se salda con
@@ -278,7 +519,7 @@ export function useNewSale(saleId?: number) {
     const product = branchProducts.find(
         (p) => p.sku === sku
     )
-    
+
     if (!product) {
             sileo.error({
                 title: `Producto no encontrado: ${sku}`
@@ -301,15 +542,21 @@ export function useNewSale(saleId?: number) {
         isEdit, paymentType, setPaymentType,
         filteredProducts, filteredCustomers,
         postSale, setPostSale,
+        totalUnits, itemsSubtotal, packagesSubtotal,
+        // paquetes
+        cartPackages, builder, packageSearch, packageSearchOpen, packageSearchRef,
+        filteredPackages, branchProducts,
         // refs
         searchRef, customerSearchRef,
         setCustomerName,
         setCustomerPhone,
         // setters
-        setBranchId, setPaymentMethod, setDocNo, setProductSearch, setSearchOpen,
-        setCustomerSearch, setCustomerSearchOpen,
+        setBranchId, changeBranch, setPaymentMethod, setDocNo, setProductSearch, setSearchOpen,
+        setCustomerSearch, setCustomerSearchOpen, setPackageSearch, setPackageSearchOpen,
         // actions
-        addToCart, removeFromCart, updateCart, selectCustomer,
-        clearCustomer, handleSubmit, handleBarcodeScan, setBarcode
+        addToCart, removeFromCart, updateCart, selectCustomer, clearCustomer,
+        handleSubmit, handleBarcodeScan, setBarcode,
+        addPackage, editPackage, removePackage, updatePackageQty,
+        confirmBuilder, cancelBuilder: () => setBuilder(null),
     }
 }

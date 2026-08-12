@@ -128,6 +128,12 @@ export function SaleReturnDialog({ saleId, onClose, onChange }: Props) {
                                                         {formatCurrency(it.unit_price)} c/u · vendidas {it.qty}
                                                         {it.returned_qty > 0 && ` · devueltas ${it.returned_qty}`}
                                                     </p>
+                                                    {/* El precio de arriba es la parte prorrateada del paquete */}
+                                                    {it.package_name && (
+                                                        <p className="text-[11px] text-muted-foreground">
+                                                            Del paquete &quot;{it.package_name}&quot;
+                                                        </p>
+                                                    )}
                                                 </div>
                                                 {it.returnable_qty > 0 ? (
                                                     <div className="flex items-center gap-2 shrink-0">

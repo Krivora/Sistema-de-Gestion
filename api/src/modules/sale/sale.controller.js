@@ -20,11 +20,12 @@ export async function getById(req, res, next) {
 
 export async function create(req, res, next) {
   try {
-    const { branch_id, items, customer_id, customer_name, customer_phone, payment_method, payment_type, doc_no, post = false } = req.body;
-    if (!branch_id || !items) return res.status(400).json({ error: "branch_id e items son requeridos" });
+    const { branch_id, items, packages, customer_id, customer_name, customer_phone, payment_method, payment_type, doc_no, post = false } = req.body;
+    if (!branch_id || (!items && !packages))
+      return res.status(400).json({ error: "branch_id y al menos items o packages son requeridos" });
     res.status(201).json(
       await SaleService.createSale(
-        { branch_id, items, customer_id, customer_name, customer_phone, payment_method, payment_type, doc_no, post },
+        { branch_id, items, packages, customer_id, customer_name, customer_phone, payment_method, payment_type, doc_no, post },
         req.user,
         extractRequestMeta(req)
       )
@@ -34,12 +35,13 @@ export async function create(req, res, next) {
 
 export async function update(req, res, next) {
   try {
-    const { branch_id, items, customer_id, customer_name, customer_phone, payment_method, doc_no } = req.body;
-    if (!branch_id || !items) return res.status(400).json({ error: "branch_id e items son requeridos" });
+    const { branch_id, items, packages, customer_id, customer_name, customer_phone, payment_method, doc_no } = req.body;
+    if (!branch_id || (!items && !packages))
+      return res.status(400).json({ error: "branch_id y al menos items o packages son requeridos" });
     res.json(
       await SaleService.updateSale(
         +req.params.id,
-        { branch_id, items, customer_id, customer_name, customer_phone, payment_method, doc_no },
+        { branch_id, items, packages, customer_id, customer_name, customer_phone, payment_method, doc_no },
         req.user,
         extractRequestMeta(req)
       )

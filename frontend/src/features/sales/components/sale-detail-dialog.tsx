@@ -1,13 +1,13 @@
 "use client"
 import { useEffect, useState } from "react"
 import { sileo } from "sileo"
-import { salesApi, type Sale, PAYMENT_METHODS } from "@/lib/api/sales"
+import { salesApi, groupSaleLines, type Sale, PAYMENT_METHODS } from "@/lib/api/sales"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog"
-import { Package, Building2, User, Calendar, CreditCard, Download } from "lucide-react"
+import { Package, Boxes, Building2, User, Calendar, CreditCard, Download } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { generateSaleReceipt } from "@/lib/pdf/sale-receipt"
 import { useAuthStore } from "@/store/auth.store"
@@ -48,6 +48,10 @@ export function SaleDetailDialog({ saleId, onClose }: Props) {
             .catch(() => sileo.error({ title: "Error al cargar detalle" }))
             .finally(() => setLoading(false))
     }, [saleId])
+
+    const groups = sale
+        ? groupSaleLines(sale)
+        : { packages: [], loose: [] }
 
     return (
         <Dialog open={!!saleId} onOpenChange={(v) => !v && onClose()}>
@@ -133,15 +137,48 @@ export function SaleDetailDialog({ saleId, onClose }: Props) {
 
                         <Separator />
 
-                        {/* Items */}
+                        {/* Paquetes: se cobran completos, con su contenido a la vista */}
+                        {groups.packages.length > 0 && (
+                            <div className="space-y-3">
+                                {groups.packages.map(({ pkg, items }) => (
+                                    <div key={pkg.id} className="border rounded-lg overflow-hidden">
+                                        <div className="flex items-center gap-2.5 px-3 py-2 bg-muted/40">
+                                            <div className="h-7 w-7 rounded bg-primary/10 flex items-center justify-center shrink-0">
+                                                <Boxes size={13} className="text-primary" />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-medium truncate">{pkg.name}</p>
+                                                <p className="text-xs text-muted-foreground font-mono">
+                                                    {pkg.package_code ?? "—"} · {pkg.qty} × {formatCurrency(pkg.unit_price)}
+                                                </p>
+                                            </div>
+                                            <p className="text-sm font-semibold shrink-0">{formatCurrency(pkg.total)}</p>
+                                        </div>
+                                        <div className="divide-y">
+                                            {items.map((item) => (
+                                                <div key={item.id} className="flex items-center gap-2 px-3 py-1.5">
+                                                    <span className="flex-1 min-w-0 text-sm truncate">{item.product_name}</span>
+                                                    <span className="text-xs text-muted-foreground font-mono shrink-0">{item.sku}</span>
+                                                    <span className="text-sm tabular-nums w-16 text-right shrink-0">{item.qty} pza</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Productos sueltos */}
                         <div className="space-y-1">
+                            {groups.loose.length > 0 && (
                             <div className="grid grid-cols-[1fr_60px_90px_90px] gap-2 px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                                 <span>Producto</span>
                                 <span className="text-center">Cant.</span>
                                 <span className="text-right">Precio unit.</span>
                                 <span className="text-right">Subtotal</span>
                             </div>
-                            {sale.items?.map((item) => (
+                            )}
+                            {groups.loose.map((item) => (
                                 <div
                                     key={item.id}
                                     className="grid grid-cols-[1fr_60px_90px_90px] gap-2 items-center px-2 py-2 rounded-md hover:bg-muted/40 transition-colors"
@@ -171,7 +208,12 @@ export function SaleDetailDialog({ saleId, onClose }: Props) {
                         {/* Total */}
                         <div className="flex justify-between items-center">
                             <span className="text-sm text-muted-foreground">
-                                {sale.items?.length} producto{sale.items?.length !== 1 ? "s" : ""}
+                                {groups.packages.length > 0 && (
+                                    <>{groups.packages.length} paquete{groups.packages.length !== 1 ? "s" : ""}
+                                        {groups.loose.length > 0 ? " · " : ""}</>
+                                )}
+                                {(groups.loose.length > 0 || groups.packages.length === 0) &&
+                                    `${groups.loose.length} producto${groups.loose.length !== 1 ? "s" : ""}`}
                             </span>
                             <div className="text-right">
                                 <p className="text-xs text-muted-foreground">Total</p>

@@ -1,6 +1,6 @@
 import jsPDF from "jspdf"
-import autoTable from "jspdf-autotable"
-import { type Sale, PAYMENT_METHODS } from "@/lib/api/sales"
+import autoTable, { type RowInput } from "jspdf-autotable"
+import { groupSaleLines, type Sale, PAYMENT_METHODS } from "@/lib/api/sales"
 import { API_URL } from "@/lib/constants"
 
 // ─────────────────────────────────────────────────────────────
@@ -23,6 +23,11 @@ function fmt(n: number) {
         style: "currency",
         currency: "MXN",
     }).format(n)
+}
+
+/** Cantidades sin ceros de relleno: "3.0000" -> "3", "1.5000" -> "1.5" */
+function fmtQty(n: number) {
+    return String(Number(n))
 }
 
 function fmtDate(iso: string) {
@@ -224,17 +229,45 @@ export async function generateSaleReceipt(
     // ─────────────────────────────────────────────────────────
     // TABLA DE PRODUCTOS
     // ─────────────────────────────────────────────────────────
+    // El paquete se cobra completo: encabeza con su precio y debajo van sus
+    // productos solo con la cantidad. Poner ahí el precio prorrateado de cada
+    // pieza confundiría al cliente, que pagó por el paquete.
+    const { packages, loose } = groupSaleLines(sale)
+
+    const body: RowInput[] = []
+
+    for (const { pkg, items } of packages) {
+        body.push([
+            { content: pkg.name, styles: { fontStyle: "bold" } },
+            fmtQty(pkg.qty),
+            fmt(pkg.unit_price),
+            fmt(pkg.total),
+        ])
+        for (const item of items) {
+            body.push([
+                { content: `    ${item.product_name}`, styles: { textColor: COLORS.secondary } },
+                { content: fmtQty(item.qty), styles: { textColor: COLORS.secondary } },
+                "",
+                "",
+            ])
+        }
+    }
+
+    for (const item of loose) {
+        body.push([
+            item.product_name,
+            fmtQty(item.qty),
+            fmt(item.unit_price),
+            fmt(item.qty * item.unit_price),
+        ])
+    }
+
     autoTable(doc, {
         startY: y,
         margin: { left: M, right: M },
         tableWidth: W - M * 2,
         head: [["Producto", "Cant.", "Precio", "Importe"]],
-        body: (sale.items ?? []).map((item) => [
-            item.product_name,
-            Math.floor(item.qty),
-            fmt(item.unit_price),
-            fmt(item.qty * item.unit_price),
-        ]),
+        body,
         theme: "plain",
         styles: {
             font: "helvetica",
@@ -316,20 +349,18 @@ export async function generateSaleReceipt(
     // ─────────────────────────────────────────────────────────
     // RESUMEN DE PRODUCTOS
     // ─────────────────────────────────────────────────────────
-    const totalUnits = sale.items?.reduce(
-        (sum, i) => sum + Number(i.qty),
-        0
-    );
-    const formattedUnits = Math.floor(totalUnits ?? 0);
+    const totalUnits = (sale.items ?? []).reduce((sum, i) => sum + Number(i.qty), 0)
+
+    const summary = [
+        packages.length ? `${packages.length} paquete(s)` : null,
+        loose.length ? `${loose.length} producto(s)` : null,
+        `${fmtQty(totalUnits)} unidad(es)`,
+    ].filter(Boolean).join(" · ")
 
     doc.setFont("helvetica", "normal")
     doc.setFontSize(8)
     doc.setTextColor(...COLORS.secondary)
-    doc.text(
-        `${sale.items?.length} producto(s) · ${formattedUnits} unidad(es)`,
-        M,
-        y
-    )
+    doc.text(summary, M, y)
 
     // ─────────────────────────────────────────────────────────
     // FOOTER

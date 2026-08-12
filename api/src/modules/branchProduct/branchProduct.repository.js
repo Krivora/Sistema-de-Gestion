@@ -20,7 +20,7 @@ const STOCK_SUBQUERY = `
 const BASE_SELECT = `
   SELECT bp.id, bp.branch_id, bp.product_id, bp.price, bp.cost,
          bp.min_stock, bp.reorder_point, bp.currency, bp.is_active,
-         p.name AS product_name, p.sku,
+         p.name AS product_name, p.sku, p.category_id,
          b.name AS branch_name,
          c.name AS client_name,
          ${STOCK_SUBQUERY}

@@ -122,7 +122,8 @@ export async function findById(id, clientId) {
 
 export async function findItems(saleId, clientId) {
   const { rows } = await pool.query(
-    `SELECT si.id, si.product_id, si.qty, si.unit_price, p.name AS product_name, p.sku
+    `SELECT si.id, si.product_id, si.qty, si.unit_price, si.sale_package_id,
+            p.name AS product_name, p.sku
      FROM sale_items si
      JOIN products p ON p.id = si.product_id
      WHERE si.sale_id=$1 AND si.client_id=$2
@@ -130,6 +131,56 @@ export async function findItems(saleId, clientId) {
     [saleId, clientId]
   );
   return rows;
+}
+
+/* ── Paquetes vendidos ────────────────────────────────────────── */
+
+/**
+ * Los paquetes de una venta. Sus productos siguen en sale_items apuntando aquí
+ * con `sale_package_id`, así que esto es solo la cabecera para agruparlos y
+ * mostrar el precio que se cobró por el paquete completo.
+ */
+export async function findSalePackages(saleId, clientId) {
+  const { rows } = await pool.query(
+    `SELECT sp.id, sp.package_id, sp.name, sp.qty::float8 AS qty,
+            sp.unit_price::float8 AS unit_price,
+            (sp.qty * sp.unit_price)::float8 AS total,
+            pk.code AS package_code, pk.kind AS package_kind
+     FROM sale_packages sp
+     LEFT JOIN packages pk ON pk.id = sp.package_id
+     WHERE sp.sale_id=$1 AND sp.client_id=$2
+     ORDER BY sp.id ASC`,
+    [saleId, clientId]
+  );
+  return rows;
+}
+
+export async function createSalePackage(trx, { sale_id, package_id, client_id, name, qty, unit_price }) {
+  const { rows } = await trx.query(
+    `INSERT INTO sale_packages (sale_id, package_id, client_id, name, qty, unit_price)
+     VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+    [sale_id, package_id ?? null, client_id, name, qty, unit_price]
+  );
+  return rows[0];
+}
+
+export async function deleteSalePackages(trx, saleId, clientId) {
+  await trx.query(
+    `DELETE FROM sale_packages WHERE sale_id=$1 AND client_id=$2`,
+    [saleId, clientId]
+  );
+}
+
+/** Precios de lista de la sucursal, para repartir el precio del paquete. */
+export async function findBranchPrices(db, branchId, productIds, clientId) {
+  if (!productIds.length) return new Map();
+  const { rows } = await db.query(
+    `SELECT product_id, price::float8 AS price
+     FROM branch_products
+     WHERE branch_id=$1 AND client_id=$2 AND product_id = ANY($3::int[])`,
+    [branchId, clientId, productIds]
+  );
+  return new Map(rows.map((r) => [r.product_id, r.price]));
 }
 
 /**
@@ -200,11 +251,13 @@ export async function setCancelled(trx, saleId, clientId, reason) {
 export async function findItemsWithReturned(saleId, clientId) {
   const { rows } = await pool.query(
     `SELECT si.id, si.product_id, si.qty::float8 AS qty, si.unit_price::float8 AS unit_price,
+            si.sale_package_id, sp.name AS package_name,
             p.name AS product_name, p.sku,
             COALESCE(r.returned, 0)::float8 AS returned_qty,
             (si.qty - COALESCE(r.returned, 0))::float8 AS returnable_qty
      FROM sale_items si
      JOIN products p ON p.id = si.product_id
+     LEFT JOIN sale_packages sp ON sp.id = si.sale_package_id
      LEFT JOIN LATERAL (
        SELECT SUM(ri.qty) AS returned FROM sale_return_items ri
        WHERE ri.sale_item_id = si.id
@@ -366,11 +419,11 @@ export async function deleteItems(trx, saleId, clientId) {
   );
 }
 
-export async function addItem(trx, { sale_id, product_id, qty, unit_price, client_id }) {
+export async function addItem(trx, { sale_id, product_id, qty, unit_price, client_id, sale_package_id }) {
   const { rows } = await trx.query(
-    `INSERT INTO sale_items (sale_id, product_id, qty, unit_price, client_id)
-     VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-    [sale_id, product_id, qty, unit_price, client_id]
+    `INSERT INTO sale_items (sale_id, product_id, qty, unit_price, client_id, sale_package_id)
+     VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+    [sale_id, product_id, qty, unit_price, client_id, sale_package_id ?? null]
   );
   return rows[0];
 }

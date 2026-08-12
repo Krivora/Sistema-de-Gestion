@@ -12,6 +12,8 @@ export interface BranchProduct {
     is_active: boolean
     product_name: string
     sku: string
+    /** Del producto — lo usa el armador de paquetes limitados a una categoría */
+    category_id: number | null
     branch_name: string
     client_name: string
     current_stock: number

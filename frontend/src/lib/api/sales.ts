@@ -4,9 +4,27 @@ export interface SaleItem {
     id: number
     product_id: number
     qty: number
+    /** En los renglones de un paquete es la parte prorrateada del precio fijo */
     unit_price: number
     product_name: string
     sku: string
+    /** Apunta al paquete del que salió este producto; null si se vendió suelto */
+    sale_package_id: number | null
+}
+
+/** Un paquete vendido. Sus productos viven en `SaleItem` apuntando aquí. */
+export interface SalePackage {
+    id: number
+    /** null si el paquete se eliminó del catálogo después de la venta */
+    package_id: number | null
+    name: string
+    qty: number
+    /** Precio de un paquete */
+    unit_price: number
+    /** qty × unit_price */
+    total: number
+    package_code: string | null
+    package_kind: "fixed" | "flexible" | null
 }
 
 export interface Sale {
@@ -27,6 +45,7 @@ export interface Sale {
     branch_code: string
     user_name: string
     items?: SaleItem[]
+    packages?: SalePackage[]
 
     // ── Abonos ──
     /** 'contado' publica de inmediato; 'credito' exige saldo cero */
@@ -37,6 +56,28 @@ export interface Sale {
     balance: number
     /** En crédito el inventario sale al registrar la venta, no al publicarla */
     inventory_applied?: boolean
+}
+
+export interface SaleLineGroup {
+    pkg: SalePackage
+    items: SaleItem[]
+}
+
+/**
+ * Separa los renglones de una venta: los que salieron de un paquete, agrupados
+ * bajo él, y los que se vendieron sueltos. En el detalle y el ticket el paquete
+ * se cobra completo, así que sus productos se listan sin precio propio: el que
+ * traen es la parte prorrateada, y mostrarla confunde al cliente.
+ */
+export function groupSaleLines(sale: Sale): { packages: SaleLineGroup[]; loose: SaleItem[] } {
+    const items = sale.items ?? []
+    const packages = (sale.packages ?? []).map((pkg) => ({
+        pkg,
+        items: items.filter((i) => i.sale_package_id === pkg.id),
+    }))
+
+    const grouped = new Set(packages.flatMap((g) => g.items.map((i) => i.id)))
+    return { packages, loose: items.filter((i) => !grouped.has(i.id)) }
 }
 
 export interface Paged<T> {
@@ -65,6 +106,9 @@ export interface ReturnableItem {
     unit_price: number
     returned_qty: number
     returnable_qty: number
+    /** Nombre del paquete del que salió, si no se vendió suelto */
+    package_name: string | null
+    sale_package_id: number | null
 }
 
 export interface SaleReturn {
@@ -122,6 +166,17 @@ export interface SaleItemDto {
     unit_price: number
 }
 
+export interface SalePackageDto {
+    package_id: number
+    /** Cuántos paquetes iguales */
+    qty: number
+    /**
+     * Solo en paquetes armables. En los predefinidos el contenido y el precio
+     * los pone el catálogo en el servidor, nunca el navegador.
+     */
+    items?: { product_id: number; qty: number }[]
+}
+
 
 export const PAYMENT_METHODS = [
     { value: "EFECTIVO", label: "Efectivo" },
@@ -139,6 +194,7 @@ export interface CreateSaleDto {
     doc_no?: string
     payment_type?: "contado" | "credito"
     items: SaleItemDto[]
+    packages?: SalePackageDto[]
     post?: boolean          // false = open, true = posted
 }
 
